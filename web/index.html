@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>葫芦音乐 · Wails 桌面版</title>
+</head>
+<body>
+<div id="root"></div>
+<!-- 开机自检：任何启动异常都显示在底部横条，避免白屏无从排查 -->
+<script>
+  (function () {
+    var bar = document.createElement('div');
+    bar.id = 'bootdiag';
+    // 平时不显示；只有启动失败或运行时报错才把这条横条亮出来
+    bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;padding:5px 10px;display:none;' +
+      'font:12px/1.4 ui-monospace,Consolas,monospace;color:#333;background:#fff8d6;' +
+      'border-top:1px solid #e8dca8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    function put(msg, bad) {
+      bar.textContent = msg;
+      bar.style.display = 'block';
+      if (bad) { bar.style.background = '#ffe3e3'; bar.style.color = '#8b1a1a'; bar.style.borderTopColor = '#e59a9a'; }
+    }
+    document.addEventListener('DOMContentLoaded', function () { document.body.appendChild(bar); });
+    window.addEventListener('error', function (e) {
+      put('[error] ' + (e.message || '') + ' @' + (e.lineno || '?') + ':' + (e.colno || '?') +
+        (e.error && e.error.stack ? ' | ' + String(e.error.stack).slice(0, 300) : ''), true);
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      var r = e.reason;
+      put('[reject] ' + String((r && (r.stack || r.message)) || r).slice(0, 300), true);
+    });
+    setTimeout(function () {
+      var root = document.getElementById('root');
+      var goMain = window.go && window.go.main && window.go.main.App;
+      var n = root ? root.innerHTML.length : -1;
+      var methods = goMain ? Object.keys(goMain).length : 0;
+      if (!root) { put('[boot][构建 3.0.3] 找不到 #root', true); return; }
+      if (!window.go) {
+        put('[boot][构建 3.0.3] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        return;
+      }
+      if (n < 50) {
+        put('[boot][构建 3.0.3] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        return;
+      }
+      // 一切正常就什么都不显示，只留一条控制台日志
+      try { console.log('[boot][构建 3.0.3] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+    }, 1500);
+  })();
+</script>
+<script src="./src/main.tsx" type="module"></script>
+</body>
+</html>

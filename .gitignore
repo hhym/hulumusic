@@ -1,0 +1,9 @@
+# 构建产物
+*.exe
+*.zip
+build/bin/
+web/node_modules/
+web/dist/
+web/package.json.md5
+*.log
+.DS_Store
