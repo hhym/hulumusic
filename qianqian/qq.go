@@ -96,8 +96,8 @@ func searchQQ(query string, limit int) ([]Track, error) {
 var qqMediaCache = map[string]string{}
 
 type qqVkeyResp struct {
-	Code  int `json:"code"`
-	Req0  struct {
+	Code int `json:"code"`
+	Req0 struct {
 		Code int `json:"code"`
 		Data struct {
 			Midurlinfo []struct {
@@ -120,13 +120,13 @@ func qqStreamURL(songMid string) (string, error) {
 			"module": "vkey.GetVkeyServer",
 			"method": "CgiGetVkey",
 			"param": map[string]interface{}{
-				"guid":     "10000",
-				"songmid":  []string{songMid},
-				"songtype": []int{0},
-				"uin":      "0",
+				"guid":      "10000",
+				"songmid":   []string{songMid},
+				"songtype":  []int{0},
+				"uin":       "0",
 				"loginflag": 1,
-				"platform": "24",
-				"filename": []string{"M500" + media + ".mp3"},
+				"platform":  "24",
+				"filename":  []string{"M500" + media + ".mp3"},
 			},
 		},
 	}
@@ -169,11 +169,11 @@ var qqCharts = []Chart{
 }
 
 type qqTopResp struct {
-	Code int `json:"code"`
+	Code    int `json:"code"`
 	Topinfo struct {
-		TopID   string `json:"topID"`
-		Title   string `json:"ListName"`
-		PicURL  string `json:"pic_v12"`
+		TopID  string `json:"topID"`
+		Title  string `json:"ListName"`
+		PicURL string `json:"pic_v12"`
 	} `json:"topinfo"`
 	Songlist []struct {
 		Data struct {
@@ -192,18 +192,18 @@ type qqTopResp struct {
 
 func qqChartTracks(topid string) ([]Track, error) {
 	u := qqTopList + "?" + url.Values{
-		"topid":           {topid},
-		"format":          {"json"},
-		"inCharset":       {"utf8"},
-		"outCharset":      {"utf-8"},
-		"notice":          {"0"},
-		"platform":        {"yqq.json"},
-		"needNewCode":     {"0"},
-		"tpl":             {"3"},
-		"page":            {"detail"},
-		"type":            {"top"},
-		"song_begin":      {"0"},
-		"song_num":        {"40"},
+		"topid":       {topid},
+		"format":      {"json"},
+		"inCharset":   {"utf8"},
+		"outCharset":  {"utf-8"},
+		"notice":      {"0"},
+		"platform":    {"yqq.json"},
+		"needNewCode": {"0"},
+		"tpl":         {"3"},
+		"page":        {"detail"},
+		"type":        {"top"},
+		"song_begin":  {"0"},
+		"song_num":    {"40"},
 	}.Encode()
 	txt, err := getText(u, map[string]string{"Referer": "https://y.qq.com/"})
 	if err != nil {

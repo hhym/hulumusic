@@ -19,7 +19,7 @@ type Settings struct {
 	Sources     []string `json:"sources"`     // 参与聚合搜索的源
 	SearchLimit int      `json:"searchLimit"` // 每源取多少条
 	LastTrackID string   `json:"lastTrackId"`
-	LocalDirs   []string `json:"localDirs"`   // 本地乐库授权的音乐目录
+	LocalDirs   []string `json:"localDirs"` // 本地乐库授权的音乐目录
 
 	// LookMigrated 记录「默认外观已迁到 2.7.14 那套（桌面橘黄）」，只跑一次，
 	// 之后用户自己选的主题不再被覆盖。
@@ -31,7 +31,7 @@ type Settings struct {
 	Version   string `json:"version"`
 }
 
-const appVersion = "3.0.4"
+const appVersion = "3.0.5"
 
 func defaultSettings() Settings {
 	return Settings{

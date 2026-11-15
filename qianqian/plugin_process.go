@@ -75,6 +75,43 @@ func declaredProcesses() map[string]bool {
 	return out
 }
 
+// resolveProcessPath 把插件给的 bin 解析成一个可执行路径，并校验它落在允许的目录里。
+// 裸名（ffmpeg）走 PATH 查找；带路径的必须是插件安装目录或 PATH 目录下的文件。
+func resolveProcessPath(bin, base string) (string, error) {
+	bare := !strings.ContainsAny(bin, "/\\")
+	if bare {
+		p, err := exec.LookPath(bin)
+		if err != nil {
+			return "", fmt.Errorf("找不到 %s：请把它放进 PATH，或随插件一起打包", base)
+		}
+		return p, nil
+	}
+	abs, err := filepath.Abs(bin)
+	if err != nil {
+		return "", fmt.Errorf("程序路径不合法：%v", err)
+	}
+	// 1) 插件自带的可执行文件：在某个插件安装目录内
+	entries, _ := os.ReadDir(pluginsDir())
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		if within(abs, filepath.Join(pluginsDir(), e.Name())) {
+			return abs, nil
+		}
+	}
+	// 2) 系统 PATH 目录内的（用户自己装的 ffmpeg）
+	for _, d := range filepath.SplitList(os.Getenv("PATH")) {
+		if d == "" {
+			continue
+		}
+		if within(abs, d) {
+			return abs, nil
+		}
+	}
+	return "", fmt.Errorf("只允许运行 PATH 或插件目录里的 %s：%s", base, abs)
+}
+
 func tailString(s string, max int) string {
 	if len(s) <= max {
 		return s
@@ -93,11 +130,18 @@ func (a *App) RunProcess(bin string, args []string, timeoutSec int) (ProcessResu
 	if !declaredProcesses()[base] {
 		return ProcessResult{}, "没有启用的插件声明过 " + filepath.Base(bin) + " 权限"
 	}
+	// 只看文件名不够：插件传 "C:\任意目录\ffmpeg.exe" 照样能过 basename 白名单，
+	// 等于放个同名木马就能执行任意程序。所以还要限定程序所在目录 ——
+	// 要么在 PATH 里，要么在某个插件的安装目录里（插件自带的 ffmpeg 属于这种）。
+	binPath, err := resolveProcessPath(bin, base)
+	if err != nil {
+		return ProcessResult{}, err.Error()
+	}
 	if timeoutSec <= 0 || timeoutSec > 600 {
 		timeoutSec = 180
 	}
 
-	cmd := exec.Command(bin, args...)
+	cmd := exec.Command(binPath, args...)
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

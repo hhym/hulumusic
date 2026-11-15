@@ -110,6 +110,14 @@ func handleAudioProxy(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad url", 400)
 		return
 	}
+	// /a 是个开放式转发：本机任何程序、甚至浏览器里的网页都能借它去请求任意地址。
+	// 界面上放 CORS * 是为了音频能被 WebAudio 读，代价是这条路能被当成跳板，
+	// 所以这里挡掉内网/链路本地地址，避免被拿来探测局域网。
+	// 回环保留：用户自己起的转码服务就在 127.0.0.1 上。
+	if isPrivateHost(u.Hostname()) {
+		http.Error(w, "forbidden", 403)
+		return
+	}
 
 	req, err := http.NewRequest("GET", target, nil)
 	if err != nil {
@@ -176,10 +184,43 @@ func handleAudioProxy(w http.ResponseWriter, r *http.Request) {
 
 	// 电台直播流：剥掉 junk 头与 ICY 元数据，输出干净 MP3
 	if liveMP3 {
-		copyMP3Clean(w, res.Body, w.(flusher))
-		return
+		if f, ok := w.(flusher); ok {
+			copyMP3Clean(w, res.Body, f)
+			return
+		}
 	}
 	io.Copy(w, res.Body)
+}
+
+// isPrivateHost 判断目标主机是不是内网/链路本地地址。
+func isPrivateHost(host string) bool {
+	h := strings.ToLower(strings.Trim(host, "[]"))
+	if h == "" || h == "0.0.0.0" {
+		return true
+	}
+	if ip := net.ParseIP(h); ip != nil {
+		if ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return true
+		}
+		// RFC1918 与 IPv6 唯一本地地址
+		if ip4 := ip.To4(); ip4 != nil {
+			switch {
+			case ip4[0] == 10:
+				return true
+			case ip4[0] == 172 && ip4[1] >= 16 && ip4[1] <= 31:
+				return true
+			case ip4[0] == 192 && ip4[1] == 168:
+				return true
+			case ip4[0] == 169 && ip4[1] == 254:
+				return true
+			}
+		}
+		if strings.HasPrefix(h, "fc") || strings.HasPrefix(h, "fd") {
+			return true
+		}
+		return false
+	}
+	return false
 }
 
 // ---------------- 歌词 ----------------
@@ -208,7 +249,7 @@ func lyricNetease(id string) ([]LyricLine, error) {
 }
 
 type qqLyricResp struct {
-	Code int `json:"code"`
+	Code  int    `json:"code"`
 	Lyric string `json:"lyric"`
 }
 
@@ -306,7 +347,13 @@ func serveLocalAudio(w http.ResponseWriter, r *http.Request, u *url.URL) {
 		return
 	}
 
+	// 白名单是「目录」粒度：一个音乐目录被授权后，同目录下的 txt / 密钥 / 配置
+	// 也能被读出来。所以再加一道扩展名校验，只放行音频文件。
 	ext := strings.ToLower(filepath.Ext(abs))
+	if !audioExts[ext] {
+		http.Error(w, "forbidden", 403)
+		return
+	}
 	ct := "audio/mpeg"
 	switch ext {
 	case ".m4a", ".mp4", ".aac":

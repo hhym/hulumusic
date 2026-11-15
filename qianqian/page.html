@@ -7656,7 +7656,8 @@ const empty = {
   searchLimit: 20,
   proxyPort: 0,
   dataDir: "",
-  version: ""
+  version: "",
+  allowPluginProcess: false
 };
 function SettingsPage({
   theme,
@@ -8036,6 +8037,38 @@ function SettingsPage({
             onClick: openDir,
             children: "\u6253\u5F00"
           })]
+        })]
+      })]
+    }), /* @__PURE__ */ jsxs("section", {
+      className: "set-card",
+      children: [/* @__PURE__ */ jsx("h3", {
+        children: "\u63D2\u4EF6\u6743\u9650"
+      }), /* @__PURE__ */ jsxs("div", {
+        className: "set-row",
+        children: [/* @__PURE__ */ jsx("label", {
+          children: "\u672C\u673A\u7A0B\u5E8F"
+        }), /* @__PURE__ */ jsxs("label", {
+          className: "mono",
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 8
+          },
+          children: [/* @__PURE__ */ jsx("input", {
+            type: "checkbox",
+            checked: !!s.allowPluginProcess,
+            onChange: (e) => patch({
+              allowPluginProcess: e.target.checked
+            })
+          }), "\u5141\u8BB8\u63D2\u4EF6\u8FD0\u884C node \u7B49\u672C\u673A\u7A0B\u5E8F"]
+        })]
+      }), /* @__PURE__ */ jsxs("div", {
+        className: "set-row",
+        children: [/* @__PURE__ */ jsx("label", {
+          children: "\u8BF4\u660E"
+        }), /* @__PURE__ */ jsx("span", {
+          className: "mono",
+          children: "\u5C11\u6570\u63D2\u4EF6\uFF08\u5982\u6C7D\u6C34\u97F3\u4E50\uFF09\u8981\u9760 Node + Electron \u8DD1\u5B98\u65B9 SDK \u624D\u80FD\u626B\u7801\u767B\u5F55\u3002\u6253\u5F00\u540E\u63D2\u4EF6\u53EF\u4EE5\u6267\u884C\u672C\u673A\u547D\u4EE4\uFF0C\u53EA\u7ED9\u53EF\u4FE1\u63D2\u4EF6\u5F00\u3002"
         })]
       })]
     }), /* @__PURE__ */ jsxs("section", {
@@ -18009,17 +18042,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.4] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.5] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.4] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.5] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.4] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.5] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.4] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.5] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

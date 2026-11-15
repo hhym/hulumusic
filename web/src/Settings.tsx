@@ -12,6 +12,7 @@ type Settings = {
   proxyPort: number
   dataDir: string
   version: string
+  allowPluginProcess: boolean
 }
 
 type AccountItem = {id: string; name: string; who: string}
@@ -43,6 +44,7 @@ const empty: Settings = {
   proxyPort: 0,
   dataDir: '',
   version: '',
+  allowPluginProcess: false,
 }
 
 export default function SettingsPage({ theme, onTheme, accounts, onSignOut, onRefreshAccounts }: Props) {
@@ -295,6 +297,22 @@ export default function SettingsPage({ theme, onTheme, accounts, onSignOut, onRe
             <span className="mono ellipsis" title={s.dataDir}>{s.dataDir}</span>
             <button className="mini-btn" onClick={openDir}>打开</button>
           </div>
+        </div>
+      </section>
+
+      <section className="set-card">
+        <h3>插件权限</h3>
+        <div className="set-row">
+          <label>本机程序</label>
+          <label className="mono" style={{display: 'flex', alignItems: 'center', gap: 8}}>
+            <input type="checkbox" checked={!!s.allowPluginProcess}
+                   onChange={(e) => patch({ allowPluginProcess: e.target.checked })} />
+            允许插件运行 node 等本机程序
+          </label>
+        </div>
+        <div className="set-row">
+          <label>说明</label>
+          <span className="mono">少数插件（如汽水音乐）要靠 Node + Electron 跑官方 SDK 才能扫码登录。打开后插件可以执行本机命令，只给可信插件开。</span>
         </div>
       </section>
 

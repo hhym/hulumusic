@@ -54,7 +54,6 @@ func safePluginID(id string) bool {
 	return true
 }
 
-
 // mygoManifest 读取目录型插件的清单；不是目录型插件就返回 nil。
 func mygoManifest(id string) *PluginManifest {
 	b, err := os.ReadFile(filepath.Join(pluginDir(id), "plugin.json"))
@@ -187,6 +186,11 @@ func (a *App) installPluginDir(src string) (string, error) {
 	if id == "" {
 		return "", fmt.Errorf("plugin.json 里没有 id")
 	}
+	// id 会直接拼成安装目录：含 ../ 或绝对路径的 id 能让安装器写到数据目录以外，
+	// 甚至让下面的 RemoveAll 删掉任意目录，所以必须先过一遍白名单校验。
+	if !safePluginID(id) {
+		return "", fmt.Errorf("插件 id 不合法：%q", id)
+	}
 	dst := pluginDir(id)
 	if err := os.RemoveAll(dst); err != nil {
 		return "", err
@@ -212,18 +216,23 @@ func (a *App) installPluginDir(src string) (string, error) {
 		if info.IsDir() {
 			return os.MkdirAll(out, 0o755)
 		}
+		// 显式关闭：Walk 里用 defer 会把每个文件的句柄攒到函数返回才关，
+		// 插件目录几百个文件时会把 Windows 的句柄耗尽。
 		in, err := os.Open(p)
 		if err != nil {
 			return err
 		}
-		defer in.Close()
 		of, err := os.OpenFile(out, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 		if err != nil {
+			in.Close()
 			return err
 		}
-		defer of.Close()
-		_, err = io.Copy(of, io.LimitReader(in, 32<<20))
-		return err
+		_, cpErr := io.Copy(of, io.LimitReader(in, 32<<20))
+		in.Close()
+		if closeErr := of.Close(); cpErr == nil {
+			cpErr = closeErr
+		}
+		return cpErr
 	})
 	if err != nil {
 		return "", err

@@ -103,14 +103,14 @@ type rssImage struct {
 }
 
 type rssItem struct {
-	Title       string        `xml:"title"`
-	GUID        string        `xml:"guid"`
-	PubDate     string        `xml:"pubDate"`
-	Description string        `xml:"description"`
-	Enclosure   rssEnclosure  `xml:"enclosure"`
-	Duration    string        `xml:"http://www.itunes.com/dtds/podcast-1.0.dtd duration"`
-	Author      string        `xml:"http://www.itunes.com/dtds/podcast-1.0.dtd author"`
-	Image       rssImage      `xml:"http://www.itunes.com/dtds/podcast-1.0.dtd image"`
+	Title       string       `xml:"title"`
+	GUID        string       `xml:"guid"`
+	PubDate     string       `xml:"pubDate"`
+	Description string       `xml:"description"`
+	Enclosure   rssEnclosure `xml:"enclosure"`
+	Duration    string       `xml:"http://www.itunes.com/dtds/podcast-1.0.dtd duration"`
+	Author      string       `xml:"http://www.itunes.com/dtds/podcast-1.0.dtd author"`
+	Image       rssImage     `xml:"http://www.itunes.com/dtds/podcast-1.0.dtd image"`
 }
 
 type rssDoc struct {

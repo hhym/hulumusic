@@ -143,13 +143,13 @@ func (a *App) persistLocalRoots(dirs []string) {
 // LocalScan 扫描结果。带统计是为了能回答「为什么扫不到歌」：
 // 是目录没读到、全是图片，还是真的空。
 type LocalScan struct {
-	Tracks   []Track `json:"tracks"`
-	Root     string  `json:"root"`
-	Scanned  int     `json:"scanned"`  // 遍历过的文件总数
-	Audio    int     `json:"audio"`    // 命中音频扩展名的数量
-	Dirs     int     `json:"dirs"`     // 遍历过的目录数
-	Skipped  int     `json:"skipped"`  // 读不进去的目录/文件
-	Err      string  `json:"err"`
+	Tracks  []Track `json:"tracks"`
+	Root    string  `json:"root"`
+	Scanned int     `json:"scanned"` // 遍历过的文件总数
+	Audio   int     `json:"audio"`   // 命中音频扩展名的数量
+	Dirs    int     `json:"dirs"`    // 遍历过的目录数
+	Skipped int     `json:"skipped"` // 读不进去的目录/文件
+	Err     string  `json:"err"`
 }
 
 // ScanLocalMusic 递归扫一个目录，返回曲目列表 + 扫描统计。同名 .lrc 会被 Lyric 读到。
