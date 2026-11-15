@@ -1116,7 +1116,7 @@ export default function App() {
       <header className={"head hd-" + tab}>
         <div>
           <h1 className={'page-h1 ph-' + tab}>{tab === 'home' ? '首页' : tab === 'library' ? '我的收藏' : tab === 'radio' ? '电台' : tab === 'podcast' ? '听书' : tab === 'local' ? '歌曲' : tab === 'queue' ? '待播清单' : tab === 'plugins' ? '插件' : tab === 'settings' ? '设置' : tab === 'lyric' ? '歌词' : '搜索结果'}</h1>
-          <p>{meta || (tab === 'home' ? '当前插件的首页，点卡片直接播' : tab === 'radio' ? '网络直播，点台即听' : tab === 'podcast' ? '搜有声书、播客节目' : tab === 'local' ? (localInfo || '选一个音乐文件夹，扫出来的歌直接播（同名 .lrc 会当歌词）') : tab === 'queue' ? '正在放的 + 接下来要放的，点一下就能跳过去' : tab === 'plugins' ? '导入 MyGo 插件，扩展音源' : tab === 'settings' ? '偏好设置，改完记得点保存' : tab === 'lyric' ? '跟着唱，可切卡拉OK 大行 / 整段滚动' : '输入关键词开始搜索')}</p>
+          <p>{meta || (tab === 'home' ? '当前插件的首页，点卡片直接播' : tab === 'radio' ? '网络直播，点台即听' : tab === 'podcast' ? '搜有声书、播客节目' : tab === 'local' ? (localInfo || '选一个音乐文件夹，扫出来的歌直接播（同名 .lrc 会当歌词）') : tab === 'queue' ? '正在放的 + 接下来要放的，点一下就能跳过去' : tab === 'plugins' ? '导入 MyGo / MusicFree 插件，扩展音源' : tab === 'settings' ? '偏好设置，改完记得点保存' : tab === 'lyric' ? '跟着唱，可切卡拉OK 大行 / 整段滚动' : '输入关键词开始搜索')}</p>
         </div>
         {err && <div className="err">{err}</div>}
         {needLogin.length > 0 && (
