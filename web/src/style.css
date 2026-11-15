@@ -940,7 +940,7 @@ html[data-theme='dark'] .plug-kind {
 /* ══════════════════════════════════════════════════════
    双列布局：左列（主窗口 / 均衡器 / 播放列表）+ 右列（歌词秀）
    ══════════════════════════════════════════════════════ */
-.skin-page{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;
+.skin-page{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:8px;
   align-items:stretch;max-width:1080px;margin:0 auto;padding:8px;box-sizing:border-box;
   height:100%;overflow-y:auto;background:linear-gradient(180deg,#151832,#0b0d1c 60%,#0a0b16)}
 .sk-col{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -1085,7 +1085,7 @@ html[data-theme='dark'] .plug-kind {
 
 /* 皮肤区占满窗口，去掉两侧留白 */
 .skin-page{max-width:none;width:100%;padding:10px;gap:10px;
-  grid-template-columns:minmax(0,1.06fr) minmax(0,1fr)}
+  grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
 /* 歌词从顶部开始排，不再整体垂直居中 */
 .skin .sk-lyr-body{justify-content:flex-start;padding-top:12px}
 .skin .sk-lyr-body .song{margin-top:0;margin-bottom:2px}
@@ -1932,8 +1932,10 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 /* ══════════ 窄窗口断点（放在最后，覆盖前面 .skin-page/.sk-pl 的固定写法）══════════
    窗口被缩到一半左右时，两列皮肤会互相挤压：左列按钮和搜索框挤成一行、右列歌词被压成一条。
    窄屏统一改成单列：歌词不再并排，整块堆到播放列表下面；工具条允许换行。 */
-@media (max-width:1100px){
+@media (max-width:840px){
   .skin-page{display:flex;flex-direction:column;gap:6px;padding:6px;height:auto;min-height:100vh;overflow-x:hidden}
+  /* 单列时面板别铺满整屏，封顶 760 居中，两侧由面板底色吸掉 */
+  .sk-win,.sk-eq,.sk-lyr,.sk-pl{width:100%;max-width:760px;margin-left:auto;margin-right:auto}
   .skin-page .sk-col{flex:1 1 auto;height:auto;min-height:0;gap:6px}
   .skin-page .sk-col-r{flex:0 0 auto;height:auto;min-height:0;overflow:visible}
   .skin-page .sk-pl{flex:1 1 auto;min-height:340px;overflow:hidden}
@@ -2098,3 +2100,6 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   .sk-tab-bar button, .pl-tabs button{font-size:10px;padding:0 5px}
   .sk-eq-on button{height:15px;font-size:9px;padding:0 5px}
 }
+
+/* 歌词正文：窗口宽的时候别让一行字拉得太长，封顶 520 居中 */
+.skin-page .sk-col-r .sk-lyr-body{max-width:560px;margin-left:auto;margin-right:auto}
