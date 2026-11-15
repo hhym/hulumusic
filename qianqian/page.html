@@ -8107,10 +8107,10 @@ function SettingsPage({
   });
 }
 function md5hex(input) {
-  const str = unescape(encodeURIComponent(String(input)));
+  const str2 = unescape(encodeURIComponent(String(input)));
   const bytes = [];
-  for (let i = 0; i < str.length; i++)
-    bytes.push(str.charCodeAt(i));
+  for (let i = 0; i < str2.length; i++)
+    bytes.push(str2.charCodeAt(i));
   const n2 = bytes.length;
   const padded = bytes.slice();
   padded.push(128);
@@ -8355,7 +8355,7 @@ function aesEcbEncrypt(keyOrText, textOrKey) {
   }
   return hex;
 }
-const moduleCache = /* @__PURE__ */ new Map();
+const moduleCache$1 = /* @__PURE__ */ new Map();
 const codeCache = /* @__PURE__ */ new Map();
 const storageCache = /* @__PURE__ */ new Map();
 const saveTimers = /* @__PURE__ */ new Map();
@@ -8827,7 +8827,7 @@ function build(id2, rel, built) {
   return moduleObj.exports;
 }
 async function loadMyGoPlugin(id2) {
-  const hit = moduleCache.get(id2);
+  const hit = moduleCache$1.get(id2);
   if (hit)
     return hit;
   await ensureDataDir();
@@ -8849,15 +8849,15 @@ async function loadMyGoPlugin(id2) {
   await prepare(id2, "");
   const built = /* @__PURE__ */ new Map();
   const exp = build(id2, "", built);
-  moduleCache.set(id2, exp);
+  moduleCache$1.set(id2, exp);
   return exp;
 }
 function clearMyGoCache(id2) {
   if (id2) {
-    moduleCache.delete(id2);
+    moduleCache$1.delete(id2);
     Array.from(codeCache.keys()).filter((k2) => k2.startsWith(id2 + "::")).forEach((k2) => codeCache.delete(k2));
   } else {
-    moduleCache.clear();
+    moduleCache$1.clear();
     codeCache.clear();
   }
 }
@@ -9065,6 +9065,315 @@ async function mygoAccount(pluginId) {
     return null;
   }
 }
+const scriptRel = "modulepreload";
+const assetsURL = function(dep) {
+  return "/" + dep;
+};
+const seen = {};
+const __vitePreload = function preload(baseModule, deps, importerUrl) {
+  if (!deps || deps.length === 0) {
+    return baseModule();
+  }
+  const links = document.getElementsByTagName("link");
+  return Promise.all(deps.map((dep) => {
+    dep = assetsURL(dep);
+    if (dep in seen)
+      return;
+    seen[dep] = true;
+    const isCss = dep.endsWith(".css");
+    const cssSelector = isCss ? '[rel="stylesheet"]' : "";
+    const isBaseRelative = !!importerUrl;
+    if (isBaseRelative) {
+      for (let i = links.length - 1; i >= 0; i--) {
+        const link2 = links[i];
+        if (link2.href === dep && (!isCss || link2.rel === "stylesheet")) {
+          return;
+        }
+      }
+    } else if (document.querySelector(`link[href="${dep}"]${cssSelector}`)) {
+      return;
+    }
+    const link = document.createElement("link");
+    link.rel = isCss ? "stylesheet" : scriptRel;
+    if (!isCss) {
+      link.as = "script";
+      link.crossOrigin = "";
+    }
+    link.href = dep;
+    document.head.appendChild(link);
+    if (isCss) {
+      return new Promise((res, rej) => {
+        link.addEventListener("load", res);
+        link.addEventListener("error", () => rej(new Error(`Unable to preload CSS for ${dep}`)));
+      });
+    }
+  })).then(() => baseModule());
+};
+const moduleCache = /* @__PURE__ */ new Map();
+const sourceCache = /* @__PURE__ */ new Map();
+const pkgCache = /* @__PURE__ */ new Map();
+const CDN = "https://esm.sh/";
+async function loadPkg(name) {
+  if (pkgCache.has(name))
+    return pkgCache.get(name);
+  const aliases = {
+    cheerio: "cheerio@1.0.0-rc.12",
+    "crypto-js": "crypto-js@4.2.0",
+    he: "he@1.2.0",
+    qs: "qs@6.11.2",
+    lodash: "lodash@4.17.21",
+    dayjs: "dayjs@1.11.10",
+    "big.js": "big.js@6.2.1",
+    "isomorphic-fetch": "node-fetch@2"
+  };
+  const spec = aliases[name] || name;
+  const m2 = await __vitePreload(() => import(CDN + spec), true ? [] : void 0);
+  const v2 = (m2 == null ? void 0 : m2.default) ?? m2;
+  pkgCache.set(name, v2);
+  return v2;
+}
+function makeAxios() {
+  const joinParams = (target, params) => {
+    if (!params)
+      return target;
+    const parts = [];
+    Object.keys(params).forEach((k2) => {
+      const v2 = params[k2];
+      if (v2 == null)
+        return;
+      parts.push(encodeURIComponent(k2) + "=" + encodeURIComponent(typeof v2 === "object" ? JSON.stringify(v2) : String(v2)));
+    });
+    if (!parts.length)
+      return target;
+    return target + (target.indexOf("?") >= 0 ? "&" : "?") + parts.join("&");
+  };
+  const request = async (cfg) => {
+    const app = bridge$1();
+    if (!(app == null ? void 0 : app.HttpRequest))
+      throw new Error("\u7F51\u7EDC\u80FD\u529B\u4E0D\u53EF\u7528");
+    const method = String(cfg.method || "GET").toUpperCase();
+    let target = String(cfg.url || cfg.uri || "");
+    if (cfg.baseURL && !/^https?:/.test(target))
+      target = String(cfg.baseURL).replace(/\/$/, "") + "/" + target.replace(/^\//, "");
+    target = joinParams(target, cfg.params);
+    const headers = {};
+    if (cfg.headers)
+      Object.keys(cfg.headers).forEach((k2) => {
+        if (cfg.headers[k2] != null)
+          headers[k2] = String(cfg.headers[k2]);
+      });
+    let body = "";
+    const data = cfg.data;
+    if (data != null && method !== "GET" && method !== "HEAD") {
+      if (typeof data === "string")
+        body = data;
+      else {
+        body = JSON.stringify(data);
+        if (!headers["Content-Type"] && !headers["content-type"])
+          headers["Content-Type"] = "application/json";
+      }
+    }
+    const r2 = await app.HttpRequest(target, method, headers, body, false);
+    if (r2 == null ? void 0 : r2.err)
+      throw new Error(String(r2.err));
+    const status = Number(r2 == null ? void 0 : r2.status) || 0;
+    if (status >= 400) {
+      const e = new Error("HTTP " + status);
+      e.response = { status, data: r2 == null ? void 0 : r2.body, headers: (r2 == null ? void 0 : r2.headers) || {} };
+      throw e;
+    }
+    let out = (r2 == null ? void 0 : r2.body) ?? "";
+    const type = String(cfg.responseType || "");
+    if (type === "arraybuffer" || type === "blob") {
+      const b64 = (r2 == null ? void 0 : r2.bodyB64) || "";
+      const bin = atob(b64);
+      const buf = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++)
+        buf[i] = bin.charCodeAt(i);
+      out = buf.buffer;
+    } else if (type !== "text") {
+      const t2 = String(out || "").trim();
+      if (type === "json" || t2 && (t2[0] === "{" || t2[0] === "[")) {
+        try {
+          out = JSON.parse(t2);
+        } catch {
+        }
+      }
+    }
+    return { data: out, status, statusText: String(status), headers: (r2 == null ? void 0 : r2.headers) || {}, config: cfg };
+  };
+  const inst = {
+    request,
+    get: (url, cfg = {}) => request({ ...cfg, url, method: "GET" }),
+    post: (url, data, cfg = {}) => request({ ...cfg, url, method: "POST", data }),
+    put: (url, data, cfg = {}) => request({ ...cfg, url, method: "PUT", data }),
+    delete: (url, cfg = {}) => request({ ...cfg, url, method: "DELETE" }),
+    head: (url, cfg = {}) => request({ ...cfg, url, method: "HEAD" }),
+    defaults: { headers: { common: {} } },
+    create: (cfg = {}) => makeAxiosWith(cfg),
+    interceptors: { request: { use: () => 0 }, response: { use: () => 0 } },
+    CancelToken: { source: () => ({ token: {}, cancel: () => {
+    } }) },
+    isCancel: () => false
+  };
+  inst.default = inst;
+  return inst;
+}
+function makeAxiosWith(cfg) {
+  const base = { ...cfg };
+  const req = async (c) => {
+    const merged = { ...base, ...c, headers: { ...base.headers || {}, ...c.headers || {} } };
+    const ax = makeAxios();
+    return ax.request(merged);
+  };
+  const inst = {
+    request: req,
+    get: (url, c = {}) => req({ ...c, url, method: "GET" }),
+    post: (url, data, c = {}) => req({ ...c, url, method: "POST", data }),
+    defaults: { headers: { common: {} } },
+    interceptors: { request: { use: () => 0 }, response: { use: () => 0 } }
+  };
+  inst.default = inst;
+  return inst;
+}
+async function makeRequire(code) {
+  const names = /* @__PURE__ */ new Set();
+  const re2 = /require\(\s*['"]([^'"]+)['"]\s*\)/g;
+  let m2;
+  while (m2 = re2.exec(code))
+    names.add(String(m2[1]).replace(/^node:/, ""));
+  for (const name of names) {
+    if (name === "axios")
+      continue;
+    try {
+      await loadPkg(name);
+    } catch {
+    }
+  }
+  const cryptoStub = {
+    createHash: () => ({ update: () => ({ digest: () => "" }) }),
+    createHmac: () => ({ update: () => ({ digest: () => "" }) }),
+    randomBytes: (n2) => new Uint8Array(n2),
+    randomUUID: () => String(Math.random()).slice(2)
+  };
+  return (name) => {
+    const key = String(name || "").replace(/^node:/, "");
+    if (key === "axios")
+      return makeAxios();
+    if (key === "crypto")
+      return cryptoStub;
+    if (key === "url")
+      return { URL, URLSearchParams };
+    if (key === "buffer")
+      return { Buffer: { from: (x2) => x2, isBuffer: () => false } };
+    if (pkgCache.has(key))
+      return pkgCache.get(key);
+    throw new Error("MusicFree \u63D2\u4EF6\u4F9D\u8D56\u4E86\u684C\u9762\u7248\u6CA1\u80FD\u52A0\u8F7D\u7684\u5305\uFF1A" + name + "\uFF08\u76EE\u524D\u5185\u7F6E axios\uFF0CCDN \u53EF\u53D6 cheerio / crypto-js / he / qs / lodash / dayjs / big.js\uFF09");
+  };
+}
+async function loadMusicFree(pluginId) {
+  if (moduleCache.has(pluginId))
+    return moduleCache.get(pluginId);
+  const app = bridge$1();
+  if (!(app == null ? void 0 : app.PluginSource))
+    throw new Error("\u63D2\u4EF6\u80FD\u529B\u4E0D\u53EF\u7528");
+  let code = sourceCache.get(pluginId);
+  if (!code) {
+    const raw = await app.PluginSource(pluginId);
+    code = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : "";
+    if (!code || !String(code).trim())
+      throw new Error("\u8BFB\u4E0D\u5230\u63D2\u4EF6\u6E90\u7801\uFF1A" + pluginId);
+    sourceCache.set(pluginId, String(code));
+  }
+  const requireFn = await makeRequire(String(code));
+  const mod = { exports: {} };
+  const fn = new Function(
+    "module",
+    "exports",
+    "require",
+    "console",
+    "__filename",
+    String(code) + "\n//# sourceURL=hulu-mf-" + pluginId + ".js"
+  );
+  fn(mod, mod.exports, requireFn, console, pluginId + ".js");
+  const exp = mod.exports;
+  if (!exp || typeof exp !== "object" && typeof exp !== "function") {
+    throw new Error("\u63D2\u4EF6\u6CA1\u6709\u5BFC\u51FA\u4EFB\u4F55\u4E1C\u897F\uFF08\u8981 module.exports = { \u2026 }\uFF09");
+  }
+  moduleCache.set(pluginId, exp);
+  return exp;
+}
+function clearMusicFreeCache(pluginId) {
+  if (pluginId) {
+    moduleCache.delete(pluginId);
+    sourceCache.delete(pluginId);
+    return;
+  }
+  moduleCache.clear();
+  sourceCache.clear();
+}
+const str = (v2) => v2 == null ? "" : String(v2);
+async function mfSearch(pluginId, keyword, page = 1) {
+  const mod = await loadMusicFree(pluginId);
+  if (typeof mod.search !== "function")
+    throw new Error("\u8FD9\u4E2A MusicFree \u63D2\u4EF6\u6CA1\u6709 search \u65B9\u6CD5");
+  const res = await mod.search(keyword, page);
+  const list = Array.isArray(res == null ? void 0 : res.data) ? res.data : Array.isArray(res) ? res : [];
+  const out = [];
+  for (const it of list) {
+    if (!it || typeof it !== "object")
+      continue;
+    out.push({
+      ...it,
+      title: str(it.title || it.name || it.songname),
+      artist: str(it.artist || it.singer || it.artists),
+      album: str(it.album || it.albumName),
+      artwork: str(it.artwork || it.cover || it.pic || it.img),
+      duration: Number(it.duration || it.interval || 0) || 0,
+      id: str(it.id || it.songmid || it.songId || it.songid || "")
+    });
+  }
+  return out;
+}
+async function mfMediaSource(pluginId, item, quality = "standard") {
+  const mod = await loadMusicFree(pluginId);
+  if (typeof mod.getMediaSource !== "function")
+    throw new Error("\u8FD9\u4E2A MusicFree \u63D2\u4EF6\u6CA1\u6709 getMediaSource \u65B9\u6CD5");
+  let res = await mod.getMediaSource(item, quality);
+  if (Array.isArray(res)) {
+    const picked = res.find((x2) => str(x2 == null ? void 0 : x2.quality).toLowerCase() === String(quality).toLowerCase()) || res[0];
+    res = picked;
+  }
+  if (typeof res === "string")
+    return { url: res, referer: "" };
+  const url = str((res == null ? void 0 : res.url) || (res == null ? void 0 : res.src));
+  if (!url)
+    throw new Error("\u63D2\u4EF6\u6CA1\u6709\u7ED9\u51FA\u53EF\u7528\u7684\u64AD\u653E\u5730\u5740\uFF08\u53EF\u80FD\u9700\u8981\u767B\u5F55\u6216\u8BE5\u66F2\u65E0\u7248\u6743\uFF09");
+  const headers = (res == null ? void 0 : res.headers) || {};
+  const referer = str(headers.Referer || headers.referer || headers["referer"] || "");
+  return { url, referer };
+}
+function parseLrc(raw) {
+  const out = [];
+  for (const line of String(raw || "").split("\n")) {
+    const m2 = line.trim().match(/^\[(\d+):(\d+(?:\.\d+)?)\](.*)$/);
+    if (!m2)
+      continue;
+    const text = m2[3].trim();
+    if (!text)
+      continue;
+    out.push({ time: Number(m2[1]) * 60 * 1e3 + Math.round(Number(m2[2]) * 1e3), text });
+  }
+  return out;
+}
+async function mfLyric(pluginId, item) {
+  const mod = await loadMusicFree(pluginId);
+  if (typeof mod.getLyric !== "function")
+    return [];
+  const res = await mod.getLyric(item);
+  const raw = str((res == null ? void 0 : res.rawLrc) || (res == null ? void 0 : res.lrc) || (res == null ? void 0 : res.lyric) || (typeof res === "string" ? res : ""));
+  return parseLrc(raw);
+}
 const bridge$1 = () => {
   var _a, _b;
   return (_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App;
@@ -9095,8 +9404,32 @@ function decodePluginTrackId(id2) {
 }
 function clearPluginCache(pluginId) {
   clearMyGoCache(pluginId);
+  clearMusicFreeCache(pluginId);
+}
+let kindCache = { at: 0, map: {} };
+async function pluginKindOf(id2) {
+  const app = bridge$1();
+  if (!(app == null ? void 0 : app.Plugins))
+    return "mygo";
+  if (Date.now() - kindCache.at > 5e3) {
+    try {
+      const raw = await app.Plugins();
+      const list = Array.isArray(raw) ? raw[0] != null ? raw[0] : raw : raw;
+      const map = {};
+      for (const p2 of Array.isArray(list) ? list : []) {
+        if (p2 && p2.id)
+          map[String(p2.id)] = String(p2.kind || "mygo");
+      }
+      kindCache = { at: Date.now(), map };
+    } catch {
+    }
+  }
+  return kindCache.map[id2] || "mygo";
 }
 async function pluginSearch(pluginId, keyword, page = 1) {
+  if (await pluginKindOf(pluginId) === "musicfree") {
+    return await mfSearch(pluginId, keyword, page);
+  }
   const items = await mygoSearch(pluginId, keyword, page);
   return items.map((it) => {
     const { raw, ...rest } = it;
@@ -9104,9 +9437,15 @@ async function pluginSearch(pluginId, keyword, page = 1) {
   });
 }
 async function pluginMediaSource(pluginId, item, quality = "standard") {
+  if (await pluginKindOf(pluginId) === "musicfree") {
+    return await mfMediaSource(pluginId, item, quality);
+  }
   return await mygoStream(pluginId, item, quality);
 }
 async function pluginLyric(pluginId, item) {
+  if (await pluginKindOf(pluginId) === "musicfree") {
+    return await mfLyric(pluginId, item);
+  }
   return await mygoLyric(pluginId, item);
 }
 const bridge = () => {
@@ -9416,24 +9755,38 @@ function PluginsPage({
         children: "\u5B89\u88C5\u63D2\u4EF6"
       }), /* @__PURE__ */ jsxs("p", {
         className: "hint",
-        children: ["\u53EA\u652F\u6301 MyGo Music \u89C4\u8303\uFF1A\u4E00\u4E2A\u63D2\u4EF6\u76EE\u5F55\uFF0C\u91CC\u9762\u6709 ", /* @__PURE__ */ jsx("code", {
+        children: ["\u652F\u6301\u4E24\u79CD\u63D2\u4EF6\uFF1A", /* @__PURE__ */ jsx("b", {
+          children: "MyGo"
+        }), "\uFF08\u63D2\u4EF6\u76EE\u5F55\uFF0C\u542B ", /* @__PURE__ */ jsx("code", {
           children: "plugin.json"
-        }), " \u548C ", /* @__PURE__ */ jsx("code", {
+        }), " + ", /* @__PURE__ */ jsx("code", {
           children: "index.js"
-        }), "\uFF08ESM \u5BFC\u51FA search / stream / lyrics\uFF0C\u7528\u5168\u5C40 ", /* @__PURE__ */ jsx("code", {
-          children: "host"
-        }), " \u548C ", /* @__PURE__ */ jsx("code", {
-          children: "fetch"
-        }), "\uFF09\u3002 \u300C\u9009 zip\u300D\u76F4\u63A5\u6311\u6253\u5305\u597D\u7684\u63D2\u4EF6\u538B\u7F29\u5305\uFF0C\u300C\u9009\u6587\u4EF6\u5939\u300D\u76F4\u63A5\u6311\u63D2\u4EF6\u76EE\u5F55\uFF08\u4F8B\u5982 QQ \u63D2\u4EF6\u4ED3\u5E93\u91CC\u7684 ", /* @__PURE__ */ jsx("code", {
-          children: "dist"
-        }), "\uFF09\uFF1B \u4E5F\u53EF\u4EE5\u5728\u4E0A\u9762\u586B .zip \u7684\u4E0B\u8F7D\u5730\u5740\uFF1B", /* @__PURE__ */ jsx("b", {
-          children: "\u6216\u8005\u5E72\u8106\u628A .zip / \u63D2\u4EF6\u6587\u4EF6\u5939\u76F4\u63A5\u62D6\u8FDB\u7A97\u53E3"
-        }), "\uFF0C\u62D6\u8FDB\u6765\u5C31\u88C5\u597D\u4E86\u3002"]
+        }), "\uFF0CESM \u5BFC\u51FA search / stream / lyrics\uFF09 \u548C ", /* @__PURE__ */ jsx("b", {
+          children: "MusicFree"
+        }), "\uFF08\u5355\u6587\u4EF6 ", /* @__PURE__ */ jsx("code", {
+          children: ".js"
+        }), "\uFF0C", /* @__PURE__ */ jsxs("code", {
+          children: ["module.exports = ", "{", " platform, search, getMediaSource, getLyric ", "}"]
+        }), "\uFF09\u3002 MusicFree \u63D2\u4EF6\u91CC\u7684 ", /* @__PURE__ */ jsx("code", {
+          children: "require('axios')"
+        }), " \u4F1A\u8D70\u684C\u9762\u7248\u7684\u53CD\u4EE3\uFF08\u4E0D\u649E CORS\uFF09\uFF0C", /* @__PURE__ */ jsx("code", {
+          children: "cheerio"
+        }), " / ", /* @__PURE__ */ jsx("code", {
+          children: "crypto-js"
+        }), " / ", /* @__PURE__ */ jsx("code", {
+          children: "he"
+        }), " / ", /* @__PURE__ */ jsx("code", {
+          children: "qs"
+        }), " / ", /* @__PURE__ */ jsx("code", {
+          children: "lodash"
+        }), " \u8FD9\u7C7B\u7EAF JS \u4F9D\u8D56\u81EA\u52A8\u4ECE CDN \u53D6\u3002 \u300C\u9009 zip / .js\u300D\u6311\u5305\u88C5\u597D\u7684\u63D2\u4EF6\uFF0C\u300C\u9009\u6587\u4EF6\u5939\u300D\u6311 MyGo \u63D2\u4EF6\u76EE\u5F55\uFF1B\u4E5F\u53EF\u4EE5\u586B\u76F4\u94FE\u5B89\u88C5\uFF0C", /* @__PURE__ */ jsx("b", {
+          children: "\u6216\u8005\u628A .zip / .js / \u63D2\u4EF6\u6587\u4EF6\u5939\u76F4\u63A5\u62D6\u8FDB\u7A97\u53E3"
+        }), "\uFF0C\u62D6\u8FDB\u6765\u5C31\u88C5\u597D\u3002"]
       }), /* @__PURE__ */ jsxs("div", {
         className: "plug-install",
         children: [/* @__PURE__ */ jsx("input", {
           value: url,
-          placeholder: "https://example.com/plugin.zip",
+          placeholder: "\u63D2\u4EF6\u76F4\u94FE\uFF1AMyGo \u7684 .zip \u6216 MusicFree \u7684 .js",
           onChange: (e) => setUrl(e.target.value),
           onKeyDown: (e) => e.key === "Enter" && installURL()
         }), /* @__PURE__ */ jsx("button", {
@@ -9444,7 +9797,7 @@ function PluginsPage({
         }), /* @__PURE__ */ jsx("button", {
           className: "ghost-btn",
           onClick: () => pickLocal("zip"),
-          children: "\u9009 zip"
+          children: "\u9009 zip / .js"
         }), /* @__PURE__ */ jsx("button", {
           className: "ghost-btn",
           onClick: () => pickLocal("dir"),
@@ -9475,9 +9828,12 @@ function PluginsPage({
             className: "plug-main",
             children: [/* @__PURE__ */ jsxs("div", {
               className: "plug-name",
-              children: [p2.name, /* @__PURE__ */ jsxs("span", {
+              children: [p2.name, p2.version ? /* @__PURE__ */ jsxs("span", {
                 className: "plug-ver",
                 children: ["v", p2.version]
+              }) : null, /* @__PURE__ */ jsx("span", {
+                className: "plug-kind",
+                children: p2.kind === "musicfree" ? "MusicFree" : "MyGo"
               }), !p2.compatible && /* @__PURE__ */ jsx("span", {
                 className: "plug-off",
                 title: "\u8BFB\u4E0D\u51FA\u53EF\u6267\u884C\u5BFC\u51FA",
@@ -11657,8 +12013,8 @@ const base64EncodeOutputStream = function() {
   };
   return _this;
 };
-const base64DecodeInputStream = function(str) {
-  const _str = str;
+const base64DecodeInputStream = function(str2) {
+  const _str = str2;
   let _pos = 0;
   let _buffer = 0;
   let _buflen = 0;
@@ -12059,6 +12415,13 @@ function PluginHome({
   const load = react.exports.useCallback(async (pluginId2, p2) => {
     if (!pluginId2)
       return;
+    const plug = enabled.find((x2) => x2.id === pluginId2);
+    if ((plug == null ? void 0 : plug.kind) === "musicfree") {
+      setView(null);
+      setErr("");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setErr("");
     setDetail(null);
@@ -12200,6 +12563,16 @@ function PluginHome({
         children: /* @__PURE__ */ jsx("p", {
           children: "\u6B63\u5728\u8BFB\u63D2\u4EF6\u9996\u9875\u2026"
         })
+      }), !view && !loading && cur && cur.kind === "musicfree" && /* @__PURE__ */ jsxs("div", {
+        className: "home-empty",
+        children: [/* @__PURE__ */ jsx("p", {
+          children: "\u8FD9\u4E2A MusicFree \u6E90\u6CA1\u6709\u9996\u9875\u63A8\u8350"
+        }), /* @__PURE__ */ jsx("p", {
+          style: {
+            opacity: 0.7
+          },
+          children: "\u53BB\u5DE6\u8FB9\u300C\u641C\u7D22\u300D\u91CC\u641C\u6B4C\u540D\u6216\u6B4C\u624B\uFF0C\u70B9\u7ED3\u679C\u5C31\u80FD\u64AD"
+        })]
       }), view && !view.sections.length && !loading && /* @__PURE__ */ jsx("div", {
         className: "home-empty",
         children: /* @__PURE__ */ jsx("p", {

@@ -292,20 +292,22 @@ export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) 
       <section className="set-card">
         <h3>安装插件</h3>
         <p className="hint">
-          只支持 MyGo Music 规范：一个插件目录，里面有 <code>plugin.json</code> 和 <code>index.js</code>
-          （ESM 导出 search / stream / lyrics，用全局 <code>host</code> 和 <code>fetch</code>）。
-          「选 zip」直接挑打包好的插件压缩包，「选文件夹」直接挑插件目录（例如 QQ 插件仓库里的 <code>dist</code>）；
-          也可以在上面填 .zip 的下载地址；<b>或者干脆把 .zip / 插件文件夹直接拖进窗口</b>，拖进来就装好了。
+          支持两种插件：<b>MyGo</b>（插件目录，含 <code>plugin.json</code> + <code>index.js</code>，ESM 导出 search / stream / lyrics）
+          和 <b>MusicFree</b>（单文件 <code>.js</code>，<code>module.exports = {'{'} platform, search, getMediaSource, getLyric {'}'}</code>）。
+          MusicFree 插件里的 <code>require('axios')</code> 会走桌面版的反代（不撞 CORS），
+          <code>cheerio</code> / <code>crypto-js</code> / <code>he</code> / <code>qs</code> / <code>lodash</code> 这类纯 JS 依赖自动从 CDN 取。
+          「选 zip / .js」挑包装好的插件，「选文件夹」挑 MyGo 插件目录；也可以填直链安装，
+          <b>或者把 .zip / .js / 插件文件夹直接拖进窗口</b>，拖进来就装好。
         </p>
         <div className="plug-install">
           <input
             value={url}
-            placeholder="https://example.com/plugin.zip"
+            placeholder="插件直链：MyGo 的 .zip 或 MusicFree 的 .js"
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && installURL()}
           />
           <button className="primary-btn" onClick={installURL} disabled={busy}>{busy ? '…' : '安装'}</button>
-          <button className="ghost-btn" onClick={() => pickLocal('zip')}>选 zip</button>
+          <button className="ghost-btn" onClick={() => pickLocal('zip')}>选 zip / .js</button>
           <button className="ghost-btn" onClick={() => pickLocal('dir')}>选文件夹</button>
         </div>
         {msg && <div className="ok-msg">{msg}</div>}
@@ -321,7 +323,8 @@ export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) 
               <div className="plug-main">
                 <div className="plug-name">
                   {p.name}
-                  <span className="plug-ver">v{p.version}</span>
+                  {p.version ? <span className="plug-ver">v{p.version}</span> : null}
+                  <span className="plug-kind">{p.kind === 'musicfree' ? 'MusicFree' : 'MyGo'}</span>
                   {!p.compatible && <span className="plug-off" title="读不出可执行导出">不兼容</span>}
                   {!p.enabled && <span className="plug-off">已关闭</span>}
                 </div>

@@ -1,13 +1,14 @@
 /* 插件桥接层。
 
-   现在只支持 MyGo Music 规范的插件：一个目录（plugin.json + index.js 的 ESM 导出），
-   运行时见 mygoRuntime.ts。旧 MusicFree 的单文件接口（module.exports + axios/cheerio）
-   已经移除，非 MyGo 插件不会被加载。
+   同时支持两套插件规范，页面对外只看到同一组函数，按插件 kind 分派：
+     - mygo       目录型插件（plugin.json + index.js 的 ESM 导出），运行时在 mygoRuntime.ts
+     - musicfree  单文件插件（module.exports + require('axios')），运行时在 musicfreeRuntime.ts
 
    对外函数签名保持和之前一致（pluginSearch / pluginMediaSource / pluginLyric），
    页面代码不用跟着改。 */
 
 import {clearMyGoCache, mygoLyric, mygoSearch, mygoStream} from './mygoRuntime'
+import {clearMusicFreeCache, mfLyric, mfMediaSource, mfSearch} from './musicfreeRuntime'
 
 type AnyObj = Record<string, any>
 
@@ -55,6 +56,29 @@ export function decodePluginTrackId(id: string): {pluginId: string; item: AnyObj
 
 export function clearPluginCache(pluginId?: string) {
   clearMyGoCache(pluginId)
+  clearMusicFreeCache(pluginId)
+}
+
+/* 插件 kind 的缓存：问一次 Go 就够了，5 秒内复用，避免搜索时每个插件都打一轮 IPC。 */
+let kindCache: {at: number; map: Record<string, string>} = {at: 0, map: {}}
+
+async function pluginKindOf(id: string): Promise<string> {
+  const app: any = bridge()
+  if (!app?.Plugins) return 'mygo'
+  if (Date.now() - kindCache.at > 5000) {
+    try {
+      const raw: any = await app.Plugins()
+      const list: any[] = Array.isArray(raw) ? raw[0] != null ? raw[0] : raw : raw
+      const map: Record<string, string> = {}
+      for (const p of Array.isArray(list) ? list : []) {
+        if (p && p.id) map[String(p.id)] = String(p.kind || 'mygo')
+      }
+      kindCache = {at: Date.now(), map}
+    } catch {
+      /* 问不到就按 MyGo 处理 */
+    }
+  }
+  return kindCache.map[id] || 'mygo'
 }
 
 /* ---------- 调用能力 ---------- */
@@ -64,6 +88,10 @@ export async function pluginSearch(
   keyword: string,
   page = 1
 ): Promise<PluginSearchItem[]> {
+  if ((await pluginKindOf(pluginId)) === 'musicfree') {
+    // MusicFree 的 item 本身就是取流/取词的入参，字段要原样带回去
+    return (await mfSearch(pluginId, keyword, page)) as PluginSearchItem[]
+  }
   const items = await mygoSearch(pluginId, keyword, page)
   return items.map((it) => {
     const {raw, ...rest} = it
@@ -77,6 +105,9 @@ export async function pluginMediaSource(
   item: AnyObj,
   quality = 'standard'
 ): Promise<{url: string; referer: string}> {
+  if ((await pluginKindOf(pluginId)) === 'musicfree') {
+    return await mfMediaSource(pluginId, item, quality)
+  }
   return await mygoStream(pluginId, item, quality)
 }
 
@@ -84,5 +115,8 @@ export async function pluginLyric(
   pluginId: string,
   item: AnyObj
 ): Promise<{time: number; text: string}[]> {
+  if ((await pluginKindOf(pluginId)) === 'musicfree') {
+    return await mfLyric(pluginId, item)
+  }
   return await mygoLyric(pluginId, item)
 }

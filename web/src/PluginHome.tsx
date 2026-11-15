@@ -69,6 +69,14 @@ export default function PluginHome({
 
   const load = useCallback(async (pluginId: string, p: string) => {
     if (!pluginId) return
+    // MusicFree 插件没有 home / browse 概念：直接提示去搜索，而不是抛一堆看不懂的错误
+    const plug = enabled.find((x: any) => x.id === pluginId) as any
+    if (plug?.kind === 'musicfree') {
+      setView(null)
+      setErr('')
+      setLoading(false)
+      return
+    }
     setLoading(true)
     setErr('')
     setDetail(null)
@@ -171,6 +179,12 @@ export default function PluginHome({
             </div>
           </div>
           {loading && !view && <div className="home-empty"><p>正在读插件首页…</p></div>}
+          {!view && !loading && cur && (cur as any).kind === 'musicfree' && (
+            <div className="home-empty">
+              <p>这个 MusicFree 源没有首页推荐</p>
+              <p style={{opacity: 0.7}}>去左边「搜索」里搜歌名或歌手，点结果就能播</p>
+            </div>
+          )}
           {view && !view.sections.length && !loading && <div className="home-empty"><p>插件首页没有内容</p></div>}
           {(view?.sections || []).map((sec: HomeSection, si: number) => (
             <section className="home-sec" key={si}>
