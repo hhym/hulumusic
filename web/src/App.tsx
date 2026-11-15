@@ -161,7 +161,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.8'
+const BUILD_TAG = '3.0.12'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -174,7 +174,7 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       const saved = localStorage.getItem('hulu-theme')
-      if (saved === 'dark' || saved === 'light' || saved === 'amber' || saved === 'teal') return saved
+      if (saved === 'dark' || saved === 'light' || saved === 'amber' || saved === 'teal' || saved === 'green') return saved
     } catch { /* 忽略 */ }
     return 'light'
   })
@@ -376,8 +376,8 @@ export default function App() {
     setLyricMode(next)
     localStorage.setItem('qqjt-lrcmode', next)
   }
-  type Skin = 'winamp' | 'tt' | 'light' | 'glass' | 'hifi' | 'steel'
-  const SKIN_ORDER: Skin[] = ['winamp', 'tt', 'light', 'glass', 'hifi', 'steel']
+  type Skin = 'winamp' | 'tt' | 'light' | 'glass' | 'hifi' | 'steel' | 'green'
+  const SKIN_ORDER: Skin[] = ['winamp', 'tt', 'light', 'glass', 'hifi', 'steel', 'green']
   const [skinTheme, setSkinTheme] = useState<Skin>(() => {
     const v = localStorage.getItem('qqjt-skin')
     return SKIN_ORDER.includes(v as Skin) ? (v as Skin) : 'glass'
@@ -385,8 +385,8 @@ export default function App() {
   // 皮肤只给「皮肤界面」定外观，主题给「桌面 + 迷你」定配色。两套本来是平行维度，
   // 各切各的就会出现「桌面橘黄 + 皮肤深紫」这种不搭的组合，所以做成联动：
   // 切皮肤把主题拉到最搭的那档，切主题把皮肤换成对应款式，三个界面始终是一套。
-  const SKIN_THEME: Record<Skin, Theme> = {winamp: 'dark', tt: 'amber', light: 'light', glass: 'light', hifi: 'dark', steel: 'light'}
-  const THEME_SKIN: Record<Theme, Skin> = {dark: 'winamp', amber: 'tt', light: 'light', teal: 'hifi'}
+  const SKIN_THEME: Record<Skin, Theme> = {winamp: 'dark', tt: 'amber', light: 'light', glass: 'light', hifi: 'dark', steel: 'light', green: 'green'}
+  const THEME_SKIN: Record<Theme, Skin> = {dark: 'winamp', amber: 'tt', light: 'light', teal: 'hifi', green: 'green'}
   const applySkin = (s: Skin) => {
     setSkinTheme(s)
     try { localStorage.setItem('qqjt-skin', s) } catch { /* 忽略 */ }
@@ -407,8 +407,9 @@ export default function App() {
     glass: '天蓝玻璃',
     hifi: 'HiFi 银灰深绿',
     steel: 'Steel 银白绿',
+    green: '护眼绿',
   }
-  const SKIN_MARK: Record<Skin, string> = {winamp: '◆', tt: '●', light: '○', glass: '◉', hifi: '◈', steel: '▣'}
+  const SKIN_MARK: Record<Skin, string> = {winamp: '◆', tt: '●', light: '○', glass: '◉', hifi: '◈', steel: '▣', green: '✿'}
   const skinName = SKIN_NAME[skinTheme]
   const [repeatOne, setRepeatOne] = useState(false)
   // 播放队列（上一首 / 下一首）
@@ -527,7 +528,7 @@ export default function App() {
         // 如果这里无条件把 st.theme 应用回去，用户换过主题后每次启动就会被旧值覆盖，所以只在没存过时兜底。
         let savedTheme = ''
         try { savedTheme = localStorage.getItem('hulu-theme') || '' } catch { /* 忽略 */ }
-        if (!savedTheme && (st.theme === 'dark' || st.theme === 'light' || st.theme === 'amber' || st.theme === 'teal')) setTheme(st.theme as Theme)
+        if (!savedTheme && (st.theme === 'dark' || st.theme === 'light' || st.theme === 'amber' || st.theme === 'teal' || st.theme === 'green')) setTheme(st.theme as Theme)
       })
       .catch(() => {})
   }, [])

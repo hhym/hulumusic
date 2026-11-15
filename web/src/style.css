@@ -44,6 +44,17 @@
   --shadow:none;
 }
 
+/* 护眼绿（豆沙绿浅底 + 深绿主色，长时间看最不刺眼） */
+:root[data-theme="green"]{
+  --bg:#cde5cb;--panel:#e8f5e3;--line:#b4d3b1;--txt:#1c3324;--dim:#5b7a62;
+  --acc:#1f9b5c;--acc2:#2f8fae;
+  --hover:#dcf0d7;--sel:#c5e4c1;--input:#f0f9ee;--cover:#c1dcbe;
+  --now-bar:#d6efdc;--on-acc-text:#ffffff;
+  --heart:#a6c3a8;--heart-on:#d94f46;
+  --ico-from:#d7ebd4;--tag-line:#a4d3aa;
+  --shadow:0 1px 2px rgba(30,60,40,.05);
+}
+
 html,body,#root{height:100%}
 body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden;transition:background .18s,color .18s}
 .app{display:grid;grid-template-columns:1fr;grid-template-rows:36px 58px 1fr 96px 26px;height:100%;min-height:0}
@@ -708,11 +719,11 @@ html[data-theme='dark'] .plug-kind {
   --vis-line:#a8f5cd;--vis-dial:#2f7f5a;--vis-needle:#7fffc4;--vis-dim:#3a6b57;--vis-hot:#ff6b3d}
 .skin[data-skin="winamp"] .sk-vis{--vis-lo:#5b3fd0;--vis-mid:#a98cff;--vis-hi:#efe6ff;
   --vis-line:#d7c9ff;--vis-dial:#8f74e8;--vis-needle:#ffb26b;--vis-dim:#6a5aa8;--vis-hot:#ff5252}
-.skin[data-skin="light"] .sk-vis-tabs button,.skin[data-skin="glass"] .sk-vis-tabs button{
+.skin[data-skin="light"] .sk-vis-tabs button,.skin[data-skin="glass"] .sk-vis-tabs button,.skin[data-skin="green"] .sk-vis-tabs button{
   color:#0f3f63;background:rgba(255,255,255,.82);border-color:rgba(120,169,198,.6)}
-.skin[data-skin="light"] .sk-vis-tabs button.on,.skin[data-skin="glass"] .sk-vis-tabs button.on{
+.skin[data-skin="light"] .sk-vis-tabs button.on,.skin[data-skin="glass"] .sk-vis-tabs button.on,.skin[data-skin="green"] .sk-vis-tabs button.on{
   background:rgba(76,199,232,.9);color:#08324d}
-.skin[data-skin="light"] .sk-vis-idle,.skin[data-skin="glass"] .sk-vis-idle{
+.skin[data-skin="light"] .sk-vis-idle,.skin[data-skin="glass"] .sk-vis-idle,.skin[data-skin="green"] .sk-vis-idle{
   color:#5b7f99;text-shadow:0 1px 1px rgba(255,255,255,.7)}
 
 .sk-side{width:190px;flex:0 0 auto;display:flex;flex-direction:column;gap:5px;justify-content:flex-start}
@@ -1940,24 +1951,82 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 /* ══════════ 再窄一档（≈460px，窗口缩到一张竖屏截图的宽度）══════════
    目标：工具条的 8 个选项卡 + 搜索框挤在一行不换行，均衡器 10 段推子整排可见不出现横向滚动。 */
 @media (max-width:560px){
-  .skin-page{padding:4px;gap:4px}
-  .sk-body{gap:5px}
-  .sk-side{width:138px}
-  .sk-tools{padding:4px 5px;gap:2px;flex-wrap:nowrap}
-  .sk-tools button{height:21px;padding:0 5px;font-size:9.5px;letter-spacing:0;flex:0 1 auto;min-width:0}
-  .sk-tools .sk-search{width:118px;margin-left:auto;order:0;gap:2px}
-  .sk-tools .sk-search input{height:21px;padding:0 4px;font-size:10px}
-  .sk-tools .sk-search button{padding:0 5px}
-  .sk-eq-body{gap:6px;padding:5px 6px 7px}
-  .sk-eq-row{width:68px;gap:4px}
+  /* 最小尺寸（≈460×1043）下的比例：控件比「勉强塞下」稍大一档，更贴近参考截图 */
+  .skin-page{padding:5px;gap:5px}
+  .sk-body{gap:6px}
+  .sk-side{width:146px}
+  .sk-tools{padding:5px 5px;gap:3px;flex-wrap:nowrap}
+  .sk-tools button{height:23px;padding:0 6px;font-size:10.5px;letter-spacing:0;flex:0 1 auto;min-width:0}
+  .sk-tools .sk-search{width:104px;margin-left:auto;order:0;gap:2px}
+  .sk-tools .sk-search input{height:23px;padding:0 4px;font-size:10px}
+  .sk-tools .sk-search button{padding:0 5px;height:23px}
+  .sk-eq-body{gap:6px;padding:6px 6px 8px}
+  .sk-eq-row{width:72px;gap:5px}
   .sk-eq-row .lab{font-size:9px;margin-bottom:-3px;white-space:nowrap}
   .sk-eq-row input{height:6px}
   .sk-eq-faders{padding:12px 4px 4px 24px;gap:0;overflow:visible}
   .sk-eq-faders .scale{left:2px;font-size:8px}
-  .sk-fader{width:16px;min-height:96px}
-  .sk-fader .hz{font-size:7px;letter-spacing:0}
+  .sk-fader{width:17px;min-height:104px}
+  .sk-fader .hz{font-size:7.5px;letter-spacing:0}
   .sk-controls{gap:4px}
   .sk-vol{width:80px;gap:4px}
   .sk-mini-btns button{height:16px;padding:0 6px;font-size:9px}
   .sk-wb{width:19px;height:19px;font-size:10px}
 }
+
+/* ══════════════════════════════════════════════════════
+   第七套：护眼绿（data-skin="green"）——浅豆沙绿底、深绿控件
+   ══════════════════════════════════════════════════════ */
+.skin[data-skin="green"]{background:#b7d5b4}
+.skin[data-skin="green"] .skin-page{background:linear-gradient(180deg,#d9ecd5,#aecbab)}
+.skin[data-skin="green"] .sk-panel{
+  background:linear-gradient(180deg,#f0f9ec 0%,#dce8d8 42%,#c4dbc0 100%);
+  border-color:#8aa888;color:#1c3324;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(60,90,60,.3),0 3px 9px rgba(40,70,45,.26)}
+.skin[data-skin="green"] .sk-title{
+  background:linear-gradient(180deg,#315f3d 0%,#1e4128 55%,#12291a 100%);
+  border-bottom-color:#0d1f12;color:#c9f6cf;text-shadow:0 0 6px rgba(110,230,140,.45);letter-spacing:.06em}
+.skin[data-skin="green"] .sk-title .sk-time{color:#b8ffc0;font-weight:600;text-shadow:0 0 7px rgba(120,240,150,.5)}
+.skin[data-skin="green"] .sk-wb{background:linear-gradient(180deg,#f6fcf3,#dcebd8 58%,#c1d7bd);
+  border-color:#8aa888;color:#17321f;text-shadow:none}
+.skin[data-skin="green"] .sk-spec{background:linear-gradient(180deg,#0c2114,#06160c);
+  border-color:#22402b;box-shadow:inset 0 0 12px rgba(0,0,0,.72)}
+.skin[data-skin="green"] .sk-spec i{background:linear-gradient(180deg,#e8ffe9 0%,#5fe483 38%,#1f9b4f 100%);
+  box-shadow:0 0 6px rgba(90,230,130,.5)}
+.skin[data-skin="green"] .sk-line{color:#2f7a4b}
+.skin[data-skin="green"] .sk-line .k{color:#5f9170}
+.skin[data-skin="green"] .sk-line .v{color:#17402a}
+.skin[data-skin="green"] .sk-status{color:#2f7a4b}
+.skin[data-skin="green"] .sk-led{background:#2fd66a;box-shadow:0 0 8px #2fd66a}
+.skin[data-skin="green"] .sk-led.off{background:#3c5d47;box-shadow:none}
+.skin[data-skin="green"] .sk-mini-btns button{background:linear-gradient(180deg,#f2f9ee,#cfe2ca 55%,#a8c3a4);
+  border-color:#7e9a7c;color:#17321f;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)}
+.skin[data-skin="green"] .sk-mini-btns button.on{background:linear-gradient(180deg,#b9f7c9,#4bcb74 55%,#13753c);color:#04170c}
+.skin[data-skin="green"] .sk-seek .tt{color:#2f7a4b}
+.skin[data-skin="green"] .sk-seek input{background:linear-gradient(180deg,#1a3a24,#0d2416);border-color:#0a1c10}
+.skin[data-skin="green"] .sk-seek input::-webkit-slider-thumb{background:linear-gradient(180deg,#f4fbf1,#c9dcc5 55%,#94ad91);border-color:#6b8669}
+.skin[data-skin="green"] .sk-ctl{background:radial-gradient(circle at 50% 22%,#f8fdf5,#c9dcc5 55%,#8ea78b);
+  border-color:#6b8669;color:#12301c;box-shadow:inset 0 2px 0 rgba(255,255,255,.9),0 2px 4px rgba(20,45,25,.45)}
+.skin[data-skin="green"] .sk-ctl.play{background:radial-gradient(circle at 50% 22%,#dcffe4,#5fdc86 55%,#116b36)}
+.skin[data-skin="green"] .sk-pl-btn{background:linear-gradient(180deg,#f2f9ee,#cfe2ca 55%,#a8c3a4);
+  border-color:#7e9a7c;color:#17321f;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)}
+.skin[data-skin="green"] .sk-vol input{background:#123021;border-color:#0a1c10}
+.skin[data-skin="green"] .sk-vol input::-webkit-slider-thumb{background:linear-gradient(180deg,#f4fbf1,#c9dcc5 55%,#94ad91);border-color:#6b8669}
+.skin[data-skin="green"] .sk-eq-on button{background:linear-gradient(180deg,#f2f9ee,#cfe2ca 55%,#a8c3a4);
+  border-color:#7e9a7c;color:#17321f;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)}
+.skin[data-skin="green"] .sk-eq-on button.on{background:linear-gradient(180deg,#b9f7c9,#42c96d 55%,#116b36);color:#04170c}
+.skin[data-skin="green"] .sk-eq-row .lab{color:#5f9170}
+.skin[data-skin="green"] .sk-eq-row input{background:#123021;border-color:#0a1c10}
+.skin[data-skin="green"] .sk-eq-row input::-webkit-slider-thumb{background:linear-gradient(180deg,#f4fbf1,#c9dcc5 55%,#94ad91);border-color:#6b8669}
+.skin[data-skin="green"] .sk-eq-faders{background:linear-gradient(180deg,#0b2113,#0a2216);border-color:#22402b}
+.skin[data-skin="green"] .sk-eq-faders .scale{color:#5f9170}
+.skin[data-skin="green"] .sk-fader .track{background:linear-gradient(180deg,#0b2417,#04120b);border-radius:2px;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.75)}
+.skin[data-skin="green"] .sk-fader .knob{background:linear-gradient(180deg,#f6fcf2,#c9dcc5 55%,#8ea78b);
+  border-color:#6b8669;box-shadow:0 1px 2px rgba(0,0,0,.55)}
+.skin[data-skin="green"] .sk-tools{background:linear-gradient(180deg,#cfe4ca,#b2cdaf 60%,#9dba99);border-bottom-color:#8aa888}
+.skin[data-skin="green"] .sk-tools button{background:linear-gradient(180deg,#f6fcf2,#d7e8d2 55%,#b1c9ad);
+  border-color:#7e9a7c;color:#17321f;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)}
+.skin[data-skin="green"] .sk-tools button.on{background:linear-gradient(180deg,#c4fad3,#4dd47a 55%,#13753c);color:#04170c}
+.skin[data-skin="green"] .sk-vis{--vis-lo:#1f8f4f;--vis-mid:#42d98a;--vis-hi:#e8ffe9;
+  --vis-line:#2f7a4b;--vis-dial:#2f7a4b;--vis-needle:#c0392b;--vis-dim:#7fa98b;--vis-hot:#d93b2d}
