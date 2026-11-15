@@ -4,5 +4,5 @@ export type Theme = 'dark' | 'light' | 'amber' | 'teal'
 
 export const THEME_LABEL: Record<Theme, string> = {dark: '深色', light: '浅色', amber: '橘黄', teal: '深青'}
 export const THEME_ICON: Record<Theme, string> = {dark: '☾', light: '☀', amber: '◐', teal: '❋'}
-// 侧栏那个小按钮点一下换下一个：浅 → 深 → 橘黄 → 浅
-export const NEXT_THEME: Record<Theme, Theme> = {light: 'dark', dark: 'amber', amber: 'teal', teal: 'light'}
+// 侧栏那个小按钮点一下换下一个：浅 → 橘黄 → 深青 → 深 色 → 浅
+export const NEXT_THEME: Record<Theme, Theme> = {light: 'amber', amber: 'teal', teal: 'dark', dark: 'light'}

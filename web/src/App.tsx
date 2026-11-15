@@ -161,7 +161,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.7'
+const BUILD_TAG = '3.0.8'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -169,7 +169,7 @@ const srcName = (s: string) =>
 type Tab = 'home' | 'search' | 'library' | 'radio' | 'podcast' | 'local' | 'queue' | 'lyric' | 'plugins' | 'settings'
 
 export default function App() {
-  // 主题：记住用户选择；没存过就用「青」（新版桌面就是这套配色）。
+  // 主题：记住用户选择；没存过就用浅色（默认），四档循环是 浅 → 橘黄 → 深青 → 深色。
   // localStorage 在某些 WebView2 环境里会抛异常，全部包起来，绝不能因此白屏。
   const [theme, setTheme] = useState<Theme>(() => {
     try {
