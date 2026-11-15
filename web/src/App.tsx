@@ -161,7 +161,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.15'
+const BUILD_TAG = '3.0.16'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -1874,6 +1874,9 @@ export default function App() {
                 <path d="M8.4 12.2 12.2 8.4" />
                 <path d="M9.6 3.2 20.8 14.4 17.6 17.6 6.4 6.4z" />
               </svg>
+            </button>
+            <button className="sk-wb sk-set" title="设置（打开设置页）" onClick={() => setTab('settings')}>
+              <span className="sk-gear" aria-hidden="true">⚙</span>
             </button>
             <button className="sk-wb sk-skin-sw" title={'切换皮肤（当前：' + skinName + '）'}
                     onClick={switchSkin}>{SKIN_MARK[skinTheme]}</button>

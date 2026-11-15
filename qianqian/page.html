@@ -13325,7 +13325,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.15";
+const BUILD_TAG = "3.0.16";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -15970,6 +15970,15 @@ function App() {
                 })]
               })
             }), /* @__PURE__ */ jsx("button", {
+              className: "sk-wb sk-set",
+              title: "\u8BBE\u7F6E\uFF08\u6253\u5F00\u8BBE\u7F6E\u9875\uFF09",
+              onClick: () => setTab("settings"),
+              children: /* @__PURE__ */ jsx("span", {
+                className: "sk-gear",
+                "aria-hidden": "true",
+                children: "\u2699"
+              })
+            }), /* @__PURE__ */ jsx("button", {
               className: "sk-wb sk-skin-sw",
               title: "\u5207\u6362\u76AE\u80A4\uFF08\u5F53\u524D\uFF1A" + skinName + "\uFF09",
               onClick: switchSkin,
@@ -18610,6 +18619,7 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   .sk-title .sk-time{font-size:10px}
   .sk-wb{width:17px;height:17px;font-size:9px}
   .sk-win-mini svg{width:10px;height:10px}
+  .sk-gear{font-size:11.5px;line-height:1;display:block}
   /* 播放控制 */
   .sk-seek .tt{font-size:9px}
   .sk-controls{gap:3px;padding:5px 4px 2px}
@@ -18667,6 +18677,36 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 
 /* 版本号小字 */
 .sk-ver{font-size:9.5px;opacity:.5;letter-spacing:0;margin-right:4px}
+
+/* 皮肤标题栏齿轮按钮（设置） */
+.sk-set svg{width:10px;height:10px}
+
+/* ── tt 亮橙皮肤补可读性 ──
+   橙色面板上的浅色字只看得到轮廓（设置页、播放列表、右栏尤其严重），
+   这里统一把皮肤界面里的正文、图标压成深棕。 */
+.skin[data-skin="tt"] .sk-line{color:#3a1a00}
+.skin[data-skin="tt"] .sk-line .k{color:#78400e}
+.skin[data-skin="tt"] .sk-line .v{color:#2b1200}
+.skin[data-skin="tt"] .sk-status{color:#5a2a02}
+.skin[data-skin="tt"] .sk-wb{color:#5a2800}
+.skin[data-skin="tt"] .sk-set svg{stroke:#5a2800}
+.skin[data-skin="tt"] .sk-ctl{color:#4a2100}
+.skin[data-skin="tt"] .sk-ctl.big.play{color:#5a2200}
+.skin[data-skin="tt"] .sk-ver{color:#7a3a06}
+.skin[data-skin="tt"] .sk-pl .main{color:#331700}
+.skin[data-skin="tt"] .sk-pl .main .muted{color:#7a3a06}
+.skin[data-skin="tt"] .set-page{color:#331700}
+.skin[data-skin="tt"] .set-page .muted,.skin[data-skin="tt"] .set-page .hint{color:#7a3a06}
+.skin[data-skin="tt"] .plug-page{color:#331700}
+.skin[data-skin="tt"] .home-page{color:#331700}
+.skin[data-skin="tt"] .sk-pl .main .page-h1{color:#2b1200}
+.skin[data-skin="tt"] .sk-pl .main p{color:#6b3308}
+.skin[data-skin="tt"] .sk-pl .main .empty,.skin[data-skin="tt"] .sk-pl .main .err{color:#6b3308}
+.skin[data-skin="tt"] .sk-eq-row .lab{color:#4a2100}
+.skin[data-skin="tt"] .sk-lyr-body .none{color:#7a3a06}
+.skin[data-skin="tt"] .set-page p{color:#6b3308}
+.skin[data-skin="tt"] .set-page h3,.skin[data-skin="tt"] .set-page h2{color:#2b1200}
+.skin[data-skin="tt"] .sk-gear{color:#3a1a00}
 
 </style>
 </head>
