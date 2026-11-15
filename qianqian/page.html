@@ -39,7 +39,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>葫芦音乐 · Wails 桌面版</title>
+    <title>千千静听 · Wails 桌面版</title>
   <script type="module">
 (function polyfill() {
   const relList = document.createElement("link").relList;
@@ -18009,17 +18009,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.3] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.4] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.3] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.4] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.3] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.4] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.3] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.4] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

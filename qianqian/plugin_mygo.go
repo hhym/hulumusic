@@ -39,6 +39,22 @@ type PluginManifest struct {
 
 func pluginDir(id string) string { return filepath.Join(pluginsDir(), id) }
 
+// safePluginID 校验来自前端的插件 id：只允许一层普通目录名，挡住 ../ 与绝对路径。
+func safePluginID(id string) bool {
+	id = strings.TrimSpace(id)
+	if id == "" || id == "." || id == ".." {
+		return false
+	}
+	if strings.ContainsAny(id, "/\\") || strings.Contains(id, "..") {
+		return false
+	}
+	if filepath.IsAbs(id) || filepath.VolumeName(id) != "" {
+		return false
+	}
+	return true
+}
+
+
 // mygoManifest 读取目录型插件的清单；不是目录型插件就返回 nil。
 func mygoManifest(id string) *PluginManifest {
 	b, err := os.ReadFile(filepath.Join(pluginDir(id), "plugin.json"))

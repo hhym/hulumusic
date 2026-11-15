@@ -168,6 +168,9 @@ func (a *App) InstallPluginURL(rawURL string) PickResult {
 }
 
 func (a *App) SetPluginEnabled(id string, on bool) ([]Plugin, string) {
+	if !safePluginID(id) {
+		return a.scanPlugins(), "插件 id 不合法"
+	}
 	state := loadPluginState()
 	state[id] = on
 	savePluginState(state)
@@ -175,6 +178,9 @@ func (a *App) SetPluginEnabled(id string, on bool) ([]Plugin, string) {
 }
 
 func (a *App) RemovePlugin(id string) ([]Plugin, string) {
+	if !safePluginID(id) {
+		return a.scanPlugins(), "插件 id 不合法"
+	}
 	if err := os.RemoveAll(pluginDir(id)); err != nil {
 		return a.scanPlugins(), err.Error()
 	}
