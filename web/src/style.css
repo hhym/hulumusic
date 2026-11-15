@@ -658,7 +658,7 @@ html[data-theme='dark'] .plug-kind {
 .row .rm:hover{background:var(--heart-on);color:#fff}
 
 /* ══════════════════════════════════════════════════════
-   葫芦音乐经典皮肤（Winamp2 风格四窗堆叠）
+   千千静听经典皮肤（Winamp2 风格四窗堆叠）
    ══════════════════════════════════════════════════════ */
 .skin{display:block;height:100%;background:#0e1020}
 .skin-page{height:100%;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;
@@ -962,7 +962,7 @@ html[data-theme='dark'] .plug-kind {
 .sk-eq-on button.off{opacity:.5}
 
 /* ══════════════════════════════════════════════════════
-   第三套：葫芦音乐浅蓝皮肤（data-skin="light"）
+   第三套：千千静听浅蓝皮肤（data-skin="light"）
    ══════════════════════════════════════════════════════ */
 .skin[data-skin="light"]{background:#dbe9f5}
 .skin[data-skin="light"] .skin-page{background:linear-gradient(180deg,#eaf4fd,#d7e8f6 60%,#cfdfef)}
@@ -2036,3 +2036,49 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin[data-skin="green"] .sk-tools button.on{background:linear-gradient(180deg,#c4fad3,#4dd47a 55%,#13753c);color:#04170c}
 .skin[data-skin="green"] .sk-vis{--vis-lo:#1f8f4f;--vis-mid:#42d98a;--vis-hi:#e8ffe9;
   --vis-line:#2f7a4b;--vis-dial:#2f7a4b;--vis-needle:#c0392b;--vis-dim:#7fa98b;--vis-hot:#d93b2d}
+
+/* ══════════ 再窄一档（≈460px，竖屏长条 460×1043）══════════
+   上一档 560 的规则是按「刚好塞下」写的，453~460 宽时工具条仍会顶出去、
+   均衡器最后一根 16k 推子贴边被切。这一档把整体再收一档比例，
+   并把工具条改成两行：8 个选项卡一行，搜索框独占一行。 */
+@media (max-width:480px){
+  .skin-page{padding:4px;gap:4px}
+  .sk-panel{border-radius:3px}
+  /* 工具条：选项卡一行、搜索框另起一行 */
+  .sk-tools{padding:4px 4px;gap:2px 2px;flex-wrap:wrap}
+  .sk-tools button{height:22px;padding:0 5px;font-size:10px;letter-spacing:0;flex:0 0 auto}
+  .sk-tools .sk-search{flex:0 0 100%;width:auto;max-width:none;margin-left:0;order:9;gap:3px}
+  .sk-tools .sk-search input{height:22px;font-size:10.5px;padding:0 5px;flex:1 1 auto;min-width:0}
+  .sk-tools .sk-search button{height:22px;padding:0 8px;font-size:10.5px}
+  /* 主面板右栏 */
+  .sk-side{width:120px;gap:4px}
+  .sk-line{font-size:10px}
+  .sk-status{font-size:9.5px}
+  .sk-mini-btns{gap:2px}
+  .sk-mini-btns button{height:15px;width:30px;font-size:9px;padding:0 4px}
+  .sk-title{padding:2px 4px;gap:3px}
+  .sk-title .t{font-size:11.5px}
+  .sk-title .sk-time{font-size:10px}
+  .sk-wb{width:17px;height:17px;font-size:9px}
+  .sk-win-mini svg{width:10px;height:10px}
+  /* 播放控制 */
+  .sk-seek .tt{font-size:9px}
+  .sk-controls{gap:3px;padding:5px 4px 2px}
+  .sk-ctl{width:26px;height:26px;font-size:10.5px}
+  .sk-ctl.big{width:36px;height:36px;font-size:14px}
+  .sk-vol{width:72px;gap:3px}
+  .sk-pl-btn{height:20px;font-size:9.5px;padding:0 6px}
+  /* 均衡器 */
+  .sk-eq-body{gap:5px;padding:5px 5px 6px}
+  .sk-eq-row{width:58px;gap:4px}
+  .sk-eq-row .lab{font-size:8.5px}
+  .sk-eq-faders{padding:11px 2px 3px 18px;gap:0;overflow:visible}
+  .sk-eq-faders .scale{left:1px;font-size:7px}
+  .sk-fader{width:15px;min-height:96px}
+  .sk-fader .hz{font-size:6.5px;letter-spacing:0}
+  .sk-eq-faders .scale span{font-size:7px}
+  /* 播放列表 / 歌词 / 其余 */
+  .sk-pl .main{padding:0 2px}
+  .sk-tab-bar button, .pl-tabs button{font-size:10px;padding:0 5px}
+  .sk-eq-on button{height:15px;font-size:9px;padding:0 5px}
+}

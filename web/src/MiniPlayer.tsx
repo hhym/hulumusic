@@ -72,7 +72,7 @@ export default function MiniPlayer(p: Props) {
     if (e.button !== 0) return
     const t = e.target as HTMLElement
     if (t.closest('button')) return
-    // 葫芦窗口（mygo-music 里加装的）由 mygo 按 CSS --app-region: drag 自己拖，
+    // 千千静听窗口（mygo-music 里加装的）由 mygo 按 CSS --app-region: drag 自己拖，
     // 这里再 preventDefault 会把它的拖动打断。
     if (document.body.classList.contains('qq-owned')) return
     e.preventDefault()

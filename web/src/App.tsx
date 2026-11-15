@@ -161,7 +161,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.14'
+const BUILD_TAG = '3.0.15'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -1471,7 +1471,7 @@ export default function App() {
         <>
           {/* 拖动条只放标题：--app-region 是继承属性，按钮要是落在 drag 容器里，
               点击会被 mygo 当成拖窗口，click 事件就丢了 —— 所以按钮单独一层。 */}
-          <div className="mygo-dragbar"><span className="mygo-bar-title">葫芦音乐</span></div>
+          <div className="mygo-dragbar"><span className="mygo-bar-title">千千静听</span></div>
           <div className="mygo-winctl">
             <button className="mygo-win-btn" title="最小化" style={{'--app-region': 'no-drag'} as any}
                     onClick={minimizeApp}>—</button>
@@ -1513,7 +1513,7 @@ export default function App() {
                 ) : (
                   <>
                     <img className="dn-ava" src={logoHulu} alt="" />
-                    <div className="dnp-id"><b>葫芦音乐</b><span className="dnp-sub">未装音源</span></div>
+                    <div className="dnp-id"><b>千千静听</b><span className="dnp-sub">未装音源</span></div>
                   </>
                 )}
                 <svg className="dnp-caret" width="12" height="12" viewBox="0 0 24 24" fill="none"
@@ -1693,7 +1693,7 @@ export default function App() {
                   </div>
                   <div className="dpl-info">
                     <h2>{curPl ? curPl.name : (libAlbum || '我的收藏')}</h2>
-                    <p>{curPl ? `自建歌单 · 共 ${libView.length} 首` : `葫芦音乐 · 本地收藏 · 共 ${libView.length} 首`}</p>
+                    <p>{curPl ? `自建歌单 · 共 ${libView.length} 首` : `千千静听 · 本地收藏 · 共 ${libView.length} 首`}</p>
                     <div className="dpl-btns">
                       <button className="dpl-main" disabled={!libView.length} onClick={() => play(libView[0])}>播放全部</button>
                       {!!curPl && (
@@ -1849,14 +1849,18 @@ export default function App() {
         <section className="sk-panel sk-win">
           <div className="sk-title">
             <img src={logoHulu} alt="" />
-            <span className="t">葫芦音乐</span>
+            <span className="t">千千静听</span>
             <span className="sk-time" style={{ marginLeft: 'auto' }}>{isLive ? 'LIVE' : fmt(pos)}</span>
             <button className="sk-wb" title="切换到桌面界面（左侧竖排导航 + 底部播放条）"
                     onClick={() => switchLayout('desk')}>▤</button>
             <button className="sk-wb sk-win-mini" title="小窗口模式（缩成迷你条并置顶，按 Esc 或条上按钮还原）"
                     onClick={() => toggleMini(true)}>
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square">
-                <path d="M9 3v6H3M15 3v6h6M3 15h6v6M21 15h-6v6" />
+              {/* 小锤子：把整个窗口钉成一条迷你卡 */}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3.2 20.8 9.6 14.4" />
+                <path d="M8.4 12.2 12.2 8.4" />
+                <path d="M9.6 3.2 20.8 14.4 17.6 17.6 6.4 6.4z" />
               </svg>
             </button>
             <button className="sk-wb sk-skin-sw" title={'切换皮肤（当前：' + skinName + '）'}
