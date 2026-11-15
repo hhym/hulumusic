@@ -33,6 +33,17 @@
   --shadow:0 1px 2px rgba(120,80,20,.06);
 }
 
+/* 深青（暗底 + 青绿主色，介于深色和皮肤界面的青色之间） */
+:root[data-theme="teal"]{
+  --bg:#0b1517;--panel:#101e20;--line:#1d3033;--txt:#e0efed;--dim:#7da39f;
+  --acc:#22c8b2;--acc2:#35a0d8;
+  --hover:#142628;--sel:#173033;--input:#091213;--cover:#192e31;
+  --now-bar:#0e2724;--on-acc-text:#04120f;
+  --heart:#2f4645;--heart-on:#ff6470;
+  --ico-from:#173134;--tag-line:#1d5a52;
+  --shadow:none;
+}
+
 html,body,#root{height:100%}
 body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden;transition:background .18s,color .18s}
 .app{display:grid;grid-template-columns:1fr;grid-template-rows:36px 58px 1fr 96px 26px;height:100%;min-height:0}

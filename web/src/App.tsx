@@ -161,7 +161,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.6'
+const BUILD_TAG = '3.0.7'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -174,7 +174,7 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       const saved = localStorage.getItem('hulu-theme')
-      if (saved === 'dark' || saved === 'light' || saved === 'amber') return saved
+      if (saved === 'dark' || saved === 'light' || saved === 'amber' || saved === 'teal') return saved
     } catch { /* 忽略 */ }
     return 'light'
   })
@@ -386,7 +386,7 @@ export default function App() {
   // 各切各的就会出现「桌面橘黄 + 皮肤深紫」这种不搭的组合，所以做成联动：
   // 切皮肤把主题拉到最搭的那档，切主题把皮肤换成对应款式，三个界面始终是一套。
   const SKIN_THEME: Record<Skin, Theme> = {winamp: 'dark', tt: 'amber', light: 'light', glass: 'light', hifi: 'dark', steel: 'light'}
-  const THEME_SKIN: Record<Theme, Skin> = {dark: 'winamp', amber: 'tt', light: 'light'}
+  const THEME_SKIN: Record<Theme, Skin> = {dark: 'winamp', amber: 'tt', light: 'light', teal: 'hifi'}
   const applySkin = (s: Skin) => {
     setSkinTheme(s)
     try { localStorage.setItem('qqjt-skin', s) } catch { /* 忽略 */ }
@@ -527,7 +527,7 @@ export default function App() {
         // 如果这里无条件把 st.theme 应用回去，用户换过主题后每次启动就会被旧值覆盖，所以只在没存过时兜底。
         let savedTheme = ''
         try { savedTheme = localStorage.getItem('hulu-theme') || '' } catch { /* 忽略 */ }
-        if (!savedTheme && (st.theme === 'dark' || st.theme === 'light' || st.theme === 'amber')) setTheme(st.theme as Theme)
+        if (!savedTheme && (st.theme === 'dark' || st.theme === 'light' || st.theme === 'amber' || st.theme === 'teal')) setTheme(st.theme as Theme)
       })
       .catch(() => {})
   }, [])

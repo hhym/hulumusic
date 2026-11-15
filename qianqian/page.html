@@ -7886,6 +7886,10 @@ function SettingsPage({
             className: theme === "amber" ? "on" : "",
             onClick: () => onTheme("amber"),
             children: "\u6A58\u9EC4"
+          }), /* @__PURE__ */ jsx("button", {
+            className: theme === "teal" ? "on" : "",
+            onClick: () => onTheme("teal"),
+            children: "\u6DF1\u9752"
           })]
         })]
       }), /* @__PURE__ */ jsxs("div", {
@@ -10609,9 +10613,9 @@ function MiniPlayer(p2) {
     })
   });
 }
-const THEME_LABEL = { dark: "\u6DF1\u8272", light: "\u6D45\u8272", amber: "\u6A58\u9EC4" };
-const THEME_ICON = { dark: "\u263E", light: "\u2600", amber: "\u25D0" };
-const NEXT_THEME = { light: "dark", dark: "amber", amber: "light" };
+const THEME_LABEL = { dark: "\u6DF1\u8272", light: "\u6D45\u8272", amber: "\u6A58\u9EC4", teal: "\u6DF1\u9752" };
+const THEME_ICON = { dark: "\u263E", light: "\u2600", amber: "\u25D0", teal: "\u274B" };
+const NEXT_THEME = { light: "dark", dark: "amber", amber: "teal", teal: "light" };
 const qrcode = function(typeNumber, errorCorrectionLevel) {
   const PAD0 = 236;
   const PAD1 = 17;
@@ -13315,7 +13319,7 @@ function App() {
   const [theme, setTheme] = react.exports.useState(() => {
     try {
       const saved = localStorage.getItem("hulu-theme");
-      if (saved === "dark" || saved === "light" || saved === "amber")
+      if (saved === "dark" || saved === "light" || saved === "amber" || saved === "teal")
         return saved;
     } catch {
     }
@@ -13545,7 +13549,8 @@ function App() {
   const THEME_SKIN = {
     dark: "winamp",
     amber: "tt",
-    light: "light"
+    light: "light",
+    teal: "hifi"
   };
   const applySkin = (s) => {
     setSkinTheme(s);
@@ -13692,7 +13697,7 @@ function App() {
         savedTheme = localStorage.getItem("hulu-theme") || "";
       } catch {
       }
-      if (!savedTheme && (st.theme === "dark" || st.theme === "light" || st.theme === "amber"))
+      if (!savedTheme && (st.theme === "dark" || st.theme === "light" || st.theme === "amber" || st.theme === "teal"))
         setTheme(st.theme);
     }).catch(() => {
     });
@@ -16463,6 +16468,17 @@ createRoot(container).render(/* @__PURE__ */ jsx(React.StrictMode, {
   --heart:#d8c3a6;--heart-on:#e04b3a;
   --ico-from:#f5e7d3;--tag-line:#f3d6a8;
   --shadow:0 1px 2px rgba(120,80,20,.06);
+}
+
+/* 深青（暗底 + 青绿主色，介于深色和皮肤界面的青色之间） */
+:root[data-theme="teal"]{
+  --bg:#0b1517;--panel:#101e20;--line:#1d3033;--txt:#e0efed;--dim:#7da39f;
+  --acc:#22c8b2;--acc2:#35a0d8;
+  --hover:#142628;--sel:#173033;--input:#091213;--cover:#192e31;
+  --now-bar:#0e2724;--on-acc-text:#04120f;
+  --heart:#2f4645;--heart-on:#ff6470;
+  --ico-from:#173134;--tag-line:#1d5a52;
+  --shadow:none;
 }
 
 html,body,#root{height:100%}

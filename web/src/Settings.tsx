@@ -207,6 +207,7 @@ export default function SettingsPage({ theme, onTheme, accounts, onSignOut, onRe
             <button className={theme === 'dark' ? 'on' : ''} onClick={() => onTheme('dark')}>深色</button>
             <button className={theme === 'light' ? 'on' : ''} onClick={() => onTheme('light')}>浅色</button>
             <button className={theme === 'amber' ? 'on' : ''} onClick={() => onTheme('amber')}>橘黄</button>
+            <button className={theme === 'teal' ? 'on' : ''} onClick={() => onTheme('teal')}>深青</button>
           </div>
         </div>
         <div className="set-row">
