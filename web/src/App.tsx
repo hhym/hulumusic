@@ -358,9 +358,10 @@ export default function App() {
     setEqGains(EQ_PRESETS[i].gains.slice())
   }
 
-  // 皮肤界面默认不展开歌词：单列面板 + 内容区，和 3.0 的默认外观一致（截图那套）。
+  // 皮肤界面默认展开歌词秀（参照 TTPLAYER 那套四块面板的样张）；
+  // 用户手动收起过（存了 '0'）就尊重用户的选择。
   const [showLrc, setShowLrc] = useState(() => {
-    try { return localStorage.getItem('qqjt-showlrc') === '1' } catch { return false }
+    try { return localStorage.getItem('qqjt-showlrc') !== '0' } catch { return true }
   })
   const toggleLrc = () => {
     const next = !showLrc

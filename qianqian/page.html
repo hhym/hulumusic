@@ -13523,9 +13523,9 @@ function App() {
   };
   const [showLrc, setShowLrc] = react.exports.useState(() => {
     try {
-      return localStorage.getItem("qqjt-showlrc") === "1";
+      return localStorage.getItem("qqjt-showlrc") !== "0";
     } catch {
-      return false;
+      return true;
     }
   });
   const toggleLrc = () => {
@@ -18467,6 +18467,13 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   .skin-page .sk-pl{flex:1 1 auto;min-height:340px;overflow:hidden}
   .skin-page .sk-pl .main{flex:1 1 auto;min-height:0}
   .sk-col-r .sk-lyr{min-height:220px;max-height:44vh}
+  /* 窄屏下让两列容器「透明」，四块面板直接由 .skin-page 排：主 → 均衡器 → 歌词 → 列表，
+     和参考样张（TTPLAYER）的面板顺序一致 */
+  .skin-page .sk-col,.skin-page .sk-col-r{display:contents}
+  .sk-win{order:1}
+  .sk-eq{order:2}
+  .sk-lyr{order:3}
+  .sk-pl{order:4}
   .sk-side{width:150px}
   .sk-tools{flex-wrap:wrap;gap:4px}
   .sk-tools .sk-search{width:100%;margin-left:0;order:9}
@@ -18605,6 +18612,15 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   .sk-fader{width:15px;min-height:96px}
   .sk-fader .hz{font-size:6.5px;letter-spacing:0}
   .sk-eq-faders .scale span{font-size:7px}
+  /* 歌词秀 */
+  .skin-page .sk-col-r .sk-lyr{flex:0 0 auto;height:auto;min-height:132px;max-height:34vh}
+  .skin-page .sk-col-r .sk-lyr-body{min-height:104px}
+  .sk-lyr-body{padding:7px 8px;min-height:110px}
+  .sk-lyr-body .song{font-size:11.5px}
+  .sk-lyr-body .meta{font-size:9px;margin-bottom:6px}
+  .sk-lyr-body .ln{font-size:10.5px;line-height:1.9}
+  .sk-lyr-body .ln.on{font-size:12px;text-shadow:0 0 6px rgba(150,160,255,.4)}
+  .sk-lyr-body .none{font-size:10.5px}
   /* 播放列表 / 歌词 / 其余 */
   .sk-pl .main{padding:0 2px}
   .sk-tab-bar button, .pl-tabs button{font-size:10px;padding:0 5px}
