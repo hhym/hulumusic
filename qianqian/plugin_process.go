@@ -34,6 +34,10 @@ type ProcessResult struct {
 var processAllowList = map[string]bool{
 	"ffmpeg":     true,
 	"ffmpeg.exe": true,
+	// node：给汽水音乐这类「官方 SDK 跑在辅助进程里」的插件用，默认不放行，
+	// 要用户在设置里打开「允许插件运行本机程序」才生效。
+	"node":     true,
+	"node.exe": true,
 }
 
 // 已启用插件在 plugin.json 里声明过的可执行程序（basename 归一化）。
@@ -75,43 +79,6 @@ func declaredProcesses() map[string]bool {
 	return out
 }
 
-// resolveProcessPath 把插件给的 bin 解析成一个可执行路径，并校验它落在允许的目录里。
-// 裸名（ffmpeg）走 PATH 查找；带路径的必须是插件安装目录或 PATH 目录下的文件。
-func resolveProcessPath(bin, base string) (string, error) {
-	bare := !strings.ContainsAny(bin, "/\\")
-	if bare {
-		p, err := exec.LookPath(bin)
-		if err != nil {
-			return "", fmt.Errorf("找不到 %s：请把它放进 PATH，或随插件一起打包", base)
-		}
-		return p, nil
-	}
-	abs, err := filepath.Abs(bin)
-	if err != nil {
-		return "", fmt.Errorf("程序路径不合法：%v", err)
-	}
-	// 1) 插件自带的可执行文件：在某个插件安装目录内
-	entries, _ := os.ReadDir(pluginsDir())
-	for _, e := range entries {
-		if !e.IsDir() {
-			continue
-		}
-		if within(abs, filepath.Join(pluginsDir(), e.Name())) {
-			return abs, nil
-		}
-	}
-	// 2) 系统 PATH 目录内的（用户自己装的 ffmpeg）
-	for _, d := range filepath.SplitList(os.Getenv("PATH")) {
-		if d == "" {
-			continue
-		}
-		if within(abs, d) {
-			return abs, nil
-		}
-	}
-	return "", fmt.Errorf("只允许运行 PATH 或插件目录里的 %s：%s", base, abs)
-}
-
 func tailString(s string, max int) string {
 	if len(s) <= max {
 		return s
@@ -125,23 +92,24 @@ func (a *App) RunProcess(bin string, args []string, timeoutSec int) (ProcessResu
 	}
 	base := strings.ToLower(filepath.Base(bin))
 	if !processAllowList[base] {
-		return ProcessResult{}, "桌面版只允许插件运行 ffmpeg，其它程序一律拒绝：" + filepath.Base(bin)
+		return ProcessResult{}, "桌面版只允许插件运行 ffmpeg / node，其它程序一律拒绝：" + filepath.Base(bin)
 	}
 	if !declaredProcesses()[base] {
 		return ProcessResult{}, "没有启用的插件声明过 " + filepath.Base(bin) + " 权限"
 	}
-	// 只看文件名不够：插件传 "C:\任意目录\ffmpeg.exe" 照样能过 basename 白名单，
-	// 等于放个同名木马就能执行任意程序。所以还要限定程序所在目录 ——
-	// 要么在 PATH 里，要么在某个插件的安装目录里（插件自带的 ffmpeg 属于这种）。
-	binPath, err := resolveProcessPath(bin, base)
-	if err != nil {
-		return ProcessResult{}, err.Error()
+	// ffmpeg 是内置能力，直接放行；其它程序（现在是 node）要用户明确授权，
+	// 否则插件等于拿到了任意命令执行权限。
+	if base != "ffmpeg" && base != "ffmpeg.exe" {
+		if !a.loadSettings().AllowPluginProcess {
+			return ProcessResult{}, "插件要运行 " + filepath.Base(bin) +
+				"，但设置里的「允许插件运行本机程序」还没打开（设置 → 插件权限）"
+		}
 	}
 	if timeoutSec <= 0 || timeoutSec > 600 {
 		timeoutSec = 180
 	}
 
-	cmd := exec.Command(binPath, args...)
+	cmd := exec.Command(bin, args...)
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

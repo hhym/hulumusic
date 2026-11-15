@@ -25,13 +25,9 @@ func (a *App) PickPluginZip() PickResult {
 		return PickResult{Plugins: a.scanPlugins(), Err: "窗口还没就绪"}
 	}
 	paths, err := mygo.Dialog.Open(mygo.OpenDialogOptions{
-		Parent: a.win,
-		Title:  "选择插件：MyGo 的 .zip，或 MusicFree 的 .js",
-		Filters: []mygo.FileFilter{
-			{Name: "插件 (*.zip, *.js)", Extensions: []string{"zip", "js"}},
-			{Name: "MyGo 插件 (*.zip)", Extensions: []string{"zip"}},
-			{Name: "MusicFree 插件 (*.js)", Extensions: []string{"js"}},
-		},
+		Parent:  a.win,
+		Title:   "选择 MyGo 插件压缩包",
+		Filters: []mygo.FileFilter{{Name: "MyGo 插件 (*.zip)", Extensions: []string{"zip"}}},
 	})
 	if err != nil {
 		return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}

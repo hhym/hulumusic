@@ -2159,3 +2159,34 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin[data-skin="tt"] .set-page p{color:#6b3308}
 .skin[data-skin="tt"] .set-page h3,.skin[data-skin="tt"] .set-page h2{color:#2b1200}
 .skin[data-skin="tt"] .sk-gear{color:#3a1a00}
+
+/* ══════════ 桌面模式最窄一档（≈460px，窗口拖到最小）══════════
+   桌面模式（非皮肤）在 460 下原本会被挤：顶栏搜索框被截、侧栏吃掉一半宽度、
+   底部播放条右侧按钮溢出。这里让顶栏换行、侧栏收窄、播放条改单列堆叠。 */
+@media (max-width:620px){
+  .app.desk-mode .desk-nav{flex:0 0 132px}
+  .app.desk-mode .dn-empty{display:none}
+  .app.desk-mode .dn-grp{padding:6px 8px 3px;font-size:10.5px}
+  .app.desk-mode .dn-user{padding:8px 8px 6px;gap:6px}
+  .app.desk-mode .dn-ava,.app.desk-mode .dnp-badge{width:30px;height:30px}
+  .app.desk-mode .dnp-id b{font-size:12px}
+  .app.desk-mode .dnp-sub{font-size:10px}
+  .app.desk-mode .dn-card{height:56px}
+  .app.desk-mode .dn-lab{font-size:11px}
+  .app.desk-mode .dn-empty{font-size:10px;line-height:1.5}
+
+  .app.desk-mode .desk-top{flex-wrap:wrap;gap:6px;padding:4px 4px 6px}
+  .app.desk-mode .desk-search{order:9;flex:1 1 100%}
+  .app.desk-mode .desk-search input{min-width:0}
+  .app.desk-mode .desk-top-right{margin-left:auto;gap:4px}
+  .app.desk-mode .desk-top-right .ghost-btn{min-width:24px;height:24px;padding:0 6px}
+
+  .app.desk-mode .desk-body .main{padding:0}
+  .app.desk-mode .desk-now{grid-template-columns:1fr;gap:8px;padding:8px 10px}
+  .app.desk-mode .dnp-right{justify-content:flex-start;flex-wrap:wrap;gap:4px}
+  .app.desk-mode .dnp-right button{min-width:28px;height:24px;padding:0 6px;font-size:11px}
+  .app.desk-mode .dnp-vol input{width:56px}
+  .app.desk-mode .dnp-cover{width:36px;height:36px;flex:0 0 36px}
+  .app.desk-mode .dpl-hero{flex-direction:column;gap:10px;padding:12px}
+  .app.desk-mode .dpl-cover{width:96px;height:96px}
+}

@@ -80,7 +80,6 @@ func sanitizeID(s string) string {
 
 func (a *App) scanPlugins() []Plugin {
 	out := scanMyGoPlugins(loadPluginState())
-	out = append(out, scanSingleFilePlugins(loadPluginState())...)
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Name == out[j].Name {
 			return out[i].ID < out[j].ID
@@ -96,20 +95,12 @@ func (a *App) Plugins() ([]Plugin, string) {
 	return a.scanPlugins(), ""
 }
 
-// InstallPluginText 粘贴源码只对 MusicFree 单文件插件有意义：
-// MyGo 插件是目录结构（plugin.json + index.js + 附属文件），一段源码装不了。
+// InstallPluginText MyGo 插件有目录结构，粘贴一段源码装不了。
 func (a *App) InstallPluginText(code string) PickResult {
 	if strings.TrimSpace(code) == "" {
 		return PickResult{Plugins: a.scanPlugins(), Err: "内容是空的"}
 	}
-	if mfIsPlugin(code) {
-		id, err := a.installMFPlugin(code, "mf-plugin")
-		if err != nil {
-			return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}
-		}
-		return PickResult{Plugins: a.scanPlugins(), InstalledID: id}
-	}
-	return PickResult{Plugins: a.scanPlugins(), Err: "MyGo 插件是「目录 + plugin.json」的形式，不能只粘贴源码：请用「选文件夹」挑插件目录，或装打包好的 .zip。MusicFree 插件（module.exports = {…}）可以直接粘贴。"}
+	return PickResult{Plugins: a.scanPlugins(), Err: "MyGo 插件是「目录 + plugin.json」的形式，不能只粘贴源码：请用「选文件夹」挑插件目录，或装打包好的 .zip"}
 }
 
 // InstallPluginFile 从本地导入：选文件夹，或选含 plugin.json 的 .zip。
@@ -132,18 +123,6 @@ func (a *App) InstallPluginFile(path string) PickResult {
 		}
 		return PickResult{Plugins: a.scanPlugins(), Err: "", InstalledID: id}
 	}
-	// MusicFree 插件是一个 .js 文件，直接读进来落盘
-	if strings.HasSuffix(strings.ToLower(path), ".js") {
-		b, err := os.ReadFile(path)
-		if err != nil {
-			return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}
-		}
-		id, err := a.installMFPlugin(string(b), filepath.Base(path))
-		if err != nil {
-			return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}
-		}
-		return PickResult{Plugins: a.scanPlugins(), InstalledID: id}
-	}
 	if strings.HasSuffix(strings.ToLower(path), ".zip") {
 		b, err := os.ReadFile(path)
 		if err != nil {
@@ -155,7 +134,7 @@ func (a *App) InstallPluginFile(path string) PickResult {
 		}
 		return PickResult{Plugins: a.scanPlugins(), Err: "", InstalledID: id}
 	}
-	return PickResult{Plugins: a.scanPlugins(), Err: "只支持 MyGo 插件文件夹 / 含 plugin.json 的 .zip，或 MusicFree 的单文件 .js 插件"}
+	return PickResult{Plugins: a.scanPlugins(), Err: "只支持 MyGo 插件文件夹，或里面带 plugin.json 的 .zip"}
 }
 
 // InstallPluginURL 只接受打包好的插件 zip（里面要有 plugin.json）。
@@ -179,15 +158,7 @@ func (a *App) InstallPluginURL(rawURL string) PickResult {
 		return PickResult{Plugins: a.scanPlugins(), Err: "读取失败：" + err.Error()}
 	}
 	if !bytes.HasPrefix(body, []byte("PK\x03\x04")) {
-		// 不是压缩包：可能是 MusicFree 的单文件 .js（直链安装常见）
-		if code := string(body); mfIsPlugin(code) {
-			id, err := a.installMFPlugin(code, "mf-plugin")
-			if err != nil {
-				return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}
-			}
-			return PickResult{Plugins: a.scanPlugins(), InstalledID: id}
-		}
-		return PickResult{Plugins: a.scanPlugins(), Err: "这不是插件 zip，也不是 MusicFree 插件（MyGo 插件要打包成含 plugin.json 的压缩包，MusicFree 插件要 module.exports = {…}）"}
+		return PickResult{Plugins: a.scanPlugins(), Err: "这不是插件 zip（MyGo 插件要打包成含 plugin.json 的压缩包）"}
 	}
 	id, err := a.installPluginZip(body)
 	if err != nil {
@@ -221,6 +192,9 @@ func (a *App) RemovePlugin(id string) ([]Plugin, string) {
 
 // PluginSource 把插件入口文件交给前端执行。
 func (a *App) PluginSource(id string) (string, string) {
+	if !safePluginID(id) {
+		return "", "插件 id 不合法"
+	}
 	p, ok := pluginEntryFile(id)
 	if !ok {
 		return "", "读不到插件：" + id

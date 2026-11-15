@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 	"unicode/utf8"
 )
@@ -32,31 +31,6 @@ func collectHeaders(h http.Header) map[string]string {
 	return out
 }
 
-// 复用同一个 Transport：插件搜索一页发几十个请求，每次新建 Client 会留下
-// 一堆不会复用的空闲连接，端口和 TIME_WAIT 很快就堆起来。
-var (
-	httpOnce   sync.Once
-	clientAuto *http.Client
-	clientMan  *http.Client
-)
-
-func pluginClients() (*http.Client, *http.Client) {
-	httpOnce.Do(func() {
-		tr := &http.Transport{
-			Proxy:                 http.ProxyFromEnvironment,
-			MaxIdleConns:          64,
-			MaxIdleConnsPerHost:   16,
-			IdleConnTimeout:       60 * time.Second,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-		}
-		clientAuto = &http.Client{Transport: tr, Timeout: 30 * time.Second}
-		clientMan = &http.Client{Transport: tr, Timeout: 30 * time.Second,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
-	})
-	return clientAuto, clientMan
-}
-
 func (a *App) HttpRequest(rawURL, method string, headers map[string]string, body string, manualRedirect bool) HttpResult {
 	u, err := url.Parse(rawURL)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
@@ -80,12 +54,13 @@ func (a *App) HttpRequest(rawURL, method string, headers map[string]string, body
 		}
 		req.Header.Set(k, v)
 	}
+	client := &http.Client{Timeout: 30 * time.Second}
 	// 插件显式要求 redirect: 'manual' 时不要自动跟随：
 	// QQ 登录靠 check_sig 返回的 302 和 Location 拿授权票据，跟随后就看不到 302 了
-	auto, man := pluginClients()
-	client := auto
 	if manualRedirect {
-		client = man
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
 	}
 	res, err := client.Do(req)
 	if err != nil {

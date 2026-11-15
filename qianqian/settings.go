@@ -21,6 +21,11 @@ type Settings struct {
 	LastTrackID string   `json:"lastTrackId"`
 	LocalDirs   []string `json:"localDirs"` // 本地乐库授权的音乐目录
 
+	// AllowPluginProcess 允许插件运行 ffmpeg 之外的本机程序（node 等）。
+	// 默认关闭：汽水音乐这类插件要跑 node + Electron 才能扫码登录，但等于把
+	// 任意命令执行交给插件，所以必须由用户在设置里显式打开。
+	AllowPluginProcess bool `json:"allowPluginProcess"`
+
 	// LookMigrated 记录「默认外观已迁到 2.7.14 那套（桌面橘黄）」，只跑一次，
 	// 之后用户自己选的主题不再被覆盖。
 	LookMigrated bool `json:"lookMigrated"`
@@ -31,7 +36,7 @@ type Settings struct {
 	Version   string `json:"version"`
 }
 
-const appVersion = "3.0.16"
+const appVersion = "3.0.17"
 
 func defaultSettings() Settings {
 	return Settings{

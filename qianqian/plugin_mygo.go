@@ -109,6 +109,9 @@ func (a *App) PluginDir(id string) string {
 
 // PluginFile 读插件目录里的任意文件，供前端解析 index.js 里的相对 import。
 func (a *App) PluginFile(id, rel string) (string, string) {
+	if !safePluginID(id) {
+		return "", "插件 id 不合法"
+	}
 	rel = strings.TrimPrefix(strings.ReplaceAll(rel, "\\", "/"), "./")
 	if rel == "" || strings.Contains(rel, "..") {
 		return "", "路径不合法"
@@ -165,6 +168,28 @@ func (a *App) SavePluginStorage(id, data string) string {
 	return ""
 }
 
+// RemovePluginDataDir 清掉插件自己的持久化数据（host.storage 的 removeDataDir）。
+func (a *App) RemovePluginDataDir(id, name string) string {
+	if !safePluginID(id) {
+		return "插件 id 不合法"
+	}
+	name = strings.TrimPrefix(strings.ReplaceAll(name, "\\", "/"), "./")
+	if name == "" {
+		if err := os.Remove(pluginDataPath(id)); err != nil && !os.IsNotExist(err) {
+			return err.Error()
+		}
+		return ""
+	}
+	if strings.Contains(name, "..") || path.IsAbs(name) {
+		return "路径不合法"
+	}
+	p := filepath.Join(pluginDataDir(), sanitizeID(id), filepath.FromSlash(name))
+	if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+		return err.Error()
+	}
+	return ""
+}
+
 // ---------- 安装：目录 / zip ----------
 
 // installPluginDir 把一个 MyGo 插件目录整体复制进插件目录。
@@ -186,10 +211,9 @@ func (a *App) installPluginDir(src string) (string, error) {
 	if id == "" {
 		return "", fmt.Errorf("plugin.json 里没有 id")
 	}
-	// id 会直接拼成安装目录：含 ../ 或绝对路径的 id 能让安装器写到数据目录以外，
-	// 甚至让下面的 RemoveAll 删掉任意目录，所以必须先过一遍白名单校验。
+	id = sanitizeID(id)
 	if !safePluginID(id) {
-		return "", fmt.Errorf("插件 id 不合法：%q", id)
+		return "", fmt.Errorf("plugin.json 里的 id 不合法：只允许字母、数字、下划线、减号和中文")
 	}
 	dst := pluginDir(id)
 	if err := os.RemoveAll(dst); err != nil {
@@ -216,23 +240,18 @@ func (a *App) installPluginDir(src string) (string, error) {
 		if info.IsDir() {
 			return os.MkdirAll(out, 0o755)
 		}
-		// 显式关闭：Walk 里用 defer 会把每个文件的句柄攒到函数返回才关，
-		// 插件目录几百个文件时会把 Windows 的句柄耗尽。
 		in, err := os.Open(p)
 		if err != nil {
 			return err
 		}
+		defer in.Close()
 		of, err := os.OpenFile(out, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 		if err != nil {
-			in.Close()
 			return err
 		}
-		_, cpErr := io.Copy(of, io.LimitReader(in, 32<<20))
-		in.Close()
-		if closeErr := of.Close(); cpErr == nil {
-			cpErr = closeErr
-		}
-		return cpErr
+		defer of.Close()
+		_, err = io.Copy(of, io.LimitReader(in, 32<<20))
+		return err
 	})
 	if err != nil {
 		return "", err

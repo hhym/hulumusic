@@ -11,9 +11,9 @@ import (
 //  1. 千千静听的方法返回 (值, 错误串)，MyGo 只认 (值, error)，错误串要包成 error；
 //  2. 前端经 Proxy 转发，参数偶尔会多裹一层数组，这里统一用 any 收再宽松还原，
 //     避免 invalid argument: cannot unmarshal ... 之类的小事故。
-type API struct{ *App }
+type API struct{ App *App }
 
-func NewAPI(a *App) API { return API{a} }
+func NewAPI(a *App) API { return API{App: a} }
 
 // unwrap 剥掉多余的包裹：单元素数组取第一个，单键 map 取值。
 func unwrap(v any) any {
@@ -50,6 +50,51 @@ func errOf(s string) error {
 		return nil
 	}
 	return errors.New(s)
+}
+
+// 下面几个方法原先靠 API 匿名嵌入 *App 自动暴露。匿名嵌入会把 App 里所有导出方法
+// 都注册进前端桥接，而其中一批返回 (值, 字符串) 的方法不满足 mygo 的要求
+// （第二个返回值必须是 error），BindAs 直接在启动时 panic —— 表现就是双击无反应。
+// 改成具名字段后必须显式转发，这里补回前端真正用到的那几个。
+
+func (x API) ResizeEdge(w any, dir any) (string, error) {
+	v := x.App.ResizeEdge(as[int](w), asStr(dir))
+	return v, errOf(v)
+}
+
+func (x API) RemovePluginDataDir(id any, name any) (string, error) {
+	v := x.App.RemovePluginDataDir(asStr(id), asStr(name))
+	return v, errOf(v)
+}
+
+func (x API) StartPluginProcess(bin any, args any) (string, error) {
+	v, e := x.App.StartPluginProcess(asStr(bin), as[[]string](args))
+	return v, errOf(e)
+}
+
+func (x API) PluginProcWrite(id any, data any) (string, error) {
+	v := x.App.PluginProcWrite(asStr(id), asStr(data))
+	return v, errOf(v)
+}
+
+func (x API) PluginProcReadLine(id any, timeoutMs any) (string, error) {
+	v, e := x.App.PluginProcReadLine(asStr(id), as[int](timeoutMs))
+	return v, errOf(e)
+}
+
+func (x API) PluginProcStderr(id any) (string, error) {
+	v, e := x.App.PluginProcStderr(asStr(id))
+	return v, errOf(e)
+}
+
+func (x API) PluginProcKill(id any) (string, error) {
+	v := x.App.PluginProcKill(asStr(id))
+	return v, errOf(v)
+}
+
+func (x API) PluginProcWait(id any, timeoutSec any) (int, error) {
+	v, e := x.App.PluginProcWait(asStr(id), as[int](timeoutSec))
+	return v, errOf(e)
 }
 
 func (x API) OpenExternal(url any) string {

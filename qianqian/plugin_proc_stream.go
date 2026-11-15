@@ -1,0 +1,282 @@
+package qianqian
+
+import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+)
+
+/* 常驻子进程（插件里的辅助程序）。
+
+   有些插件（比如汽水音乐那版）不是「跑一次拿 stdout」，而是开一个辅助程序，
+   然后用「一行一条 JSON」跟它长期对话：写一条 spec、读一条结果。原来的
+   RunProcess 是一次性的，满足不了这种协议，所以这里单独做一套：
+
+     StartPluginProcess(bin,args) → id
+     PluginProcWrite(id, data)    → 往里写一行
+     PluginProcReadLine(id, ms)   → 读一行（阻塞到有数据或超时）
+     PluginProcKill(id) / PluginProcWait(id) / PluginProcStderr(id)
+
+   安全约束沿用 RunProcess 那套，并且更严：程序必须真的在插件自己的目录里
+   （不接受 ../ 或绝对路径跑到别处），而且得有一个启用中的插件在 plugin.json
+   的 permissions.process 里声明过（支持 bin/xxx-* 这种通配），最后还要用户
+   在设置里打开「允许插件运行本机程序」。 */
+
+type childProc struct {
+	cmd   *exec.Cmd
+	stdin io.WriteCloser
+	out   *bufio.Reader
+	lines chan string
+	errb  bytes.Buffer
+
+	done chan struct{}
+	code int
+}
+
+var procHub = struct {
+	sync.Mutex
+	m    map[string]*childProc
+	next int
+}{m: map[string]*childProc{}}
+
+// 把插件给的相对路径解析到插件目录，并保证跑不出 plugins 目录。
+func pluginExecPath(bin string) (string, string) {
+	p := strings.TrimSpace(bin)
+	if p == "" {
+		return "", "没有指定要运行的程序"
+	}
+	if !filepath.IsAbs(p) {
+		p = filepath.Join(pluginsDir(), p)
+	}
+	p = filepath.Clean(p)
+	root, err := filepath.Abs(pluginsDir())
+	if err != nil {
+		return "", "插件目录不可用"
+	}
+	abs, err := filepath.Abs(p)
+	if err != nil {
+		return "", "路径无效"
+	}
+	rel, err := filepath.Rel(root, abs)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", "插件只能运行自己目录里的程序：" + filepath.Base(abs)
+	}
+	st, err := os.Stat(abs)
+	if err != nil || st.IsDir() {
+		return "", "找不到插件目录里的程序：" + filepath.Base(abs)
+	}
+	return abs, ""
+}
+
+// 启用中的插件声明过的 process 通配（已归一化成 basename 上的模式）。
+func declaredProcessPatterns() map[string]bool {
+	out := map[string]bool{}
+	dir := pluginsDir()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return out
+	}
+	state := loadPluginState()
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		id := e.Name()
+		if v, ok := state[id]; ok && !v {
+			continue
+		}
+		b, err := os.ReadFile(filepath.Join(dir, id, "plugin.json"))
+		if err != nil {
+			continue
+		}
+		var m struct {
+			Permissions struct {
+				Process []string `json:"process"`
+			} `json:"permissions"`
+		}
+		if json.Unmarshal(b, &m) != nil {
+			continue
+		}
+		for _, p := range m.Permissions.Process {
+			if p = strings.TrimSpace(p); p == "" {
+				continue
+			}
+			out[strings.ToLower(filepath.Base(filepath.ToSlash(p)))] = true
+		}
+	}
+	return out
+}
+
+func processDeclared(base string) bool {
+	base = strings.ToLower(base)
+	if processAllowList[base] {
+		return true
+	}
+	for pat := range declaredProcessPatterns() {
+		if ok, err := filepath.Match(pat, base); err == nil && ok {
+			return true
+		}
+	}
+	return false
+}
+
+// StartPluginProcess 起一个可对话的子进程，返回句柄 id。
+func (a *App) StartPluginProcess(bin string, args []string) (string, string) {
+	path, errMsg := pluginExecPath(bin)
+	if errMsg != "" {
+		return "", errMsg
+	}
+	base := strings.ToLower(filepath.Base(path))
+	if !processDeclared(base) {
+		return "", "没有启用的插件声明过 " + filepath.Base(path) + " 权限"
+	}
+	if base != "ffmpeg" && base != "ffmpeg.exe" {
+		if !a.loadSettings().AllowPluginProcess {
+			return "", "插件要运行 " + filepath.Base(path) +
+				"，但设置里的「允许插件运行本机程序」还没打开（设置 → 插件权限）"
+		}
+	}
+
+	cmd := exec.Command(path, args...)
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return "", "启动失败：" + err.Error()
+	}
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return "", "启动失败：" + err.Error()
+	}
+	cp := &childProc{
+		cmd:   cmd,
+		stdin: stdin,
+		out:   bufio.NewReaderSize(stdout, 64*1024),
+		lines: make(chan string, 64),
+		done:  make(chan struct{}),
+	}
+	cmd.Stderr = &cp.errb
+	if err := cmd.Start(); err != nil {
+		return "", "启动失败：" + err.Error()
+	}
+
+	go func() {
+		for {
+			line, err := cp.out.ReadString('\n')
+			line = strings.TrimRight(line, "\r\n")
+			if line != "" {
+				select {
+				case cp.lines <- line:
+				}
+			}
+			if err != nil {
+				break
+			}
+		}
+	}()
+
+	go func() {
+		err := cmd.Wait()
+		if err != nil {
+			cp.code = -1
+			if cmd.ProcessState != nil {
+				cp.code = cmd.ProcessState.ExitCode()
+			}
+		}
+		close(cp.lines)
+		close(cp.done)
+	}()
+
+	procHub.Lock()
+	procHub.next++
+	id := strconv.Itoa(procHub.next)
+	procHub.m[id] = cp
+	procHub.Unlock()
+	return id, ""
+}
+
+func procOf(id string) (*childProc, string) {
+	procHub.Lock()
+	cp := procHub.m[id]
+	procHub.Unlock()
+	if cp == nil {
+		return nil, "辅助进程已经结束，请重试"
+	}
+	return cp, ""
+}
+
+func (a *App) PluginProcWrite(id, data string) string {
+	cp, errMsg := procOf(id)
+	if errMsg != "" {
+		return errMsg
+	}
+	if _, err := cp.stdin.Write([]byte(data)); err != nil {
+		return "写入失败：" + err.Error()
+	}
+	return ""
+}
+
+func (a *App) PluginProcReadLine(id string, timeoutMs int) (string, string) {
+	cp, errMsg := procOf(id)
+	if errMsg != "" {
+		return "", errMsg
+	}
+	if timeoutMs <= 0 || timeoutMs > 120000 {
+		timeoutMs = 25000
+	}
+	select {
+	case line, ok := <-cp.lines:
+		if !ok {
+			return "", "辅助进程已退出"
+		}
+		return line, ""
+	case <-time.After(time.Duration(timeoutMs) * time.Millisecond):
+		return "", "辅助进程响应超时"
+	}
+}
+
+func (a *App) PluginProcStderr(id string) (string, string) {
+	cp, errMsg := procOf(id)
+	if errMsg != "" {
+		return "", errMsg
+	}
+	return tailString(cp.errb.String(), 4096), ""
+}
+
+func (a *App) PluginProcKill(id string) string {
+	cp, errMsg := procOf(id)
+	if errMsg != "" {
+		return errMsg
+	}
+	if cp.stdin != nil {
+		_ = cp.stdin.Close()
+	}
+	if cp.cmd.Process != nil {
+		_ = cp.cmd.Process.Kill()
+	}
+	return ""
+}
+
+func (a *App) PluginProcWait(id string, timeoutSec int) (int, string) {
+	cp, errMsg := procOf(id)
+	if errMsg != "" {
+		return -1, errMsg
+	}
+	if timeoutSec <= 0 || timeoutSec > 600 {
+		timeoutSec = 180
+	}
+	select {
+	case <-cp.done:
+		return cp.code, ""
+	case <-time.After(time.Duration(timeoutSec) * time.Second):
+		return -1, fmt.Sprintf("等待超时（%d 秒）", timeoutSec)
+	}
+}

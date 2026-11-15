@@ -15,18 +15,9 @@ const (
 	uaMobile  = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
 )
 
-// 接口返回的 JSON/文本最大读这么多：上游异常或恶意重定向到超大文件时，
-// 不设上限会把内存吃满。
-const maxTextBody = 8 << 20
-
 var httpClient = &http.Client{
 	Timeout: 20 * time.Second,
 	CheckRedirect: func(req *http.Request, via []*http.Request) error {
-		// 自定义 CheckRedirect 后标准库的 10 次上限就不再生效，这里自己兜住，
-		// 否则 A→B→A 的循环重定向会一直转。
-		if len(via) >= 10 {
-			return fmt.Errorf("重定向次数过多")
-		}
 		return nil
 	},
 }
@@ -46,7 +37,7 @@ func getText(rawURL string, headers map[string]string) (string, error) {
 		return "", err
 	}
 	defer res.Body.Close()
-	b, err := io.ReadAll(io.LimitReader(res.Body, maxTextBody))
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return "", err
 	}
@@ -80,7 +71,7 @@ func postJSON(rawURL string, body interface{}, headers map[string]string) (strin
 		return "", err
 	}
 	defer res.Body.Close()
-	b, err := io.ReadAll(io.LimitReader(res.Body, maxTextBody))
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return "", err
 	}

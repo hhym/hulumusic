@@ -10,7 +10,7 @@ var page string
 
 func Page() string { return page }
 
-// IconPNG 是应用图标（橘红圆底 + 福禄葫芦），透明底，600×600。
+// IconPNG 是应用图标（千千静听橙圈图标），透明底，600×600。
 //
 //go:embed icon.png
 var iconPNG []byte

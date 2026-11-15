@@ -40,9 +40,6 @@ type App struct {
 	mu     sync.Mutex
 	lib    []Track
 	libPth string
-	// 最大化 / 还原：无边框窗口没有系统标题栏，得自己算工作区并记住还原点
-	maxed   bool
-	restore [4]int // x, y, w, h
 }
 
 func NewApp() *App { return &App{} }
