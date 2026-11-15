@@ -13325,6 +13325,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
+const BUILD_TAG = "3.0.15";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -13521,6 +13522,13 @@ function App() {
     setEqPreset(i);
     setEqGains(EQ_PRESETS[i].gains.slice());
   };
+  const [skinWide, setSkinWide] = react.exports.useState(() => typeof window === "undefined" ? true : window.innerWidth >= 860);
+  react.exports.useEffect(() => {
+    const upd = () => setSkinWide(window.innerWidth >= 860);
+    upd();
+    window.addEventListener("resize", upd);
+    return () => window.removeEventListener("resize", upd);
+  }, []);
   const [showLrc, setShowLrc] = react.exports.useState(() => {
     try {
       return localStorage.getItem("qqjt-showlrc") !== "0";
@@ -15916,7 +15924,7 @@ function App() {
         })]
       })]
     }) : /* @__PURE__ */ jsxs("div", {
-      className: "skin-page" + (showLrc ? "" : " only-left"),
+      className: "skin-page" + (skinWide ? "" : " one-col") + (showLrc ? "" : " only-left"),
       children: [/* @__PURE__ */ jsxs("div", {
         className: "sk-col",
         children: [/* @__PURE__ */ jsxs("section", {
@@ -16105,7 +16113,10 @@ function App() {
           className: "sk-panel sk-eq",
           children: [/* @__PURE__ */ jsxs("div", {
             className: "sk-title",
-            children: [/* @__PURE__ */ jsx("span", {
+            children: [/* @__PURE__ */ jsxs("span", {
+              className: "sk-ver",
+              children: ["v", BUILD_TAG]
+            }), /* @__PURE__ */ jsx("span", {
               className: "t",
               children: skinTheme === "tt" || skinTheme === "hifi" || skinTheme === "steel" ? "EQUALIZER \u5747\u8861\u5668" : "\u5747\u8861\u5668"
             }), /* @__PURE__ */ jsxs("div", {
@@ -17316,7 +17327,8 @@ html[data-theme='dark'] .plug-kind {
 
 /* 播放列表 */
 .sk-pl{flex:1 1 auto;min-height:340px;display:flex;flex-direction:column}
-.sk-tools{display:flex;align-items:center;gap:3px;padding:5px 6px;flex:0 0 auto;
+/* 允许换行：两列时间列表那一列会窄到 480 左右，硬挤一行会把搜索框和「搜」挤出去 */
+.sk-tools{display:flex;align-items:center;gap:3px;padding:5px 6px;flex:0 0 auto;flex-wrap:wrap;
   background:linear-gradient(180deg,#262b72,#1b1e56);border-bottom:1px solid #0a0b28}
 .sk-tools button{height:22px;padding:0 8px;font-size:10.5px;letter-spacing:.3px;cursor:pointer;
   color:#dfe3ff;background:linear-gradient(180deg,#7e87e2,#4a52ab 55%,#333a8f);
@@ -18460,15 +18472,15 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 /* ══════════ 窄窗口断点（放在最后，覆盖前面 .skin-page/.sk-pl 的固定写法）══════════
    窗口被缩到一半左右时，两列皮肤会互相挤压：左列按钮和搜索框挤成一行、右列歌词被压成一条。
    窄屏统一改成单列：歌词不再并排，整块堆到播放列表下面；工具条允许换行。 */
-@media (max-width:840px){
+@media (max-width:860px){
   .skin-page{display:flex;flex-direction:column;gap:6px;padding:6px;height:auto;min-height:100vh;overflow-x:hidden}
   /* 单列时面板别铺满整屏，封顶 760 居中，两侧由面板底色吸掉 */
-  .sk-win,.sk-eq,.sk-lyr,.sk-pl{width:100%;max-width:760px;margin-left:auto;margin-right:auto}
+  .sk-win,.sk-eq,.sk-lyr,.sk-pl{width:100%;max-width:660px;margin-left:auto;margin-right:auto}
   .skin-page .sk-col{flex:1 1 auto;height:auto;min-height:0;gap:6px}
   .skin-page .sk-col-r{flex:0 0 auto;height:auto;min-height:0;overflow:visible}
   .skin-page .sk-pl{flex:1 1 auto;min-height:340px;overflow:hidden}
   .skin-page .sk-pl .main{flex:1 1 auto;min-height:0}
-  .sk-col-r .sk-lyr{min-height:220px;max-height:44vh}
+  .skin-page .sk-col-r .sk-lyr{flex:0 0 auto;height:auto;min-height:150px;max-height:34vh}
   /* 窄屏下让两列容器「透明」，四块面板直接由 .skin-page 排：主 → 均衡器 → 歌词 → 列表，
      和参考样张（TTPLAYER）的面板顺序一致 */
   .skin-page .sk-col,.skin-page .sk-col-r{display:contents}
@@ -18498,7 +18510,7 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   .skin-page{padding:5px;gap:5px}
   .sk-body{gap:6px}
   .sk-side{width:146px}
-  .sk-tools{padding:5px 5px;gap:3px;flex-wrap:nowrap}
+  .sk-tools{padding:5px 5px;gap:3px;flex-wrap:wrap}
   .sk-tools button{height:23px;padding:0 6px;font-size:10.5px;letter-spacing:0;flex:0 1 auto;min-width:0}
   .sk-tools .sk-search{width:104px;margin-left:auto;order:0;gap:2px}
   .sk-tools .sk-search input{height:23px;padding:0 4px;font-size:10px}
@@ -18631,6 +18643,30 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 
 /* 歌词正文：窗口宽的时候别让一行字拉得太长，封顶 520 居中 */
 .skin-page .sk-col-r .sk-lyr-body{max-width:560px;margin-left:auto;margin-right:auto}
+
+/* ── 按真实可用宽度切列（skinWide 判断）────────────────────────
+   和下面 840px 断点是一套规则，只是改由 JS 按 window.innerWidth 判定，
+   避免系统缩放时「看着窗口挺宽、实际 CSS 宽度不够」而一直单列。 */
+.skin-page.one-col{display:flex;flex-direction:column;gap:6px;padding:6px;height:auto;min-height:100vh;overflow-x:hidden}
+.skin-page.one-col .sk-col{flex:1 1 auto;height:auto;min-height:0;gap:6px}
+.skin-page.one-col .sk-col-r{flex:0 0 auto;height:auto;min-height:0;overflow:visible}
+.skin-page.one-col .sk-pl{flex:1 1 auto;min-height:340px;overflow:hidden}
+.skin-page.one-col .sk-pl .main{flex:1 1 auto;min-height:0}
+.skin-page.one-col .sk-col,.skin-page.one-col .sk-col-r{display:contents}
+.skin-page.one-col .sk-win{order:1}
+.skin-page.one-col .sk-eq{order:2}
+.skin-page.one-col .sk-lyr{order:3}
+.skin-page.one-col .sk-pl{order:4}
+.skin-page.one-col .sk-win,.skin-page.one-col .sk-eq,.skin-page.one-col .sk-lyr,.skin-page.one-col .sk-pl{
+  width:100%;max-width:660px;margin-left:auto;margin-right:auto}
+.skin-page.one-col .sk-side{width:150px}
+.skin-page.one-col .sk-tools{flex-wrap:wrap;gap:4px}
+.skin-page.one-col .sk-tools .sk-search{width:100%;margin-left:0;order:9}
+.skin-page.one-col .sk-eq-faders{gap:2px}
+.skin-page.one-col .sk-col-r .sk-lyr{flex:0 0 auto;height:auto;min-height:150px;max-height:34vh}
+
+/* 版本号小字 */
+.sk-ver{font-size:9.5px;opacity:.5;letter-spacing:0;margin-right:4px}
 
 </style>
 </head>

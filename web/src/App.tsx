@@ -360,6 +360,17 @@ export default function App() {
 
   // 皮肤界面默认展开歌词秀（参照 TTPLAYER 那套四块面板的样张）；
   // 用户手动收起过（存了 '0'）就尊重用户的选择。
+  // 按当前「CSS 可用宽度」决定皮肤界面单列/两列。
+  // 用 window.innerWidth 而不是纯 CSS 断点：Windows 125% 缩放下 901px 的窗口只有 720 CSS px，
+  // 断点按物理像素判断会一直停在单列（用户看到的就是"没变化"）。
+  const [skinWide, setSkinWide] = useState(() => (typeof window === 'undefined' ? true : window.innerWidth >= 860))
+  useEffect(() => {
+    const upd = () => setSkinWide(window.innerWidth >= 860)
+    upd()
+    window.addEventListener('resize', upd)
+    return () => window.removeEventListener('resize', upd)
+  }, [])
+
   const [showLrc, setShowLrc] = useState(() => {
     try { return localStorage.getItem('qqjt-showlrc') !== '0' } catch { return true }
   })
@@ -1844,7 +1855,7 @@ export default function App() {
           </section>
         </div>
       ) : (
-      <div className={'skin-page' + (showLrc ? '' : ' only-left')}>
+      <div className={'skin-page' + (skinWide ? '' : ' one-col') + (showLrc ? '' : ' only-left')}>
         <div className="sk-col">
         {/* ── 主窗口 ── */}
         <section className="sk-panel sk-win">
@@ -1916,7 +1927,8 @@ export default function App() {
         {showEq && (
           <section className="sk-panel sk-eq">
             <div className="sk-title">
-              <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' ? 'EQUALIZER 均衡器' : '均衡器'}</span>
+              <span className="sk-ver">v{BUILD_TAG}</span>
+            <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' ? 'EQUALIZER 均衡器' : '均衡器'}</span>
               <div className="sk-eq-on">
                 <button className={eqOn ? 'on' : 'off'} title="开关均衡器（真实作用于音频）" onClick={toggleEq}>ON</button>
                 <button onClick={resetEq}>RESET</button>
