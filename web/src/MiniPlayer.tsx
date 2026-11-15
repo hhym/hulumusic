@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react'
+import {THEME_ICON, THEME_LABEL, type Theme} from './theme'
 
 type Track = {id: string; name: string; artist: string; album: string; cover: string; duration: number; source: string; plug?: string}
 
@@ -18,12 +19,14 @@ type Props = {
   onClose: () => void    // ×：直接退出播放器
   onFav: () => void
   onQueue: () => void
+  theme: Theme         // 当前主题（迷你卡直接吃主界面的那套配色变量）
+  onTheme: () => void  // 点主题图标：切到下一档
 }
 
 /* 迷你播放器：窗口缩成一个浮在桌面上的小卡片。
    形态按用户给的截图：左边一枚压在卡片上的圆形封面，
    右边一排图标（收藏／上一首／播放／下一首／列表），
-   最右一列竖排三个按钮：小窗（回桌面界面）／大窗（进皮肤界面）／×（退出播放器）。
+   最右一列竖排四个按钮：主题／小窗（回桌面界面）／大窗（进皮肤界面）／×（退出播放器）。
    卡片配色全部走主题变量，所以橘黄、冷白、深色下都跟主界面一致。
    快捷键：Esc 还原，空格播放暂停。 */
 export default function MiniPlayer(p: Props) {
@@ -158,6 +161,9 @@ export default function MiniPlayer(p: Props) {
         </div>
 
         <div className="mini-tools">
+          <button className="mini-theme" onClick={p.onTheme} title={'主题：' + THEME_LABEL[p.theme] + '（点一下换下一档）'}>
+            <span className="mini-theme-ico">{THEME_ICON[p.theme]}</span>
+          </button>
           <button className="mini-desk" onClick={p.onDesk} title="切到桌面界面">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">

@@ -161,7 +161,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.12'
+const BUILD_TAG = '3.0.14'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -210,6 +210,8 @@ export default function App() {
   const [bulkPl, setBulkPl] = useState<{x: number; y: number} | null>(null)
   const [bulkDel, setBulkDel] = useState(false)
   const [plNewBulk, setPlNewBulk] = useState<Track[] | null>(null)
+  // 歌单重命名：正在改名的歌单 id + 输入框里的临时名字
+  const [plRename, setPlRename] = useState<{id: string, name: string} | null>(null)
   const [loading, setLoading] = useState(false)
   const [err, setErrState] = useState('')
   // 搜索失败若是因为没登录，这里放插件信息，界面上给一个扫码入口
@@ -1005,6 +1007,22 @@ export default function App() {
     setPlNewBulk(null)
     return id
   }
+  // 歌单重命名：空名字视为取消，重名加后缀避免混淆
+  function renamePlaylist(id: string, raw: string) {
+    const nm = raw.trim()
+    setPlRename(null)
+    if (!nm) return
+    setPls((list) => list.map((p) => {
+      if (p.id !== id) return p
+      if (p.name === nm) return p
+      const dup = list.some((q) => q.id !== id && q.name === nm)
+      return {...p, name: dup ? nm + ' (2)' : nm}
+    }))
+  }
+  function commitRename() {
+    if (plRename) renamePlaylist(plRename.id, plRename.name)
+  }
+
   function delPlaylist(id: string) {
     setPls((list) => list.filter((p) => p.id !== id))
     if (plSel === id) setPlSel('')
@@ -1575,12 +1593,25 @@ export default function App() {
                   <button onClick={createFromNew}>建</button>
                 </div>
               )}
-              {pls.map((p) => (
+              {pls.map((p) => plRename?.id === p.id ? (
+                <div key={p.id} className="dn-newpl">
+                  <input autoFocus value={plRename.name} placeholder="歌单名字"
+                         onChange={(e) => setPlRename({id: p.id, name: e.target.value})}
+                         onKeyDown={(e) => {
+                           if (e.key === 'Enter') commitRename()
+                           if (e.key === 'Escape') setPlRename(null)
+                         }} />
+                  <button onClick={commitRename}>存</button>
+                </div>
+              ) : (
                 <button key={p.id} className={'dn-pl' + (plSel === p.id ? ' on' : '')}
-                        onClick={() => openPl(p.id)} title={p.name}>
+                        onClick={() => openPl(p.id)} title={p.name + '（双击名字可改名）'}>
                   <span className="dn-pl-cover">♪</span>
-                  <span className="dn-pl-name">{p.name}</span>
+                  <span className="dn-pl-name"
+                        onDoubleClick={(e) => { e.stopPropagation(); setPlRename({id: p.id, name: p.name}) }}>{p.name}</span>
                   <em>{p.tracks.length}</em>
+                  <span className="dn-pl-ren" title="重命名这个歌单"
+                        onClick={(e) => { e.stopPropagation(); setPlRename({id: p.id, name: p.name}) }}>改</span>
                   <span className={'dn-pl-del' + (plDel === p.id ? ' confirm' : '')}
                         onClick={(e) => { e.stopPropagation(); if (plDel === p.id) delPlaylist(p.id); else setPlDel(p.id) }}>
                     {plDel === p.id ? '删?' : '×'}
@@ -1665,6 +1696,10 @@ export default function App() {
                     <p>{curPl ? `自建歌单 · 共 ${libView.length} 首` : `葫芦音乐 · 本地收藏 · 共 ${libView.length} 首`}</p>
                     <div className="dpl-btns">
                       <button className="dpl-main" disabled={!libView.length} onClick={() => play(libView[0])}>播放全部</button>
+                      {!!curPl && (
+                        <button className="dpl-sub" title="重命名这个歌单"
+                                onClick={() => setPlRename({id: curPl.id, name: curPl.name})}>重命名</button>
+                      )}
                       <button className="dpl-sub" disabled={!libView.length}
                               onClick={() => libView.forEach((t) => enqueue(t))}>批量加入待播</button>
                       <button className={'dpl-sub' + (selMode ? ' on' : '')}
@@ -2039,6 +2074,8 @@ export default function App() {
           }}
           onFav={() => { if (cur) fav(cur) }}
           onQueue={() => { setTab('queue'); toggleMini(false) }}
+          theme={theme}
+          onTheme={() => pickTheme(NEXT_THEME[theme])}
         />
       )}
 

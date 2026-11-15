@@ -10350,6 +10350,9 @@ function NowPlaying(p2) {
     })]
   });
 }
+const THEME_LABEL = { dark: "\u6DF1\u8272", light: "\u6D45\u8272", amber: "\u6A58\u9EC4", teal: "\u6DF1\u9752", green: "\u62A4\u773C\u7EFF" };
+const THEME_ICON = { dark: "\u263E", light: "\u2600", amber: "\u25D0", teal: "\u274B", green: "\u273F" };
+const NEXT_THEME = { light: "green", green: "amber", amber: "teal", teal: "dark", dark: "light" };
 function MiniPlayer(p2) {
   var _a, _b, _c;
   react.exports.useEffect(() => {
@@ -10553,6 +10556,14 @@ function MiniPlayer(p2) {
       }), /* @__PURE__ */ jsxs("div", {
         className: "mini-tools",
         children: [/* @__PURE__ */ jsx("button", {
+          className: "mini-theme",
+          onClick: p2.onTheme,
+          title: "\u4E3B\u9898\uFF1A" + THEME_LABEL[p2.theme] + "\uFF08\u70B9\u4E00\u4E0B\u6362\u4E0B\u4E00\u6863\uFF09",
+          children: /* @__PURE__ */ jsx("span", {
+            className: "mini-theme-ico",
+            children: THEME_ICON[p2.theme]
+          })
+        }), /* @__PURE__ */ jsx("button", {
           className: "mini-desk",
           onClick: p2.onDesk,
           title: "\u5207\u5230\u684C\u9762\u754C\u9762",
@@ -10617,9 +10628,6 @@ function MiniPlayer(p2) {
     })
   });
 }
-const THEME_LABEL = { dark: "\u6DF1\u8272", light: "\u6D45\u8272", amber: "\u6A58\u9EC4", teal: "\u6DF1\u9752", green: "\u62A4\u773C\u7EFF" };
-const THEME_ICON = { dark: "\u263E", light: "\u2600", amber: "\u25D0", teal: "\u274B", green: "\u273F" };
-const NEXT_THEME = { light: "green", green: "amber", amber: "teal", teal: "dark", dark: "light" };
 const qrcode = function(typeNumber, errorCorrectionLevel) {
   const PAD0 = 236;
   const PAD1 = 17;
@@ -13361,6 +13369,7 @@ function App() {
   const [bulkPl, setBulkPl] = react.exports.useState(null);
   const [bulkDel, setBulkDel] = react.exports.useState(false);
   const [plNewBulk, setPlNewBulk] = react.exports.useState(null);
+  const [plRename, setPlRename] = react.exports.useState(null);
   const [loading, setLoading] = react.exports.useState(false);
   const [err, setErrState] = react.exports.useState("");
   const [needLogin, setNeedLogin] = react.exports.useState([]);
@@ -14321,6 +14330,27 @@ function App() {
     setPlName("");
     setPlNewBulk(null);
     return id2;
+  }
+  function renamePlaylist(id2, raw) {
+    const nm = raw.trim();
+    setPlRename(null);
+    if (!nm)
+      return;
+    setPls((list2) => list2.map((p2) => {
+      if (p2.id !== id2)
+        return p2;
+      if (p2.name === nm)
+        return p2;
+      const dup = list2.some((q22) => q22.id !== id2 && q22.name === nm);
+      return {
+        ...p2,
+        name: dup ? nm + " (2)" : nm
+      };
+    }));
+  }
+  function commitRename() {
+    if (plRename)
+      renamePlaylist(plRename.id, plRename.name);
   }
   function delPlaylist(id2) {
     setPls((list2) => list2.filter((p2) => p2.id !== id2));
@@ -15339,18 +15369,56 @@ function App() {
               onClick: createFromNew,
               children: "\u5EFA"
             })]
-          }), pls.map((p2) => /* @__PURE__ */ jsxs("button", {
+          }), pls.map((p2) => (plRename == null ? void 0 : plRename.id) === p2.id ? /* @__PURE__ */ jsxs("div", {
+            className: "dn-newpl",
+            children: [/* @__PURE__ */ jsx("input", {
+              autoFocus: true,
+              value: plRename.name,
+              placeholder: "\u6B4C\u5355\u540D\u5B57",
+              onChange: (e) => setPlRename({
+                id: p2.id,
+                name: e.target.value
+              }),
+              onKeyDown: (e) => {
+                if (e.key === "Enter")
+                  commitRename();
+                if (e.key === "Escape")
+                  setPlRename(null);
+              }
+            }), /* @__PURE__ */ jsx("button", {
+              onClick: commitRename,
+              children: "\u5B58"
+            })]
+          }, p2.id) : /* @__PURE__ */ jsxs("button", {
             className: "dn-pl" + (plSel === p2.id ? " on" : ""),
             onClick: () => openPl(p2.id),
-            title: p2.name,
+            title: p2.name + "\uFF08\u53CC\u51FB\u540D\u5B57\u53EF\u6539\u540D\uFF09",
             children: [/* @__PURE__ */ jsx("span", {
               className: "dn-pl-cover",
               children: "\u266A"
             }), /* @__PURE__ */ jsx("span", {
               className: "dn-pl-name",
+              onDoubleClick: (e) => {
+                e.stopPropagation();
+                setPlRename({
+                  id: p2.id,
+                  name: p2.name
+                });
+              },
               children: p2.name
             }), /* @__PURE__ */ jsx("em", {
               children: p2.tracks.length
+            }), /* @__PURE__ */ jsx("span", {
+              className: "dn-pl-ren",
+              title: "\u91CD\u547D\u540D\u8FD9\u4E2A\u6B4C\u5355",
+              onClick: (e) => {
+                e.stopPropagation();
+                setPlRename({
+                  id: p2.id,
+                  name: p2.name
+                });
+              },
+              children: "\u6539"
             }), /* @__PURE__ */ jsx("span", {
               className: "dn-pl-del" + (plDel === p2.id ? " confirm" : ""),
               onClick: (e) => {
@@ -15564,6 +15632,14 @@ function App() {
                   disabled: !libView.length,
                   onClick: () => play(libView[0]),
                   children: "\u64AD\u653E\u5168\u90E8"
+                }), !!curPl && /* @__PURE__ */ jsx("button", {
+                  className: "dpl-sub",
+                  title: "\u91CD\u547D\u540D\u8FD9\u4E2A\u6B4C\u5355",
+                  onClick: () => setPlRename({
+                    id: curPl.id,
+                    name: curPl.name
+                  }),
+                  children: "\u91CD\u547D\u540D"
                 }), /* @__PURE__ */ jsx("button", {
                   className: "dpl-sub",
                   disabled: !libView.length,
@@ -16331,7 +16407,9 @@ function App() {
       onQueue: () => {
         setTab("queue");
         toggleMini(false);
-      }
+      },
+      theme,
+      onTheme: () => pickTheme(NEXT_THEME[theme])
     }), /* @__PURE__ */ jsx("audio", {
       ref: audio,
       crossOrigin: "anonymous",
@@ -16636,12 +16714,13 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 .mini-ops .mini-play:hover{filter:brightness(1.08);transform:scale(1.05)}
 .mini-ops .mini-play:disabled{background:var(--acc);color:var(--on-acc-text);box-shadow:none;filter:none;opacity:.72}
 
-/* 右列竖排：换皮肤（衣服）／放大还原／关闭。卡片只有 88 高，三个 22 的按钮刚好排满一列 */
-.mini-tools{position:absolute;right:5px;top:5px;display:flex;flex-direction:column;gap:2px}
-.mini-tools button{width:22px;height:22px;border:none;background:transparent;color:var(--dim);
+/* 右列竖排：主题／桌面／皮肤／关闭。卡片只有 88 高，四个 20 的按钮排一列正好 */
+.mini-tools{position:absolute;right:5px;top:4px;display:flex;flex-direction:column;gap:1px}
+.mini-tools button{width:22px;height:20px;border:none;background:transparent;color:var(--dim);
   cursor:pointer;padding:0;border-radius:6px;
   display:flex;align-items:center;justify-content:center;transition:color .12s,background .12s}
 .mini-tools button:hover{color:var(--acc);background:var(--hover)}
+.mini-theme-ico{font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center}
 .mini-btn{border:none;background:transparent;color:var(--dim);cursor:pointer;width:28px;height:28px;
   border-radius:8px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .mini-btn:hover{color:var(--acc);background:var(--hover)}
@@ -18051,6 +18130,11 @@ html[data-theme='dark'] .plug-kind {
 .dn-pl:hover{background:var(--hover)}
 .dn-pl.on{background:var(--sel);font-weight:600}
 .dn-pl em{font-style:normal;font-size:10.5px;color:var(--dim)}
+.dn-pl-ren{margin-left:2px;width:16px;height:16px;flex:0 0 16px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--mut,#8a97a8);
+  background:transparent;opacity:0;transition:opacity .12s,background .12s}
+.dn-pl:hover .dn-pl-ren{opacity:.85}
+.dn-pl-ren:hover{background:rgba(90,150,255,.18);color:#4b8bff;opacity:1}
 .dn-pl-del{margin-left:2px;width:16px;height:16px;flex:0 0 16px;border-radius:9px;
   display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;opacity:0}
 .dn-pl:hover .dn-pl-del{opacity:.85}
@@ -18508,17 +18592,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.12] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.14] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.12] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.14] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.12] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.14] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.12] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.14] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

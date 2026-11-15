@@ -191,12 +191,13 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 .mini-ops .mini-play:hover{filter:brightness(1.08);transform:scale(1.05)}
 .mini-ops .mini-play:disabled{background:var(--acc);color:var(--on-acc-text);box-shadow:none;filter:none;opacity:.72}
 
-/* 右列竖排：换皮肤（衣服）／放大还原／关闭。卡片只有 88 高，三个 22 的按钮刚好排满一列 */
-.mini-tools{position:absolute;right:5px;top:5px;display:flex;flex-direction:column;gap:2px}
-.mini-tools button{width:22px;height:22px;border:none;background:transparent;color:var(--dim);
+/* 右列竖排：主题／桌面／皮肤／关闭。卡片只有 88 高，四个 20 的按钮排一列正好 */
+.mini-tools{position:absolute;right:5px;top:4px;display:flex;flex-direction:column;gap:1px}
+.mini-tools button{width:22px;height:20px;border:none;background:transparent;color:var(--dim);
   cursor:pointer;padding:0;border-radius:6px;
   display:flex;align-items:center;justify-content:center;transition:color .12s,background .12s}
 .mini-tools button:hover{color:var(--acc);background:var(--hover)}
+.mini-theme-ico{font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center}
 .mini-btn{border:none;background:transparent;color:var(--dim);cursor:pointer;width:28px;height:28px;
   border-radius:8px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .mini-btn:hover{color:var(--acc);background:var(--hover)}
@@ -1606,6 +1607,11 @@ html[data-theme='dark'] .plug-kind {
 .dn-pl:hover{background:var(--hover)}
 .dn-pl.on{background:var(--sel);font-weight:600}
 .dn-pl em{font-style:normal;font-size:10.5px;color:var(--dim)}
+.dn-pl-ren{margin-left:2px;width:16px;height:16px;flex:0 0 16px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--mut,#8a97a8);
+  background:transparent;opacity:0;transition:opacity .12s,background .12s}
+.dn-pl:hover .dn-pl-ren{opacity:.85}
+.dn-pl-ren:hover{background:rgba(90,150,255,.18);color:#4b8bff;opacity:1}
 .dn-pl-del{margin-left:2px;width:16px;height:16px;flex:0 0 16px;border-radius:9px;
   display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;opacity:0}
 .dn-pl:hover .dn-pl-del{opacity:.85}
