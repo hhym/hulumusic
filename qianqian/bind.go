@@ -62,6 +62,12 @@ func (x API) ResizeEdge(w any, dir any) (string, error) {
 	return v, errOf(v)
 }
 
+// FitWindowWidth 关歌词秀时把窗口收成一列 320，重开时恢复原宽。
+func (x API) FitWindowWidth(w any) (string, error) {
+	v := x.App.FitWindowWidth(as[int](w))
+	return v, errOf(v)
+}
+
 func (x API) RemovePluginDataDir(id any, name any) (string, error) {
 	v := x.App.RemovePluginDataDir(asStr(id), asStr(name))
 	return v, errOf(v)
