@@ -2415,6 +2415,12 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 
 /* 关掉歌词秀：左区真正铺满整宽，不留右侧空白 */
 .skin-page.only-left{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,100%)!important}
-.skin-page.only-left .sk-col{max-width:none!important;width:100%;margin:0!important;height:100%;min-height:0}
+.skin-page.only-left .sk-col{max-width:none!important;width:100%;margin:0!important;height:100%;min-height:0;min-width:0}
+.skin-page.only-left .sk-col>section{min-width:0}
 .skin-page.only-left .sk-col>section{max-width:none}
 .skin-page.only-left .sk-split{display:none}
+
+/* 底部工具条按钮的激活态（电台/听书/插件现在是底部图标入口） */
+.sk-pbtn.on{border-color:var(--acc2);color:var(--acc2);
+  background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(0,0,0,.04));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}

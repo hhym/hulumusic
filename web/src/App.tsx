@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.28'
+const BUILD_TAG = '3.0.29'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -403,9 +403,24 @@ export default function App() {
   const [showLrc, setShowLrc] = useState(() => {
     try { return localStorage.getItem('qqjt-showlrc') !== '0' } catch { return true }
   })
+  // 关歌词秀后把窗口收成一列 320，不留右侧空白；重新打开时恢复原宽度
+  const fitLrcWidth = (on: boolean) => {
+    try {
+      const app: any = (window as any).go?.main?.App
+      if (on) {
+        let pw = 1190
+        try { pw = Number(localStorage.getItem('qqjt-prev-w') || 1190) || 1190 } catch { /* 忽略 */ }
+        app?.FitWindowWidth?.(Math.max(460, pw))
+      } else {
+        try { localStorage.setItem('qqjt-prev-w', String(Math.round(window.innerWidth))) } catch { /* 忽略 */ }
+        app?.FitWindowWidth?.(320)
+      }
+    } catch { /* 沙箱里没有宿主，忽略 */ }
+  }
   const toggleLrc = () => {
     const next = !showLrc
     setShowLrc(next)
+    fitLrcWidth(next)
     try { localStorage.setItem('qqjt-showlrc', next ? '1' : '0') } catch { /* 忽略 */ }
     // 关掉歌词时人还停在歌词页，就退回首页，别留个空面板
     if (!next && tab === 'lyric') setTab('home')
@@ -1981,10 +1996,7 @@ export default function App() {
             <button className={tab === 'search' ? 'on' : ''} onClick={() => setTab('search')}><Fi n="search" size={12} /><span>搜索</span></button>
             <button className={tab === 'local' ? 'on' : ''}
                     onClick={() => { setTab('local'); G()?.LocalDirs?.().then((d: any) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {}) }}><Fi n="folder" size={12} /><span>乐库</span></button>
-            <button className={tab === 'radio' ? 'on' : ''} onClick={() => setTab('radio')}><Fi n="radio" size={12} /><span>电台</span></button>
-            <button className={tab === 'podcast' ? 'on' : ''} onClick={() => setTab('podcast')}><Fi n="book-open" size={12} /><span>听书</span></button>
             <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}><Fi n="list" size={12} /><span>待播</span></button>
-            <button className={tab === 'plugins' ? 'on' : ''} onClick={() => setTab('plugins')}><Fi n="package" size={12} /><span>插件</span></button>
             <div className="sk-search">
               <Fi n="search" size={12} />
               <input value={q} placeholder="搜歌、歌手" onChange={(e) => setQ(e.target.value)}
@@ -2015,7 +2027,15 @@ export default function App() {
                     }}>
               <Fi n="crosshair" size={13} />
             </button>
-            <button className="sk-pbtn sk-pbtn-ico" title="插件（我的音源插件）"
+            <button className={'sk-pbtn sk-pbtn-ico' + (tab === 'radio' ? ' on' : '')} title="电台"
+                    onClick={() => setTab('radio')}>
+              <Fi n="radio" size={13} />
+            </button>
+            <button className={'sk-pbtn sk-pbtn-ico' + (tab === 'podcast' ? ' on' : '')} title="听书"
+                    onClick={() => setTab('podcast')}>
+              <Fi n="book-open" size={13} />
+            </button>
+            <button className={'sk-pbtn sk-pbtn-ico' + (tab === 'plugins' ? ' on' : '')} title="插件（我的音源插件）"
                     onClick={() => setTab('plugins')}>
               <Fi n="package" size={13} />
             </button>
@@ -2044,7 +2064,8 @@ export default function App() {
                         onClick={switchLyricMode}>{lyricMode === 'karaoke' ? 'K' : '≡'}</button>
                 <button className="sk-wb" title={lyrMax ? '还原歌词秀' : '最大化歌词秀（左侧主区收起）'}
                         onClick={() => setLyrMax(v => !v)}><Fi n={lyrMax ? 'minimize-2' : 'maximize-2'} size={11} /></button>
-                <button className="sk-wb" title="收起歌词" onClick={() => { setShowLrc(false); setLyrMax(false) }}>×</button>
+                <button className="sk-wb" title="收起歌词（窗口收成一列 320）"
+                        onClick={() => { setShowLrc(false); setLyrMax(false); fitLrcWidth(false) }}>×</button>
               </div>
             </div>
             <div className="sk-lyr-body" title="双击放大 / 还原歌词秀"

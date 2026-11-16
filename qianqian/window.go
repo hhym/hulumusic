@@ -71,3 +71,25 @@ func (a *App) ResizeEdge(w int, dir string) string {
 	a.win.SetSize(w, h)
 	return ""
 }
+
+// FitWindowWidth 把窗口宽度改到 w（高度不动），页面关掉歌词秀时收成一列 320 用。
+// w 小于最小宽度时会临时放开下限，宽度回到常规档时再恢复。
+func (a *App) FitWindowWidth(w int) string {
+	if a.win == nil {
+		return "窗口还没准备好"
+	}
+	if w < 240 {
+		w = 240
+	}
+	if w > maxW {
+		w = maxW
+	}
+	if w >= minW {
+		a.win.SetMinimumSize(minW, minH)
+	} else {
+		a.win.SetMinimumSize(0, 0)
+	}
+	_, h := a.win.Size()
+	a.win.SetSize(w, h)
+	return ""
+}
