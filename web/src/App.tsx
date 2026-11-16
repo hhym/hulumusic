@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.26'
+const BUILD_TAG = '3.0.27'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -2047,7 +2047,8 @@ export default function App() {
                 <button className="sk-wb" title="收起歌词" onClick={() => { setShowLrc(false); setLyrMax(false) }}>×</button>
               </div>
             </div>
-            <div className="sk-lyr-body">
+            <div className="sk-lyr-body" title="双击放大 / 还原歌词秀"
+                 onDoubleClick={() => setLyrMax(v => !v)}>
               {lyric.length > 0 ? (
                 <>
                   <div className="song">{cur ? cur.name : ''}</div>
