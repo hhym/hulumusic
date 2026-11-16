@@ -13596,9 +13596,31 @@ function App() {
       return true;
     }
   });
+  const fitLrcWidth = (on) => {
+    var _a2, _b2, _c, _d;
+    try {
+      const app = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
+      if (on) {
+        let pw = 1190;
+        try {
+          pw = Number(localStorage.getItem("qqjt-prev-w") || 1190) || 1190;
+        } catch {
+        }
+        (_c = app == null ? void 0 : app.FitWindowWidth) == null ? void 0 : _c.call(app, Math.max(460, pw));
+      } else {
+        try {
+          localStorage.setItem("qqjt-prev-w", String(Math.round(window.innerWidth)));
+        } catch {
+        }
+        (_d = app == null ? void 0 : app.FitWindowWidth) == null ? void 0 : _d.call(app, 320);
+      }
+    } catch {
+    }
+  };
   const toggleLrc = () => {
     const next = !showLrc;
     setShowLrc(next);
+    fitLrcWidth(next);
     try {
       localStorage.setItem("qqjt-showlrc", next ? "1" : "0");
     } catch {
@@ -16239,24 +16261,6 @@ function App() {
                 children: "\u4E50\u5E93"
               })]
             }), /* @__PURE__ */ jsxs("button", {
-              className: tab === "radio" ? "on" : "",
-              onClick: () => setTab("radio"),
-              children: [/* @__PURE__ */ jsx(Fi, {
-                n: "radio",
-                size: 12
-              }), /* @__PURE__ */ jsx("span", {
-                children: "\u7535\u53F0"
-              })]
-            }), /* @__PURE__ */ jsxs("button", {
-              className: tab === "podcast" ? "on" : "",
-              onClick: () => setTab("podcast"),
-              children: [/* @__PURE__ */ jsx(Fi, {
-                n: "book-open",
-                size: 12
-              }), /* @__PURE__ */ jsx("span", {
-                children: "\u542C\u4E66"
-              })]
-            }), /* @__PURE__ */ jsxs("button", {
               className: tab === "queue" ? "on" : "",
               onClick: () => setTab("queue"),
               children: [/* @__PURE__ */ jsx(Fi, {
@@ -16264,15 +16268,6 @@ function App() {
                 size: 12
               }), /* @__PURE__ */ jsx("span", {
                 children: "\u5F85\u64AD"
-              })]
-            }), /* @__PURE__ */ jsxs("button", {
-              className: tab === "plugins" ? "on" : "",
-              onClick: () => setTab("plugins"),
-              children: [/* @__PURE__ */ jsx(Fi, {
-                n: "package",
-                size: 12
-              }), /* @__PURE__ */ jsx("span", {
-                children: "\u63D2\u4EF6"
               })]
             }), /* @__PURE__ */ jsxs("div", {
               className: "sk-search",
@@ -16338,7 +16333,23 @@ function App() {
                 size: 13
               })
             }), /* @__PURE__ */ jsx("button", {
-              className: "sk-pbtn sk-pbtn-ico",
+              className: "sk-pbtn sk-pbtn-ico" + (tab === "radio" ? " on" : ""),
+              title: "\u7535\u53F0",
+              onClick: () => setTab("radio"),
+              children: /* @__PURE__ */ jsx(Fi, {
+                n: "radio",
+                size: 13
+              })
+            }), /* @__PURE__ */ jsx("button", {
+              className: "sk-pbtn sk-pbtn-ico" + (tab === "podcast" ? " on" : ""),
+              title: "\u542C\u4E66",
+              onClick: () => setTab("podcast"),
+              children: /* @__PURE__ */ jsx(Fi, {
+                n: "book-open",
+                size: 13
+              })
+            }), /* @__PURE__ */ jsx("button", {
+              className: "sk-pbtn sk-pbtn-ico" + (tab === "plugins" ? " on" : ""),
               title: "\u63D2\u4EF6\uFF08\u6211\u7684\u97F3\u6E90\u63D2\u4EF6\uFF09",
               onClick: () => setTab("plugins"),
               children: /* @__PURE__ */ jsx(Fi, {
@@ -16399,10 +16410,11 @@ function App() {
                 })
               }), /* @__PURE__ */ jsx("button", {
                 className: "sk-wb",
-                title: "\u6536\u8D77\u6B4C\u8BCD",
+                title: "\u6536\u8D77\u6B4C\u8BCD\uFF08\u7A97\u53E3\u6536\u6210\u4E00\u5217 320\uFF09",
                 onClick: () => {
                   setShowLrc(false);
                   setLyrMax(false);
+                  fitLrcWidth(false);
                 },
                 children: "\xD7"
               })]
@@ -19032,9 +19044,15 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 
 /* 关掉歌词秀：左区真正铺满整宽，不留右侧空白 */
 .skin-page.only-left{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,100%)!important}
-.skin-page.only-left .sk-col{max-width:none!important;width:100%;margin:0!important;height:100%;min-height:0}
+.skin-page.only-left .sk-col{max-width:none!important;width:100%;margin:0!important;height:100%;min-height:0;min-width:0}
+.skin-page.only-left .sk-col>section{min-width:0}
 .skin-page.only-left .sk-col>section{max-width:none}
 .skin-page.only-left .sk-split{display:none}
+
+/* 底部工具条按钮的激活态（电台/听书/插件现在是底部图标入口） */
+.sk-pbtn.on{border-color:var(--acc2);color:var(--acc2);
+  background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(0,0,0,.04));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
 
 </style>
 </head>
@@ -19068,17 +19086,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.27] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.28] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.27] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.28] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.27] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.28] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.27] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.28] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>
