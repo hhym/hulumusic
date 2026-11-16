@@ -161,7 +161,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.22'
+const BUILD_TAG = '3.0.23'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -363,6 +363,33 @@ export default function App() {
   // 按当前「CSS 可用宽度」决定皮肤界面单列/两列。
   // 用 window.innerWidth 而不是纯 CSS 断点：Windows 125% 缩放下 901px 的窗口只有 720 CSS px，
   // 断点按物理像素判断会一直停在单列（用户看到的就是"没变化"）。
+  // 两列时主区（左列）宽度：默认 230px，可拖中间的分隔条调整，记在 localStorage
+  const [mainW, setMainW] = useState(() => {
+    try { const v = Number(localStorage.getItem('qqjt-main-w')); return Number.isFinite(v) && v >= 160 ? v : 230 } catch { return 230 }
+  })
+  const mainWRef = useState({ v: 0 })[0]
+  useEffect(() => { mainWRef.v = mainW }, [mainW])
+  const startSplit = (e: React.PointerEvent) => {
+    e.preventDefault()
+    const page = (e.currentTarget as HTMLElement).parentElement as HTMLElement | null
+    if (!page) return
+    const left = page.getBoundingClientRect().left
+    document.body.style.userSelect = 'none'
+    const move = (ev: PointerEvent) => {
+      const max = Math.max(200, page.clientWidth - 220)
+      const w = Math.min(Math.max(160, Math.round(ev.clientX - left)), max)
+      mainWRef.v = w
+      setMainW(w)
+    }
+    const up = () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      document.body.style.userSelect = ''
+      try { localStorage.setItem('qqjt-main-w', String(mainWRef.v)) } catch { /* 忽略 */ }
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+  }
   const [skinWide, setSkinWide] = useState(() => (typeof window === 'undefined' ? true : window.innerWidth >= 860))
   useEffect(() => {
     const upd = () => setSkinWide(window.innerWidth >= 860)
@@ -1855,7 +1882,9 @@ export default function App() {
           </section>
         </div>
       ) : (
-      <div className={'skin-page' + (skinWide ? '' : ' one-col') + (showLrc ? '' : ' only-left')}>
+      <div className={'skin-page' + (skinWide ? '' : ' one-col') + (showLrc ? '' : ' only-left')
+                      + (skinWide && mainW < 520 ? ' compact-main' : '')}
+           style={{ ['--sk-main-w' as any]: mainW + 'px' }}>
         <div className="sk-col">
         {/* ── 主窗口 ── */}
         <section className="sk-panel sk-win">
@@ -1875,9 +1904,7 @@ export default function App() {
                 <path d="M9.6 3.2 20.8 14.4 17.6 17.6 6.4 6.4z" />
               </svg>
             </button>
-            <button className="sk-wb sk-set" title="设置（打开设置页）" onClick={() => setTab('settings')}>
-              <span className="sk-gear" aria-hidden="true">⚙</span>
-            </button>
+
             <button className="sk-wb sk-skin-sw" title={'切换皮肤（当前：' + skinName + '）'}
                     onClick={switchSkin}>{SKIN_MARK[skinTheme]}</button>
           </div>
@@ -2047,6 +2074,10 @@ export default function App() {
         </section>
 
         </div>
+        {skinWide && (
+          <div className="sk-split" title="拖动调整主区宽度（双击恢复 230px）" onPointerDown={startSplit}
+               onDoubleClick={() => { setMainW(230); try { localStorage.setItem('qqjt-main-w', '230') } catch { /* 忽略 */ } }} />
+        )}
         <div className="sk-col sk-col-r">
         {/* ── 歌词秀 ── */}
         {showLrc && (

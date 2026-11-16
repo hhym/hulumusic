@@ -1086,7 +1086,13 @@ html[data-theme='dark'] .plug-kind {
 
 /* 皮肤区占满窗口，去掉两侧留白 */
 .skin-page{max-width:none;width:100%;padding:10px;gap:10px;
-  grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+  grid-template-columns:var(--sk-main-w,230px) 7px minmax(0,1fr)}
+/* 两列之间的拖拽分隔条 */
+.sk-split{width:7px;align-self:stretch;cursor:col-resize;border-radius:3px;
+  background:linear-gradient(90deg,rgba(0,0,0,.04),rgba(0,0,0,.22),rgba(0,0,0,.04));
+  touch-action:none;user-select:none}
+.sk-split:hover,.sk-split:active{background:linear-gradient(90deg,rgba(120,160,255,.30),rgba(120,160,255,.78),rgba(120,160,255,.30))}
+.skin-page.one-col .sk-split{display:none}
 /* 歌词从顶部开始排，不再整体垂直居中 */
 .skin .sk-lyr-body{justify-content:flex-start;padding-top:12px}
 .skin .sk-lyr-body .song{margin-top:0;margin-bottom:2px}
@@ -2309,3 +2315,48 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 @media (max-width:300px){
   .sk-pbtn-ico .sk-ico-glyph{font-size:9.5px}
 }
+
+/* ── 两列但左列被拖窄（默认 230px）时的紧凑排版 ── */
+.skin-page.compact-main .sk-body{flex-direction:column;gap:3px;padding:4px 4px 0}
+.skin-page.compact-main .sk-side{width:100%;flex-direction:row;flex-wrap:wrap;gap:2px 6px;align-items:center}
+.skin-page.compact-main .sk-vis{min-height:54px;flex:1 1 54px}
+.skin-page.compact-main .sk-line{font-size:9.5px}
+.skin-page.compact-main .sk-line .v{max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.skin-page.compact-main .sk-status{font-size:8.5px}
+.skin-page.compact-main .sk-mini-btns{gap:2px}
+.skin-page.compact-main .sk-mini-btns button{height:14px;width:26px;font-size:8.5px;padding:0 3px}
+.skin-page.compact-main .sk-title{padding:1px 4px;gap:3px}
+.skin-page.compact-main .sk-title .t{font-size:10.5px}
+.skin-page.compact-main .sk-ver{font-size:8px}
+.skin-page.compact-main .sk-wb{width:16px;height:16px;font-size:8.5px}
+.skin-page.compact-main .sk-seek .tt{font-size:8.5px}
+.skin-page.compact-main .sk-controls{gap:2px;padding:4px 2px 1px}
+.skin-page.compact-main .sk-ctl{width:22px;height:22px;font-size:9.5px}
+.skin-page.compact-main .sk-ctl.big{width:28px;height:28px;font-size:12px}
+.skin-page.compact-main .sk-vol{width:56px;gap:2px}
+.skin-page.compact-main .sk-pl-btn{margin-left:0;height:17px;font-size:8.5px;padding:0 5px}
+.skin-page.compact-main .sk-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:3px}
+.skin-page.compact-main .sk-tools button{height:19px;padding:0 2px;font-size:9px;min-width:0;letter-spacing:-.2px}
+.skin-page.compact-main .sk-tools .sk-search{grid-column:1/-1;display:flex;gap:2px;flex:initial;margin:0;max-width:none;width:auto}
+.skin-page.compact-main .sk-tools .sk-search input{height:19px;font-size:9.5px;padding:0 4px;flex:1 1 auto;min-width:0}
+.skin-page.compact-main .sk-tools .sk-search button{height:19px;padding:0 6px;font-size:9.5px}
+.skin-page.compact-main .sk-eq-body{gap:3px;padding:3px}
+.skin-page.compact-main .sk-eq-row{width:48px;gap:3px}
+.skin-page.compact-main .sk-eq-row .lab{font-size:7.5px}
+.skin-page.compact-main .sk-eq-faders{overflow-x:auto;overflow-y:hidden;padding:9px 2px 2px 14px}
+.skin-page.compact-main .sk-fader{width:12px;min-height:76px}
+.skin-page.compact-main .sk-fader .hz{font-size:5.5px}
+.skin-page.compact-main .sk-eq-faders .scale{left:1px;font-size:6px}
+.skin-page.compact-main .sk-eq-faders .scale span{font-size:6px}
+.skin-page.compact-main .sk-eq-on button{height:13px;font-size:8px;padding:0 3px}
+.skin-page.compact-main .sk-pl .main .page-h1{font-size:14px}
+.skin-page.compact-main .sk-pl .main p{font-size:10px}
+.skin-page.compact-main .sk-pl-foot{padding:2px 3px;gap:3px}
+.skin-page.compact-main .sk-pbtn{min-width:19px;height:16px;font-size:9.5px;padding:0 3px}
+.skin-page.compact-main .sk-pbtn svg{width:10px;height:10px}
+.skin-page.compact-main .sk-lyr-body{padding:4px 5px}
+.skin-page.compact-main .sk-lyr-body .ln{font-size:9.5px;line-height:1.75}
+/* 左列偏窄时推子永远可横滚，不至于被面板裁掉 */
+.skin-page .sk-eq-faders{overflow-x:auto;overflow-y:hidden}
+.skin-page .sk-eq-faders::-webkit-scrollbar{height:5px}
+.skin-page .sk-eq-faders::-webkit-scrollbar-thumb{background:rgba(0,0,0,.3);border-radius:3px}
