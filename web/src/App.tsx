@@ -1994,12 +1994,10 @@ export default function App() {
 
           <div className="sk-tools">
             <button className={tab === 'search' ? 'on' : ''} onClick={() => setTab('search')}>搜索</button>
-            <button className={tab === 'radio' ? 'on' : ''} onClick={() => setTab('radio')}>电台</button>
-            <button className={tab === 'podcast' ? 'on' : ''} onClick={() => setTab('podcast')}>听书</button>
-            <button className={tab === 'library' ? 'on' : ''}
-                    onClick={() => { setTab('library'); call<Track[]>('Library').then((l) => setLib(toArr<Track>(l))) }}>收藏</button>
             <button className={tab === 'local' ? 'on' : ''}
                     onClick={() => { setTab('local'); G()?.LocalDirs?.().then((d: any) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {}) }}>乐库</button>
+            <button className={tab === 'radio' ? 'on' : ''} onClick={() => setTab('radio')}>电台</button>
+            <button className={tab === 'podcast' ? 'on' : ''} onClick={() => setTab('podcast')}>听书</button>
             <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}>待播</button>
             <button className={tab === 'plugins' ? 'on' : ''} onClick={() => setTab('plugins')}>插件</button>
             <button className={tab === 'settings' ? 'on' : ''} onClick={() => setTab('settings')}>设置</button>

@@ -16261,21 +16261,6 @@ function App() {
               onClick: () => setTab("search"),
               children: "\u641C\u7D22"
             }), /* @__PURE__ */ jsx("button", {
-              className: tab === "radio" ? "on" : "",
-              onClick: () => setTab("radio"),
-              children: "\u7535\u53F0"
-            }), /* @__PURE__ */ jsx("button", {
-              className: tab === "podcast" ? "on" : "",
-              onClick: () => setTab("podcast"),
-              children: "\u542C\u4E66"
-            }), /* @__PURE__ */ jsx("button", {
-              className: tab === "library" ? "on" : "",
-              onClick: () => {
-                setTab("library");
-                call("Library").then((l2) => setLib(toArr(l2)));
-              },
-              children: "\u6536\u85CF"
-            }), /* @__PURE__ */ jsx("button", {
               className: tab === "local" ? "on" : "",
               onClick: () => {
                 var _a2, _b2;
@@ -16284,6 +16269,14 @@ function App() {
                 });
               },
               children: "\u4E50\u5E93"
+            }), /* @__PURE__ */ jsx("button", {
+              className: tab === "radio" ? "on" : "",
+              onClick: () => setTab("radio"),
+              children: "\u7535\u53F0"
+            }), /* @__PURE__ */ jsx("button", {
+              className: tab === "podcast" ? "on" : "",
+              onClick: () => setTab("podcast"),
+              children: "\u542C\u4E66"
             }), /* @__PURE__ */ jsx("button", {
               className: tab === "queue" ? "on" : "",
               onClick: () => setTab("queue"),
