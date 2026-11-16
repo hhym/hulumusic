@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.27'
+const BUILD_TAG = '3.0.28'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -1849,7 +1849,7 @@ export default function App() {
         </div>
       ) : (
       <div className={'skin-page' + (skinWide ? '' : ' one-col') + (showLrc ? '' : ' only-left') + (lyrMax ? ' lyr-max' : '')
-                      + (skinWide && mainW < 520 ? ' compact-main' : '')}
+                      + (skinWide && showLrc && !lyrMax && mainW < 520 ? ' compact-main' : '')}
            style={{ ['--sk-main-w' as any]: mainW + 'px' }}>
         <div className="sk-col">
         {/* ── 主窗口 ── */}

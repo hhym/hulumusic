@@ -2391,7 +2391,7 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 }
 
 /* ── 歌词秀：全宽、歌词居中、滚动条贴右边 ── */
-.skin-page .sk-lyr-body{width:100%;max-width:none;box-sizing:border-box;scrollbar-gutter:stable}
+.skin-page .sk-lyr-body,.skin-page .sk-col-r .sk-lyr-body{width:100%;max-width:none;box-sizing:border-box;scrollbar-gutter:stable}
 .skin-page .sk-lyr-body::-webkit-scrollbar{width:8px}
 .skin-page .sk-lyr-body::-webkit-scrollbar-track{background:rgba(255,255,255,.06);border-radius:4px}
 .skin-page .sk-lyr-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.32);border-radius:4px}
@@ -2412,3 +2412,9 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-page.lyr-max .sk-lyr-body .ln.on{font-size:19px}
 .skin-page.lyr-max .sk-lyr-body .song{font-size:16px}
 .skin-page.lyr-max .sk-lyr-body .meta{font-size:12px}
+
+/* 关掉歌词秀：左区真正铺满整宽，不留右侧空白 */
+.skin-page.only-left{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,100%)!important}
+.skin-page.only-left .sk-col{max-width:none!important;width:100%;margin:0!important;height:100%;min-height:0}
+.skin-page.only-left .sk-col>section{max-width:none}
+.skin-page.only-left .sk-split{display:none}
