@@ -2202,3 +2202,75 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .sk-pbtn:hover{filter:brightness(1.08)}
 .sk-pbtn:active{filter:brightness(.94)}
 .skin[data-skin="tt"] .sk-pbtn{color:#3a1a00;border-color:#8a4509;background:linear-gradient(180deg,#ffcf9a,#f0a255)}
+
+/* ── 极窄 230×1043：再压一档 ───────────────────────────── */
+@media (max-width:300px){
+  .skin-page{padding:2px;gap:3px}
+  .skin-page.one-col{padding:2px;gap:3px}
+  .sk-title{padding:1px 3px;gap:2px}
+  .sk-title .t{font-size:10.5px}
+  .sk-ver{display:none}
+  .sk-wb{width:15px;height:15px;font-size:8.5px}
+  .sk-win-mini svg{width:8px;height:8px}
+  .sk-gear{font-size:10px}
+  .sk-title .sk-time{font-size:9px}
+
+  /* 主面板：可视化与右栏改上下排 */
+  .sk-body{flex-direction:column;gap:3px;padding:4px 4px 0}
+  .sk-vis{min-height:54px;flex:1 1 54px}
+  .sk-vis-idle{font-size:8.5px;bottom:2px}
+  .sk-vis-tabs button{font-size:7.5px;padding:1px 3px}
+  .sk-eq-faders::-webkit-scrollbar{height:4px}
+  .sk-eq-faders::-webkit-scrollbar-thumb{background:rgba(0,0,0,.35);border-radius:2px}
+  .sk-side{width:100%;flex-direction:row;flex-wrap:wrap;gap:2px 6px;align-items:center}
+  .sk-line{font-size:9px}
+  .sk-line .v{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sk-status{font-size:8.5px}
+  .sk-mini-btns{gap:2px}
+  .sk-mini-btns button{height:13px;width:24px;font-size:8px;padding:0 3px}
+  .sk-seek .tt{font-size:8px}
+  .sk-controls{gap:2px;padding:3px 2px 1px}
+  .sk-ctl{width:21px;height:21px;font-size:9px}
+  .sk-ctl.big{width:27px;height:27px;font-size:11px}
+  .sk-vol{width:48px;gap:2px}
+  .sk-pl-btn{height:16px;font-size:8px;padding:0 4px}
+
+  /* 工具条：3 列网格 + 搜索框整行 */
+  .sk-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:3px}
+  .sk-tools button{height:19px;padding:0 2px;font-size:9px;min-width:0;letter-spacing:-.2px}
+  .sk-tools .sk-search{grid-column:1/-1;display:flex;gap:2px;flex:initial;margin:0;max-width:none;width:auto}
+  .sk-tools .sk-search input{height:19px;font-size:9.5px;padding:0 4px;flex:1 1 auto;min-width:0}
+  .sk-tools .sk-search button{height:19px;padding:0 6px;font-size:9.5px}
+
+  /* 均衡器：推子横向滚动 */
+  .sk-eq-head{gap:2px;padding:2px 3px}
+  .sk-eq-body{gap:3px;padding:3px}
+  .sk-eq-row{width:46px;gap:3px}
+  .sk-eq-row .lab{font-size:7.5px}
+  .sk-eq-faders{overflow-x:auto;overflow-y:hidden;padding:9px 2px 2px 14px}
+  .sk-fader{width:12px;min-height:74px}
+  .sk-fader .hz{font-size:5.5px}
+  .sk-eq-faders .scale{left:1px;font-size:6px}
+  .sk-eq-faders .scale span{font-size:6px}
+  .sk-eq-on button{height:13px;font-size:8px;padding:0 3px}
+
+  /* 歌词秀 */
+  .skin-page .sk-col-r .sk-lyr{min-height:104px;max-height:30vh}
+  .skin-page .sk-col-r .sk-lyr-body{min-height:88px}
+  .sk-lyr-body{padding:4px 5px}
+  .sk-lyr-body .song{font-size:10px}
+  .sk-lyr-body .meta{font-size:8px;margin-bottom:3px}
+  .sk-lyr-body .ln{font-size:9.5px;line-height:1.75}
+  .sk-lyr-body .ln.on{font-size:11px}
+  .sk-lyr-body .none{font-size:9.5px}
+
+  /* 播放列表内容与底部图标条 */
+  .sk-pl .main{padding:0 2px}
+  .sk-pl .main .page-h1{font-size:14px}
+  .sk-pl .main p{font-size:10px}
+  .sk-pl-foot{padding:2px 3px;gap:3px}
+  .sk-pbtn{min-width:18px;height:16px;font-size:9.5px;padding:0 3px}
+  .sk-pbtn svg{width:10px;height:10px}
+  .sk-tab-bar button, .pl-tabs button{font-size:8.5px;padding:0 3px}
+  .skin-page.one-col .sk-pl{min-height:300px}
+}
