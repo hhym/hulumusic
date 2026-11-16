@@ -3,6 +3,7 @@
 export type Theme = 'dark' | 'light' | 'amber' | 'teal' | 'green'
 
 export const THEME_LABEL: Record<Theme, string> = {dark: '深色', light: '浅色', amber: '橘黄', teal: '深青', green: '护眼绿'}
+export const THEME_ICO = {dark: 'moon', light: 'sunny', amber: 'contrast', teal: 'aperture', green: 'flower'} as const
 export const THEME_ICON: Record<Theme, string> = {dark: '☾', light: '☀', amber: '◐', teal: '❋', green: '✿'}
 // 侧栏那个小按钮点一下换下一个：浅 → 护眼绿 → 橘黄 → 深青 → 深 色 → 浅
 export const NEXT_THEME: Record<Theme, Theme> = {light: 'green', green: 'amber', amber: 'teal', teal: 'dark', dark: 'light'}

@@ -1,5 +1,6 @@
 import {useEffect, useRef, useState} from 'react'
-import {THEME_ICON, THEME_LABEL, type Theme} from './theme'
+import {THEME_ICO, THEME_LABEL, type Theme} from './theme'
+import {Ic} from './icons'
 
 type Track = {id: string; name: string; artist: string; album: string; cover: string; duration: number; source: string; plug?: string}
 
@@ -118,70 +119,39 @@ export default function MiniPlayer(p: Props) {
         <div className="mini-ops">
           <button className={'mini-fav' + (p.inLib ? ' on' : '')} onClick={p.onFav}
                   disabled={!p.cur} title={p.inLib ? '取消收藏' : '收藏'}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 20.7c-.3 0-.6-.1-.8-.3L4.6 14c-1.9-1.8-1.9-4.7 0-6.5 1.8-1.7 4.6-1.7 6.3.1l1.1 1.1 1.1-1.1c1.7-1.8 4.5-1.8 6.3-.1 1.9 1.8 1.9 4.7 0 6.5l-6.6 6.4c-.2.2-.5.3-.8.3z" />
-            </svg>
+            <Ic name="heart" variant="f" size={21} />
           </button>
 
           <button onClick={p.onPrev} title="上一首">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="4.4" y="5" width="2.4" height="14" rx="1.2" />
-              <path d="M19.6 6.2v11.6c0 .9-1 1.4-1.7.9l-8.8-5.8c-.7-.5-.7-1.5 0-2l8.8-5.8c.7-.5 1.7 0 1.7 1z" />
-            </svg>
+            <Ic name="play-skip-back" variant="f" size={19} />
           </button>
 
           <button className="mini-play" onClick={p.onToggle} disabled={!p.cur}
                   title={p.busy ? '取流中' : p.playing ? '暂停' : '播放'}>
-            {p.playing ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6.6" y="4.8" width="3.6" height="14.4" rx="1.2" />
-                <rect x="13.8" y="4.8" width="3.6" height="14.4" rx="1.2" />
-              </svg>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5.6v12.8c0 .8.9 1.3 1.6.9l10-6.4c.6-.4.6-1.3 0-1.7L9.6 4.7C8.9 4.3 8 4.8 8 5.6z" />
-              </svg>
-            )}
+            <Ic name={p.playing ? 'pause' : 'play'} variant="f" size={18} />
           </button>
 
           <button onClick={p.onNext} title="下一首">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="17.2" y="5" width="2.4" height="14" rx="1.2" />
-              <path d="M4.4 6.2v11.6c0 .9 1 1.4 1.7.9l8.8-5.8c.7-.5.7-1.5 0-2L5.9 5.1C5.2 4.6 4.4 5.1 4.4 6.2z" />
-            </svg>
+            <Ic name="play-skip-forward" variant="f" size={19} />
           </button>
 
           <button onClick={p.onQueue} title="待播清单">
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 7h10M4 12h7M4 17h7" />
-              <path d="M17 8.6v6.9l3-1.6" />
-            </svg>
+            <Ic name="list" variant="f" size={20} />
           </button>
         </div>
 
         <div className="mini-tools">
           <button className="mini-theme" onClick={p.onTheme} title={'主题：' + THEME_LABEL[p.theme] + '（点一下换下一档）'}>
-            <span className="mini-theme-ico">{THEME_ICON[p.theme]}</span>
+            <span className="mini-theme-ico"><Ic name={THEME_ICO[p.theme]} size={13} /></span>
           </button>
           <button className="mini-desk" onClick={p.onDesk} title="切到桌面界面">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="6.5" y="6.5" width="11" height="11" rx="2" />
-            </svg>
+            <Ic name="desktop" size={13} />
           </button>
           <button className="mini-skin" onClick={p.onSkin} title="切到皮肤界面">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3.5" y="3.5" width="17" height="17" rx="2.6" />
-              <path d="M3.5 9.5h17M9.5 3.5v17" />
-            </svg>
+            <Ic name="grid" size={13} />
           </button>
           <button className="mini-close" onClick={p.onClose} title="关闭播放器">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 strokeWidth="2.1" strokeLinecap="round">
-              <path d="M7 7l10 10M17 7L7 17" />
-            </svg>
+            <Ic name="close" size={13} />
           </button>
         </div>
       </div>
