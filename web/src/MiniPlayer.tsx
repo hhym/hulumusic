@@ -15,8 +15,6 @@ type Props = {
   onPrev: () => void
   onNext: () => void
   onExpand: () => void   // Esc：还原成桌面窗口
-  onDesk: () => void     // 小窗图标：切到桌面界面
-  onSkin: () => void     // 大窗图标：切到皮肤界面
   onClose: () => void    // ×：直接退出播放器
   onFav: () => void
   onQueue: () => void
@@ -27,7 +25,7 @@ type Props = {
 /* 迷你播放器：窗口缩成一个浮在桌面上的小卡片。
    形态按用户给的截图：左边一枚压在卡片上的圆形封面，
    右边一排图标（收藏／上一首／播放／下一首／列表），
-   最右一列竖排四个按钮：主题／小窗（回桌面界面）／大窗（进皮肤界面）／×（退出播放器）。
+   最右一列竖排两个按钮：主题／×（退出播放器）。
    卡片配色全部走主题变量，所以橘黄、冷白、深色下都跟主界面一致。
    快捷键：Esc 还原，空格播放暂停。 */
 export default function MiniPlayer(p: Props) {
@@ -143,12 +141,6 @@ export default function MiniPlayer(p: Props) {
         <div className="mini-tools">
           <button className="mini-theme" onClick={p.onTheme} title={'主题：' + THEME_LABEL[p.theme] + '（点一下换下一档）'}>
             <span className="mini-theme-ico">{THEME_ICON[p.theme]}</span>
-          </button>
-          <button className="mini-desk" onClick={p.onDesk} title="切到桌面界面">
-            <Fi n="layout" size={13} />
-          </button>
-          <button className="mini-skin" onClick={p.onSkin} title="切到皮肤界面">
-            <Fi n="layers" size={13} />
           </button>
           <button className="mini-close" onClick={p.onClose} title="关闭播放器">
             <Fi n="x" size={13} />

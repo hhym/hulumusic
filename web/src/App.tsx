@@ -33,7 +33,7 @@ type Playlist = {id: string; name: string; tracks: Track[]; at?: Record<string, 
 // 一条能拖动的顶部条 + 最小化/关闭两个按钮。Wails 版没有 window.mygo，不受影响。
 const MYGO_HOST = typeof (window as any).mygo !== 'undefined'
 
-// mygo-music 里葫芦界面是"加装"的：原生桌面界面原样不动，皮肤和迷你卡各开
+// 桌面版单窗口：左侧导航 + 右侧内容 + 底部播放条；迷你卡是同一页面的缩小形态。
 // 一个它自己的窗口。这些窗口靠 URL 参数区分自己是谁——windowed=1 表示"我是
 // 附带的窗口，× 只关我自己"，mini=1 表示"一打开就是迷你卡"。
 const START_PARAMS = (() => {
@@ -61,7 +61,7 @@ function markMygoHost() {
 // mygo 内置的窗口命令；预置 350ms 兜底，任一成功窗口就没了。
 function closeApp() {
   const w: any = window
-  // 附带窗口（葫芦皮肤 / 迷你卡）关掉自己就够，绝不能退出整个 mygo-music。
+  // 迷你卡只是本页面的一个形态，关掉自己就够，绝不能退出整个应用。
   if (OWNED_WIN) {
     try { w.mygo?.runtime?.window?.close?.() } catch { /* 忽略 */ }
     return
@@ -83,7 +83,7 @@ function minimizeApp() {
 markMygoHost()
 markOwnedWin()
 
-// 3.0 的默认外观：皮肤界面「天蓝玻璃」，桌面界面「浅色」。
+// 3.0 的默认外观：桌面界面「浅色」。
 // 老用户的 localStorage 里存的是旧默认（紫夜 / 橘黄），只改 fallback 对他们完全不生效，
 // 所以做一次性的默认外观迁移：标记不存在才覆盖一次，之后用户自己选的就不再动。
 function applyDefaultLookOnce() {
@@ -283,16 +283,7 @@ export default function App() {
   // 用 body 上的 class 而不是 CSS :has()，老一点的 WebView2 也认。
   useEffect(() => { document.body.classList.toggle('qq-mini', mini) }, [mini])
   const [volume, setVolumeState] = useState(0.5)
-  // 启动一律进桌面界面（主面板），皮肤界面是按钮进去的附属视图，不做启动态
-  const [layout, setLayout] = useState<'skin' | 'desk'>('desk')
-  function switchLayout(l: 'skin' | 'desk') {
-    setLayout(l)
-    // 「歌词」是桌面版专属视图，切回皮肤时退回搜索结果，避免落在皮肤列表里
-    if (l === 'skin' && tab === 'lyric') setTab('search')
-    try { localStorage.setItem('qqjt-layout', l) } catch { /* 忽略 */ }
-  }
   const [shuffle, setShuffle] = useState(false)
-  const [showEq, setShowEq] = useState(true)
   // 均衡器：10 段增益（dB）、前置增益、开关与预设序号
   const eqRef = useRef<Equalizer | null>(null)
   const [eqOn, setEqOn] = useState(false)
@@ -359,72 +350,6 @@ export default function App() {
     setEqGains(EQ_PRESETS[i].gains.slice())
   }
 
-  // 皮肤界面默认展开歌词秀（参照 TTPLAYER 那套四块面板的样张）；
-  // 用户手动收起过（存了 '0'）就尊重用户的选择。
-  // 按当前「CSS 可用宽度」决定皮肤界面单列/两列。
-  // 用 window.innerWidth 而不是纯 CSS 断点：Windows 125% 缩放下 901px 的窗口只有 720 CSS px，
-  // 断点按物理像素判断会一直停在单列（用户看到的就是"没变化"）。
-  // 两列时主区（左列）宽度：默认 230px，可拖中间的分隔条调整，记在 localStorage
-  const [mainW, setMainW] = useState(() => {
-    try { const v = Number(localStorage.getItem('qqjt-main-w')); return Number.isFinite(v) && v >= 160 ? v : 230 } catch { return 230 }
-  })
-  const mainWRef = useState({ v: 0 })[0]
-  useEffect(() => { mainWRef.v = mainW }, [mainW])
-  const startSplit = (e: React.PointerEvent) => {
-    e.preventDefault()
-    const page = (e.currentTarget as HTMLElement).parentElement as HTMLElement | null
-    if (!page) return
-    const left = page.getBoundingClientRect().left
-    document.body.style.userSelect = 'none'
-    const move = (ev: PointerEvent) => {
-      const max = Math.max(200, page.clientWidth - 220)
-      const w = Math.min(Math.max(160, Math.round(ev.clientX - left)), max)
-      mainWRef.v = w
-      setMainW(w)
-    }
-    const up = () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      document.body.style.userSelect = ''
-      try { localStorage.setItem('qqjt-main-w', String(mainWRef.v)) } catch { /* 忽略 */ }
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
-  }
-  const [skinWide, setSkinWide] = useState(() => (typeof window === 'undefined' ? true : window.innerWidth >= 860))
-  useEffect(() => {
-    const upd = () => setSkinWide(window.innerWidth >= 860)
-    upd()
-    window.addEventListener('resize', upd)
-    return () => window.removeEventListener('resize', upd)
-  }, [])
-
-  const [lyrMax, setLyrMax] = useState(false)
-  const [showLrc, setShowLrc] = useState(() => {
-    try { return localStorage.getItem('qqjt-showlrc') !== '0' } catch { return true }
-  })
-  // 关歌词秀后把窗口收成一列 320，不留右侧空白；重新打开时恢复原宽度
-  const fitLrcWidth = (on: boolean) => {
-    try {
-      const app: any = (window as any).go?.main?.App
-      if (on) {
-        let pw = 1190
-        try { pw = Number(localStorage.getItem('qqjt-prev-w') || 1190) || 1190 } catch { /* 忽略 */ }
-        app?.FitWindowWidth?.(Math.max(460, pw))
-      } else {
-        try { localStorage.setItem('qqjt-prev-w', String(Math.round(window.innerWidth))) } catch { /* 忽略 */ }
-        app?.FitWindowWidth?.(320)
-      }
-    } catch { /* 沙箱里没有宿主，忽略 */ }
-  }
-  const toggleLrc = () => {
-    const next = !showLrc
-    setShowLrc(next)
-    fitLrcWidth(next)
-    try { localStorage.setItem('qqjt-showlrc', next ? '1' : '0') } catch { /* 忽略 */ }
-    // 关掉歌词时人还停在歌词页，就退回首页，别留个空面板
-    if (!next && tab === 'lyric') setTab('home')
-  }
   // 歌词秀模式：karaoke = 卡拉OK 两行；scroll = 整段滚动（当前行同样逐字填充）
   const [lyricMode, setLyricMode] = useState<'karaoke' | 'scroll'>(() => {
     return localStorage.getItem('qqjt-lrcmode') === 'scroll' ? 'scroll' : 'karaoke'
@@ -434,41 +359,7 @@ export default function App() {
     setLyricMode(next)
     localStorage.setItem('qqjt-lrcmode', next)
   }
-  type Skin = 'winamp' | 'tt' | 'light' | 'glass' | 'hifi' | 'steel' | 'green'
-  const SKIN_ORDER: Skin[] = ['winamp', 'tt', 'light', 'glass', 'hifi', 'steel', 'green']
-  const [skinTheme, setSkinTheme] = useState<Skin>(() => {
-    const v = localStorage.getItem('qqjt-skin')
-    return SKIN_ORDER.includes(v as Skin) ? (v as Skin) : 'glass'
-  })
-  // 皮肤只给「皮肤界面」定外观，主题给「桌面 + 迷你」定配色。两套本来是平行维度，
-  // 各切各的就会出现「桌面橘黄 + 皮肤深紫」这种不搭的组合，所以做成联动：
-  // 切皮肤把主题拉到最搭的那档，切主题把皮肤换成对应款式，三个界面始终是一套。
-  const SKIN_THEME: Record<Skin, Theme> = {winamp: 'dark', tt: 'amber', light: 'light', glass: 'light', hifi: 'dark', steel: 'light', green: 'green'}
-  const THEME_SKIN: Record<Theme, Skin> = {dark: 'winamp', amber: 'tt', light: 'light', teal: 'hifi', green: 'green'}
-  const applySkin = (s: Skin) => {
-    setSkinTheme(s)
-    try { localStorage.setItem('qqjt-skin', s) } catch { /* 忽略 */ }
-  }
-  const pickTheme = (t: Theme) => {
-    setTheme(t)
-    applySkin(THEME_SKIN[t])
-  }
-  const switchSkin = () => {
-    const next = SKIN_ORDER[(SKIN_ORDER.indexOf(skinTheme) + 1) % SKIN_ORDER.length]
-    applySkin(next)
-    setTheme(SKIN_THEME[next])
-  }
-  const SKIN_NAME: Record<Skin, string> = {
-    winamp: '紫夜 Winamp',
-    tt: '亮橙',
-    light: '冷白浅蓝',
-    glass: '天蓝玻璃',
-    hifi: 'HiFi 银灰深绿',
-    steel: 'Steel 银白绿',
-    green: '护眼绿',
-  }
-  const SKIN_MARK: Record<Skin, string> = {winamp: '◆', tt: '●', light: '○', glass: '◉', hifi: '◈', steel: '▣', green: '✿'}
-  const skinName = SKIN_NAME[skinTheme]
+  const pickTheme = (t: Theme) => setTheme(t)
   const [repeatOne, setRepeatOne] = useState(false)
   // 播放队列（上一首 / 下一首）
   // 播放队列（上一首 / 下一首 / 播放列表页都用它）
@@ -1283,7 +1174,7 @@ export default function App() {
                 <span>时长</span>
                 <span />
                 <span />
-                {layout === 'desk' && <span />}
+                <span />
               </div>
               {localTracks.map((t, i) => (
                 <div key={t.id + i} className={'row' + (cur?.id === t.id ? ' on' : '')}>
@@ -1298,15 +1189,13 @@ export default function App() {
                   <span className="dur">{fmt(t.duration)}</span>
                   <button className="add" onClick={() => enqueue(t)} title="加入待播"><Fi n="plus" size={12} /></button>
                   <button className={'heart' + (lib.some((x) => x.id === t.id) ? ' on' : '')} onClick={() => fav(t)}>♥</button>
-                  {layout === 'desk' && (
-                    <button className="addpl" title="加入自建歌单"
-                            onClick={(e) => {
-                              const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                              setPlMenu({t, x: Math.max(8, Math.min(r.left - 196, window.innerWidth - 204)), y: r.bottom + 6})
-                            }}>
-                      <Fi n="folder" size={13} />
-                    </button>
-                  )}
+                  <button className="addpl" title="加入自建歌单"
+                          onClick={(e) => {
+                            const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                            setPlMenu({t, x: Math.max(8, Math.min(r.left - 196, window.innerWidth - 204)), y: r.bottom + 6})
+                          }}>
+                    <Fi n="folder" size={13} />
+                  </button>
                 </div>
               ))}
             </div>
@@ -1451,7 +1340,7 @@ export default function App() {
                 <span>时长</span>
                 <span />
                 <span />
-                {layout === 'desk' && <span />}
+                <span />
               </div>
               {loading && <div className="empty">加载中…</div>}
           {!loading && shown.length === 0 && <div className="empty">还没有内容</div>}
@@ -1492,7 +1381,7 @@ export default function App() {
               {t.source !== 'radio' && t.source !== 'pod' && (
                 <button className={'heart' + (lib.some((x) => x.id === t.id) ? ' on' : '')} onClick={() => fav(t)}>♥</button>
               )}
-              {layout === 'desk' && t.source !== 'radio' && (
+              {t.source !== 'radio' && (
                 <button className="addpl" title="加入自建歌单"
                         onClick={(e) => {
                           const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
@@ -1510,7 +1399,7 @@ export default function App() {
   )
 
   return (
-    <div className={'app' + (layout === 'desk' ? ' desk-mode' : ' skin') + (mini ? ' mini-mode' : '')} data-skin={skinTheme}>
+    <div className={'app desk-mode' + (mini ? ' mini-mode' : '')}>
       {!mini && (
         <>
           <div className="edge-resize left" title="拖这里改宽" onPointerDown={(e) => startEdgeResize('left', e)} />
@@ -1534,8 +1423,7 @@ export default function App() {
           </div>
         </>
       )}
-      {layout === 'desk' ? (
-        <div className="desk">
+      <div className="desk">
           <aside className="desk-nav">
             {/* 品牌位换成音源翻页器：左右箭头循环切换插件，中间显示当前音源，点它进首页 */}
             <div className="dn-user dnp">
@@ -1676,7 +1564,6 @@ export default function App() {
               <button title="插件" onClick={() => setTab('plugins')}><Fi n="package" size={14} /></button>
               <button title="设置" onClick={() => setTab('settings')}><Fi n="settings" size={14} /></button>
               <button className="dn-theme" onClick={() => pickTheme(NEXT_THEME[theme])} title={'主题：' + THEME_LABEL[theme]}>{THEME_ICON[theme]}</button>
-              <button className="dn-skin" onClick={() => switchLayout('skin')} title="切到皮肤界面"><Fi n="layers" size={14} /></button>
             </div>
           </aside>
 
@@ -1699,9 +1586,6 @@ export default function App() {
                 </button>
                 <button className="ghost-btn icon-only" onClick={() => toggleMini(true)} title="小窗口模式">
                   <Fi n="minimize-2" size={14} />
-                </button>
-                <button className="ghost-btn icon-only" onClick={() => switchLayout('skin')} title="切回皮肤界面">
-                  <Fi n="layers" size={15} />
                 </button>
               </div>
             </div>
@@ -1862,258 +1746,6 @@ export default function App() {
                         )}
           </section>
         </div>
-      ) : (
-      <div className={'skin-page' + (skinWide ? '' : ' one-col') + (showLrc ? '' : ' only-left') + (lyrMax ? ' lyr-max' : '')
-                      + (skinWide && showLrc && !lyrMax && mainW < 520 ? ' compact-main' : '')}
-           style={{ ['--sk-main-w' as any]: mainW + 'px' }}>
-        <div className="sk-col">
-        {/* ── 主窗口 ── */}
-        <section className="sk-panel sk-win">
-          <div className="sk-title">
-            <img src={logoHulu} alt="" />
-            <span className="t">千千静听</span>
-            <span className="sk-time" style={{ marginLeft: 'auto' }}>{isLive ? 'LIVE' : fmt(pos)}</span>
-            <button className="sk-wb" title="切换到桌面界面（左侧竖排导航 + 底部播放条）"
-                    onClick={() => switchLayout('desk')}><Fi n="layout" size={11} /></button>
-            <button className="sk-wb sk-win-mini" title="小窗口模式（缩成迷你条并置顶，按 Esc 或条上按钮还原）"
-                    onClick={() => toggleMini(true)}>
-              <Fi n="minimize-2" size={11} />
-            </button>
-
-            <button className="sk-wb sk-skin-sw" title={'切换皮肤（当前：' + skinName + '）'}
-                    onClick={switchSkin}><Fi n="layers" size={13} /></button>
-          </div>
-
-          <div className="sk-body">
-            <Visualizer ensure={ensureVis} playing={playing} />
-            <div className="sk-side">
-              <div className="sk-line"><span className="k">艺术家</span><span className="v">{cur ? (cur.artist || '未知艺人') : '—'}</span></div>
-              <div className="sk-line"><span className="k">曲目</span><span className="v">{cur ? cur.name : '未在播放'}</span></div>
-              <div className="sk-status">
-                <span className={'sk-led' + (playing ? '' : ' off')} />
-                <span>状态: {playing ? '播放' : '暂停'} {isLive ? '直播' : '立体声'}</span>
-              </div>
-              <div className="sk-mini-btns">
-                <button className="on" title="播放列表" onClick={() => setTab('search')}><Fi n="search" size={13} /></button>
-                <button className={showEq ? 'on' : ''} title="均衡器" onClick={() => setShowEq(!showEq)}><Fi n="sliders" size={13} /></button>
-                <button className={showLrc ? 'on' : ''} title="歌词秀" onClick={toggleLrc}><Fi n="type" size={13} /></button>
-              </div>
-            </div>
-          </div>
-
-          {isLive ? (
-            <div className="sk-seek"><span className="tt">直播中</span></div>
-          ) : (
-            <div className="sk-seek">
-              <span className="tt">{fmt(pos)}</span>
-              <input type="range" min={0} max={dur || 1} value={Math.min(pos, dur || 1)}
-                     onChange={(e) => { const a = audio.current; if (a) a.currentTime = Number(e.target.value) / 1000 }} />
-              <span className="tt">{fmt(dur)}</span>
-            </div>
-          )}
-
-          <div className="sk-controls">
-            <button className="sk-ctl" title="停止" disabled={!cur}
-                    onClick={() => { const a = audio.current; if (a) { a.pause(); a.currentTime = 0 } setPlaying(false); setPos(0) }}><Fi n="square" size={13} /></button>
-            <button className="sk-ctl" title="上一首" disabled={!cur || busy} onClick={() => step(-1)}><Fi n="skip-back" size={13} /></button>
-            <button className="sk-ctl big play" title={playing ? '暂停' : '播放'} disabled={!cur} onClick={toggle}><Fi n={FN(playing ? 'pause' : 'play')} size={17} /></button>
-            <button className="sk-ctl big" title="下一首" disabled={!cur || busy} onClick={() => step(1)}><Fi n="skip-forward" size={13} /></button>
-            <div className="sk-vol">
-              <button className="sk-ctl" style={{ width: 22, height: 22, fontSize: 10 }} title={volume > 0 ? '静音' : '恢复音量'}
-                      onClick={() => setVolumeState(volume > 0 ? 0 : 0.5)}><Fi n={FN(volume > 0 ? 'volume-high' : 'volume-mute')} size={13} /></button>
-              <input type="range" min={0} max={1} step={0.01} value={volume}
-                     onChange={(e) => setVolumeState(Number(e.target.value))} />
-            </div>
-            <button className="sk-pl-btn" title="音乐窗" onClick={() => cur && setNpOpen(true)}><Fi n="disc" size={12} /><span>音乐窗</span></button>
-          </div>
-        </section>
-
-        {/* ── 均衡器 ── */}
-        {showEq && (
-          <section className="sk-panel sk-eq">
-            <div className="sk-title">
-              <span className="sk-ver">v{BUILD_TAG}</span>
-            <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' ? 'EQUALIZER 均衡器' : '均衡器'}</span>
-              <div className="sk-eq-on">
-                <button className={eqOn ? 'on' : 'off'} title="开关均衡器（真实作用于音频）" onClick={toggleEq}>ON</button>
-                <button onClick={resetEq}>RESET</button>
-                <button title={eqPreset >= 0 ? '当前预设：' + EQ_PRESETS[eqPreset].name : '预设'} onClick={nextPreset}>PRESETS</button>
-              </div>
-              <div className="sk-win-btns">
-                <button className="sk-wb" title="收起均衡器" onClick={() => setShowEq(false)}><Fi n="x" size={13} /></button>
-              </div>
-            </div>
-            <div className="sk-eq-body">
-              <div className="sk-eq-row">
-                <div className="lab">前置放大</div>
-                <input type="range" min={0.2} max={2} step={0.01} value={preamp}
-                       onChange={(e) => setPreamp(Number(e.target.value))} />
-                <div className="lab">音量</div>
-                <input type="range" min={0} max={1} step={0.01} value={volume}
-                       onChange={(e) => setVolumeState(Number(e.target.value))} />
-              </div>
-              <div className="sk-eq-faders">
-                <div className="scale"><span>+12dB</span><span>0dB</span><span>−12dB</span></div>
-                {EQ_FREQS.map((f, i) => {
-                  const g = eqGains[i] || 0
-
-  return (
-                    <div className="sk-fader" key={f}>
-                      <input className="sk-fader-in" type="range" min={-12} max={12} step={1} value={g}
-                             title={(f >= 1000 ? (f / 1000) + 'k' : f) + 'Hz  ' + (g > 0 ? '+' : '') + g + 'dB'}
-                             onChange={(e) => {
-                               const v = Number(e.target.value)
-                               setEqGains((prev) => prev.map((x, k) => (k === i ? v : x)))
-                               setEqPreset(-1)
-                             }} />
-                      <div className="track">
-                        <span className="knob" style={{ bottom: ((g + 12) / 24) * 100 + '%' }} />
-                      </div>
-                      <div className="hz">{f >= 1000 ? f / 1000 + 'k' : f}</div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ── 播放列表 ── */}
-        <section className="sk-panel sk-pl">
-          <div className="sk-title">
-            <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' ? 'PLAYLIST 播放列表' : '播放列表'}</span>
-            <span style={{ fontSize: 10.5, color: '#b7bff0' }}>
-              {tab === 'local' ? localTracks.length : tab === 'library' ? lib.length : tab === 'queue' ? queue.list.length : shown.length} 首
-            </span>
-            <div className="sk-win-btns">
-              <button className="sk-wb sk-win-mini" title="小窗口模式" onClick={() => toggleMini(true)}>
-                <Fi n="minimize-2" size={10} />
-              </button>
-            </div>
-          </div>
-
-          <div className="sk-tools">
-            <button className={tab === 'search' ? 'on' : ''} onClick={() => setTab('search')}><Fi n="search" size={12} /><span>搜索</span></button>
-            <button className={tab === 'local' ? 'on' : ''}
-                    onClick={() => { setTab('local'); G()?.LocalDirs?.().then((d: any) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {}) }}><Fi n="folder" size={12} /><span>乐库</span></button>
-            <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}><Fi n="list" size={12} /><span>待播</span></button>
-            <div className="sk-search">
-              <Fi n="search" size={12} />
-              <input value={q} placeholder="搜歌、歌手" onChange={(e) => setQ(e.target.value)}
-                     onKeyDown={(e) => e.key === 'Enter' && doSearch()} />
-              <button onClick={doSearch} disabled={loading}>{loading ? '…' : '搜'}</button>
-            </div>
-          </div>
-
-      {contentArea}
-
-          <div className="sk-pl-foot" title="播放列表快捷操作">
-            <button className="sk-pbtn sk-pbtn-M" title="乐库（本地歌曲）"
-                    onClick={() => { setTab('local'); G()?.LocalDirs?.().then((d: any) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {}) }}><Fi n="folder" size={13} /></button>
-            <button className="sk-pbtn" title="待播歌单"
-                    onClick={() => setTab('queue')}>
-              <Fi n="clipboard" size={13} />
-            </button>
-            <button className="sk-pbtn" title="定位当前歌曲"
-                    onClick={() => {
-                      setTab('queue')
-                      window.setTimeout(() => {
-                        const main = document.querySelector('.sk-pl .main') as HTMLElement | null
-                        if (!main) return
-                        const g = main.querySelector('.q-group') as HTMLElement | null
-                        if (g) g.scrollIntoView({ block: 'start', behavior: 'smooth' })
-                        else main.scrollTop = 0
-                      }, 180)
-                    }}>
-              <Fi n="crosshair" size={13} />
-            </button>
-            <button className={'sk-pbtn sk-pbtn-ico' + (tab === 'radio' ? ' on' : '')} title="电台"
-                    onClick={() => setTab('radio')}>
-              <Fi n="radio" size={13} />
-            </button>
-            <button className={'sk-pbtn sk-pbtn-ico' + (tab === 'podcast' ? ' on' : '')} title="听书"
-                    onClick={() => setTab('podcast')}>
-              <Fi n="book-open" size={13} />
-            </button>
-            <button className={'sk-pbtn sk-pbtn-ico' + (tab === 'plugins' ? ' on' : '')} title="插件（我的音源插件）"
-                    onClick={() => setTab('plugins')}>
-              <Fi n="package" size={13} />
-            </button>
-            <button className="sk-pbtn sk-pbtn-ico" title="设置"
-                    onClick={() => setTab('settings')}>
-              <Fi n="settings" size={13} />
-            </button>
-          </div>
-        </section>
-
-        </div>
-        {skinWide && (
-          <div className="sk-split" title="拖动调整主区宽度（双击恢复 230px）" onPointerDown={startSplit}
-               onDoubleClick={() => { setMainW(230); try { localStorage.setItem('qqjt-main-w', '230') } catch { /* 忽略 */ } }} />
-        )}
-        <div className="sk-col sk-col-r">
-        {/* ── 歌词秀 ── */}
-        {showLrc && (
-          <section className="sk-panel sk-lyr">
-            <div className="sk-title">
-              <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' ? 'LYRIC 歌词秀' : '歌词秀'}</span>
-              <span style={{ fontSize: 10.5, color: '#b7bff0' }}>{isLive ? '电台无歌词' : ''}</span>
-              <div className="sk-win-btns">
-                <button className="sk-wb sk-lrc-mode"
-                        title={lyricMode === 'karaoke' ? '当前：卡拉OK 两行（点击切整段滚动）' : '当前：整段滚动（点击切卡拉OK 两行）'}
-                        onClick={switchLyricMode}>{lyricMode === 'karaoke' ? 'K' : '≡'}</button>
-                <button className="sk-wb" title={lyrMax ? '还原歌词秀' : '最大化歌词秀（左侧主区收起）'}
-                        onClick={() => setLyrMax(v => !v)}><Fi n={lyrMax ? 'minimize-2' : 'maximize-2'} size={11} /></button>
-                <button className="sk-wb" title="收起歌词（窗口收成一列 320）"
-                        onClick={() => { setShowLrc(false); setLyrMax(false); fitLrcWidth(false) }}>×</button>
-              </div>
-            </div>
-            <div className="sk-lyr-body" title="双击放大 / 还原歌词秀"
-                 onDoubleClick={() => setLyrMax(v => !v)}>
-              {lyric.length > 0 ? (
-                <>
-                  <div className="song">{cur ? cur.name : ''}</div>
-                  <div className="meta">{cur ? ((cur.artist || '') + (cur.album ? ' · ' + cur.album : '')) : ''}</div>
-                  {lyricMode === 'karaoke' ? (
-                    <div className="kara">
-                      <div className="krow now">
-                        {curIndex >= 0 && lyric[curIndex] ? (
-                          <span className="kowrap">
-                            <span className="kbase">{lyric[curIndex].text}</span>
-                            <span className="kfill" style={{ width: (kProgress * 100) + '%' }}>{lyric[curIndex].text}</span>
-                          </span>
-                        ) : (
-                          <span className="kbase"> </span>
-                        )}
-                      </div>
-                      <div className="krow next">
-                        {curIndex >= 0 && lyric[curIndex + 1] ? lyric[curIndex + 1].text : ' '}
-                      </div>
-                    </div>
-                  ) : (
-                    lyric.map((l, k) => (
-                      k === curIndex ? (
-                        <div key={k} className="ln on">
-                          <span className="kowrap">
-                            <span className="kbase">{l.text}</span>
-                            <span className="kfill" style={{ width: (kProgress * 100) + '%' }}>{l.text}</span>
-                          </span>
-                        </div>
-                      ) : (
-                        <div key={k} className="ln">{l.text}</div>
-                      )
-                    ))
-                  )}
-                </>
-              ) : (
-                <div className="none">{busy ? '取流中…' : (cur ? '这首歌还没有歌词' : '选一首歌开始')}</div>
-              )}
-            </div>
-          </section>
-        )}
-        </div>
-      </div>
-      )}
 
       {mini && (
         <MiniPlayer
@@ -2127,8 +1759,6 @@ export default function App() {
           onPrev={() => step(-1)}
           onNext={() => step(1)}
           onExpand={() => toggleMini(false)}
-          onDesk={() => { toggleMini(false); switchLayout('desk') }}
-          onSkin={() => { toggleMini(false); switchLayout('skin') }}
           onClose={() => {
             // 迷你卡的 × 是真退出：Esc 才是还原窗口，两个不要混
             try { (window as any).go?.main?.App?.Quit?.() } catch { /* 忽略 */ }

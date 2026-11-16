@@ -10620,22 +10620,6 @@ function MiniPlayer(p2) {
             children: THEME_ICON[p2.theme]
           })
         }), /* @__PURE__ */ jsx("button", {
-          className: "mini-desk",
-          onClick: p2.onDesk,
-          title: "\u5207\u5230\u684C\u9762\u754C\u9762",
-          children: /* @__PURE__ */ jsx(Fi, {
-            n: "layout",
-            size: 13
-          })
-        }), /* @__PURE__ */ jsx("button", {
-          className: "mini-skin",
-          onClick: p2.onSkin,
-          title: "\u5207\u5230\u76AE\u80A4\u754C\u9762",
-          children: /* @__PURE__ */ jsx(Fi, {
-            n: "layers",
-            size: 13
-          })
-        }), /* @__PURE__ */ jsx("button", {
           className: "mini-close",
           onClick: p2.onClose,
           title: "\u5173\u95ED\u64AD\u653E\u5668",
@@ -12682,15 +12666,6 @@ function PluginHome({
   });
 }
 const EQ_FREQS = [31, 62, 125, 250, 500, 1e3, 2e3, 4e3, 8e3, 16e3];
-const EQ_PRESETS = [
-  { name: "\u5E73\u76F4", gains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
-  { name: "\u6D41\u884C", gains: [-1, 0, 2, 3, 2, 0, -1, -1, 0, 0] },
-  { name: "\u6447\u6EDA", gains: [3, 3, 1, 0, -1, 0, 1, 2, 3, 2] },
-  { name: "\u7235\u58EB", gains: [2, 1, 0, -1, -1, 0, 1, 2, 3, 3] },
-  { name: "\u53E4\u5178", gains: [0, 1, 2, 2, 1, 0, -1, -1, 0, 1] },
-  { name: "\u4EBA\u58F0", gains: [-2, -1, 0, 2, 4, 4, 3, 1, -1, -2] },
-  { name: "\u4F4E\u97F3\u52A0\u91CD", gains: [5, 4, 3, 2, 0, 0, 0, 0, 0, 0] }
-];
 class Equalizer {
   ac = null;
   src = null;
@@ -12842,337 +12817,6 @@ class Equalizer {
     this.anL = null;
     this.anR = null;
   }
-}
-function cvar(el2, name, fb2) {
-  const v2 = getComputedStyle(el2).getPropertyValue(name).trim();
-  return v2 || fb2;
-}
-function bucketEdges(bins, binHz, count) {
-  const lo = 40;
-  const hi2 = 15e3;
-  const edges = [];
-  for (let i = 0; i <= count; i++) {
-    const f2 = lo * Math.pow(hi2 / lo, i / count);
-    const idx = Math.min(bins - 1, Math.max(0, Math.round(f2 / binHz)));
-    edges.push(idx);
-  }
-  return edges;
-}
-function drawSpectrum(ctx, w2, h, an, on, cv, heightsRef, freqBuf) {
-  ctx.clearRect(0, 0, w2, h);
-  const n2 = Math.max(12, Math.min(48, Math.floor(w2 / 6)));
-  const padT = 4;
-  const base = h - 4;
-  const maxH = base - padT;
-  if (heightsRef.current.length !== n2)
-    heightsRef.current = new Array(n2).fill(0);
-  const heights = heightsRef.current;
-  const lo = cvar(cv, "--vis-lo", "#3c45c8");
-  const mid = cvar(cv, "--vis-mid", "#7d88ff");
-  const hi2 = cvar(cv, "--vis-hi", "#c9cfff");
-  let bins = null;
-  let edges = null;
-  if (an && on) {
-    if (freqBuf.current.length !== an.mixed.frequencyBinCount) {
-      freqBuf.current = new Uint8Array(an.mixed.frequencyBinCount);
-    }
-    const buf = freqBuf.current;
-    an.mixed.getByteFrequencyData(buf);
-    bins = buf;
-    const binHz = an.mixed.context.sampleRate / 2 / an.mixed.frequencyBinCount;
-    edges = bucketEdges(an.mixed.frequencyBinCount, binHz, n2);
-  }
-  const slot = w2 / n2;
-  const barW = Math.max(1.5, slot - Math.max(1, slot * 0.22));
-  for (let i = 0; i < n2; i++) {
-    let target = 0;
-    if (bins && edges) {
-      const a = edges[i];
-      const b = Math.max(a + 1, edges[i + 1]);
-      let peak = 0;
-      for (let k2 = a; k2 < b && k2 < bins.length; k2++)
-        if (bins[k2] > peak)
-          peak = bins[k2];
-      const tilt = 0.82 + 0.3 * (i / n2);
-      target = Math.min(1, Math.pow(peak / 255, 0.78) * tilt);
-    }
-    heights[i] = target > heights[i] ? heights[i] + (target - heights[i]) * 0.55 : heights[i] + (target - heights[i]) * 0.16;
-    const bh2 = Math.max(1.5, heights[i] * maxH);
-    const x2 = i * slot + (slot - barW) / 2;
-    const g = ctx.createLinearGradient(0, base, 0, base - bh2);
-    g.addColorStop(0, lo);
-    g.addColorStop(0.55, mid);
-    g.addColorStop(1, hi2);
-    ctx.fillStyle = g;
-    ctx.fillRect(x2, base - bh2, barW, bh2);
-    ctx.fillStyle = hi2;
-    ctx.globalAlpha = 0.85;
-    ctx.fillRect(x2, base - bh2, barW, Math.min(1.6, bh2));
-    ctx.globalAlpha = 1;
-  }
-}
-function drawScope(ctx, w2, h, an, on, cv, buf) {
-  ctx.globalCompositeOperation = "destination-out";
-  ctx.fillStyle = "rgba(0,0,0,0.16)";
-  ctx.fillRect(0, 0, w2, h);
-  ctx.globalCompositeOperation = "source-over";
-  if (!an || !on) {
-    ctx.strokeStyle = cvar(cv, "--vis-line", "#7d88ff");
-    ctx.globalAlpha = 0.35;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(2, h / 2);
-    ctx.lineTo(w2 - 2, h / 2);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    return;
-  }
-  const size = Math.min(buf.length, an.mixed.fftSize);
-  an.mixed.getByteTimeDomainData(buf.subarray(0, size));
-  const mid = 128;
-  const span = Math.min(256, size - 2);
-  let start = 0;
-  for (let i = 1; i < size - span; i++) {
-    if (buf[i - 1] <= mid && buf[i] > mid) {
-      start = i;
-      break;
-    }
-  }
-  const line = cvar(cv, "--vis-line", "#c9cfff");
-  ctx.strokeStyle = line;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  const step = w2 / span;
-  for (let i = 0; i < span; i++) {
-    const v2 = (buf[start + i] - 128) / 128;
-    const reach = h / 2 - 4;
-    const y2 = h / 2 + Math.max(-reach, Math.min(reach, v2 * reach * 1.6));
-    const x2 = i * step;
-    if (i === 0)
-      ctx.moveTo(x2, y2);
-    else
-      ctx.lineTo(x2, y2);
-  }
-  ctx.stroke();
-}
-function drawVu(ctx, w2, h, an, on, cv, buf, vu) {
-  ctx.clearRect(0, 0, w2, h);
-  const dial = cvar(cv, "--vis-dial", "#8a93ea");
-  const needle = cvar(cv, "--vis-needle", "#ff6a3d");
-  const dim = cvar(cv, "--vis-dim", "#6a74c0");
-  const hot = cvar(cv, "--vis-hot", "#ff5252");
-  const targetL = an && on ? level(buf, an.l, "l") : 0;
-  const targetR = an && on ? level(buf, an.r, "r") : 0;
-  const s = vu.current;
-  s.l = targetL > s.l ? s.l + (targetL - s.l) * 0.55 : s.l + (targetL - s.l) * 0.18;
-  s.r = targetR > s.r ? s.r + (targetR - s.r) * 0.55 : s.r + (targetR - s.r) * 0.18;
-  s.pl = Math.max(s.l, s.pl - 6e-3);
-  s.pr = Math.max(s.r, s.pr - 6e-3);
-  const gap = 8;
-  const colW = Math.min(260, (w2 - gap - 16) / 2);
-  const rail = (w2 - (colW * 2 + gap)) / 2;
-  paintMeter(ctx, rail, 2, colW, h - 6, s.l, s.pl, dial, needle, dim, hot);
-  paintMeter(ctx, rail + colW + gap, 2, colW, h - 6, s.r, s.pr, dial, needle, dim, hot);
-}
-function level(buf, an, side) {
-  const size = Math.min(buf.length, an.fftSize);
-  an.getByteTimeDomainData(buf.subarray(0, size));
-  let sum = 0;
-  for (let i = 0; i < size; i++) {
-    const v2 = (buf[i] - 128) / 128;
-    sum += v2 * v2;
-  }
-  const rms = Math.sqrt(sum / size);
-  const db2 = 20 * Math.log10(rms > 0 ? rms : 1e-7);
-  const pos = Math.pow(Math.max(0, (db2 + 30) / 28), 0.7);
-  if (side === "l" || side === "r")
-    return Math.max(0, Math.min(1, pos));
-  return 0;
-}
-function paintMeter(ctx, x2, y2, w2, h, v2, peak, dial, needle, dim, hot) {
-  const cx = x2 + w2 / 2;
-  const cy = y2 + h - 7;
-  const r2 = Math.min(w2 / 2 - 12, h * 0.74);
-  if (r2 < 8)
-    return;
-  const a0 = Math.PI * -0.78;
-  const a1 = Math.PI * -0.22;
-  const over = 20 / 23;
-  ctx.fillStyle = dial;
-  ctx.globalAlpha = 0.09;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.arc(cx, cy, r2, a0, a1);
-  ctx.closePath();
-  ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = dial;
-  ctx.globalAlpha = 0.7;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r2, a0, a1);
-  ctx.stroke();
-  ctx.strokeStyle = hot;
-  ctx.globalAlpha = 0.9;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r2, a0 + (a1 - a0) * over, a1);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = dim;
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 8; i++) {
-    const t2 = i / 8;
-    const a2 = a0 + (a1 - a0) * t2;
-    const major = i === 0 || i === 4 || i === 8;
-    ctx.globalAlpha = major ? 0.9 : 0.5;
-    ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(a2) * (r2 - (major ? 5 : 3)), cy + Math.sin(a2) * (r2 - (major ? 5 : 3)));
-    ctx.lineTo(cx + Math.cos(a2) * r2, cy + Math.sin(a2) * r2);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-  const ap = a0 + (a1 - a0) * peak;
-  ctx.fillStyle = hot;
-  const px = cx + Math.cos(ap) * (r2 - 6);
-  const py = cy + Math.sin(ap) * (r2 - 6);
-  ctx.beginPath();
-  ctx.arc(px, py, 1.8, 0, Math.PI * 2);
-  ctx.fill();
-  const a = a0 + (a1 - a0) * v2;
-  ctx.strokeStyle = needle;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + Math.cos(a) * (r2 - 1.5), cy + Math.sin(a) * (r2 - 1.5));
-  ctx.stroke();
-  ctx.fillStyle = dial;
-  ctx.beginPath();
-  ctx.arc(cx, cy, 2.4, 0, Math.PI * 2);
-  ctx.fill();
-}
-const VIS_KEY = "qqjt-vis-mode";
-const MODES = [{
-  id: "spectrum",
-  label: "\u9891\u8C31",
-  title: "\u9891\u8C31\u6761\uFF1A\u5B9E\u65F6\u9891\u7387\u80FD\u91CF\uFF0C\u8DDF\u7740\u97F3\u4E50\u8DF3\u52A8"
-}, {
-  id: "scope",
-  label: "\u793A\u6CE2",
-  title: "\u793A\u6CE2\u5668\uFF1A\u6CE2\u5F62\u8F68\u8FF9\uFF0C\u5E26\u4F59\u8F89\u62D6\u5C3E"
-}, {
-  id: "vu",
-  label: "\u7535\u5E73",
-  title: "UV \u7535\u5E73\u8868\uFF1A\u5DE6\u53F3\u58F0\u9053\u53CC\u9488\uFF0C\u5E26\u5CF0\u503C\u4FDD\u6301"
-}];
-function initialMode() {
-  try {
-    const v2 = localStorage.getItem(VIS_KEY);
-    if (v2 === "spectrum" || v2 === "scope" || v2 === "vu")
-      return v2;
-  } catch {
-  }
-  return "spectrum";
-}
-function Visualizer({
-  ensure,
-  playing
-}) {
-  const [mode, setMode] = react.exports.useState(initialMode);
-  const [live, setLive] = react.exports.useState(false);
-  const wrapRef = react.exports.useRef(null);
-  const canvasRef = react.exports.useRef(null);
-  const anRef = react.exports.useRef(null);
-  const modeRef = react.exports.useRef(mode);
-  const playRef = react.exports.useRef(playing);
-  const heightsRef = react.exports.useRef([]);
-  const vuRef = react.exports.useRef({
-    l: 0,
-    r: 0,
-    pl: 0,
-    pr: 0
-  });
-  modeRef.current = mode;
-  playRef.current = playing;
-  react.exports.useEffect(() => {
-    try {
-      localStorage.setItem(VIS_KEY, mode);
-    } catch {
-    }
-  }, [mode]);
-  react.exports.useEffect(() => {
-    let gone = false;
-    if (!playing || anRef.current)
-      return;
-    ensure().then((a) => {
-      if (gone)
-        return;
-      anRef.current = a;
-      setLive(!!a);
-    });
-    return () => {
-      gone = true;
-    };
-  }, [playing, ensure]);
-  react.exports.useEffect(() => {
-    let raf = 0;
-    let frame = 0;
-    const mixedBuf = new Uint8Array(2048);
-    const chanBuf = new Uint8Array(1024);
-    const freqBuf = {
-      current: new Uint8Array(1024)
-    };
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
-      frame++;
-      if (!playRef.current && frame % 5 !== 0)
-        return;
-      const cv = canvasRef.current;
-      const wrap = wrapRef.current;
-      if (!cv || !wrap)
-        return;
-      const ctx = cv.getContext("2d");
-      if (!ctx)
-        return;
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      const w2 = Math.max(1, Math.floor(wrap.clientWidth));
-      const h = Math.max(1, Math.floor(wrap.clientHeight));
-      if (cv.width !== w2 * dpr || cv.height !== h * dpr) {
-        cv.width = w2 * dpr;
-        cv.height = h * dpr;
-      }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const an = anRef.current;
-      const m2 = modeRef.current;
-      const on = playRef.current;
-      if (m2 === "spectrum")
-        drawSpectrum(ctx, w2, h, an, on, cv, heightsRef, freqBuf);
-      else if (m2 === "scope")
-        drawScope(ctx, w2, h, an, on, cv, mixedBuf);
-      else
-        drawVu(ctx, w2, h, an, on, cv, chanBuf, vuRef);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-  return /* @__PURE__ */ jsxs("div", {
-    className: "sk-spec sk-vis",
-    ref: wrapRef,
-    children: [/* @__PURE__ */ jsx("canvas", {
-      ref: canvasRef,
-      className: "sk-vis-cv"
-    }), /* @__PURE__ */ jsx("div", {
-      className: "sk-vis-tabs",
-      children: MODES.map((it) => /* @__PURE__ */ jsx("button", {
-        title: it.title,
-        className: mode === it.id ? "on" : "",
-        onClick: () => setMode(it.id),
-        children: it.label
-      }, it.id))
-    }), !live && /* @__PURE__ */ jsx("div", {
-      className: "sk-vis-idle",
-      children: playing ? "\u8FD9\u4E2A\u97F3\u6E90\u4E0D\u652F\u6301\u5B9E\u65F6\u6CE2\u5F62\uFF08\u8DE8\u6E90\u9650\u5236\uFF09" : "\u5F85\u673A"
-    })]
-  });
 }
 const MYGO_HOST = typeof window.mygo !== "undefined";
 const START_PARAMS = (() => {
@@ -13345,7 +12989,6 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.30";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -13453,20 +13096,9 @@ function App() {
     document.body.classList.toggle("qq-mini", mini);
   }, [mini]);
   const [volume, setVolumeState] = react.exports.useState(0.5);
-  const [layout, setLayout] = react.exports.useState("desk");
-  function switchLayout(l2) {
-    setLayout(l2);
-    if (l2 === "skin" && tab === "lyric")
-      setTab("search");
-    try {
-      localStorage.setItem("qqjt-layout", l2);
-    } catch {
-    }
-  }
   const [shuffle, setShuffle] = react.exports.useState(false);
-  const [showEq, setShowEq] = react.exports.useState(true);
   const eqRef = react.exports.useRef(null);
-  const [eqOn, setEqOn] = react.exports.useState(false);
+  react.exports.useState(false);
   const [eqGains, setEqGains] = react.exports.useState(() => {
     try {
       const v2 = JSON.parse(localStorage.getItem("qqjt-eq") || "{}");
@@ -13485,16 +13117,8 @@ function App() {
     }
     return 1;
   });
-  const [eqPreset, setEqPreset] = react.exports.useState(-1);
-  const eqReady = () => {
-    const el2 = audio.current;
-    const eq = eqRef.current || (eqRef.current = new Equalizer());
-    return {
-      el: el2,
-      eq
-    };
-  };
-  const ensureVis = react.exports.useCallback(async () => {
+  react.exports.useState(-1);
+  react.exports.useCallback(async () => {
     const el2 = audio.current;
     if (!el2)
       return null;
@@ -13507,127 +13131,6 @@ function App() {
     await eq.resume();
     return eq.analysts;
   }, []);
-  const toggleEq = async () => {
-    const {
-      el: el2,
-      eq
-    } = eqReady();
-    if (eqOn) {
-      eq.setEnabled(false);
-      setEqOn(false);
-      return;
-    }
-    if (!el2)
-      return;
-    if (!eq.ready) {
-      const ok2 = await eq.attach(el2);
-      if (!ok2) {
-        setErr("\u5747\u8861\u5668\u63A5\u4E0D\u4E0A\u5F53\u524D\u97F3\u6E90\uFF1A\u8FD9\u8DEF\u97F3\u9891\u6CA1\u6709\u5F00\u653E\u8DE8\u6E90\u8BFB\u53D6\uFF08CORS\uFF09\uFF0C\u6D4F\u89C8\u5668\u4E0D\u5141\u8BB8\u505A\u97F3\u6548\u5904\u7406\u3002\u6362\u4E00\u9996\u6216\u6362\u7535\u53F0\u518D\u8BD5\u3002");
-        return;
-      }
-    }
-    eq.setGains(eqGains);
-    eq.setPreamp(preamp);
-    eq.setEnabled(true);
-    await eq.resume();
-    setEqOn(true);
-  };
-  const resetEq = () => {
-    setEqGains(EQ_FREQS.map(() => 0));
-    setPreamp(1);
-    setEqPreset(0);
-  };
-  const nextPreset = () => {
-    const i = (eqPreset + 1) % EQ_PRESETS.length;
-    setEqPreset(i);
-    setEqGains(EQ_PRESETS[i].gains.slice());
-  };
-  const [mainW, setMainW] = react.exports.useState(() => {
-    try {
-      const v2 = Number(localStorage.getItem("qqjt-main-w"));
-      return Number.isFinite(v2) && v2 >= 160 ? v2 : 230;
-    } catch {
-      return 230;
-    }
-  });
-  const mainWRef = react.exports.useState({
-    v: 0
-  })[0];
-  react.exports.useEffect(() => {
-    mainWRef.v = mainW;
-  }, [mainW]);
-  const startSplit = (e) => {
-    e.preventDefault();
-    const page = e.currentTarget.parentElement;
-    if (!page)
-      return;
-    const left = page.getBoundingClientRect().left;
-    document.body.style.userSelect = "none";
-    const move = (ev) => {
-      const max = Math.max(200, page.clientWidth - 220);
-      const w2 = Math.min(Math.max(160, Math.round(ev.clientX - left)), max);
-      mainWRef.v = w2;
-      setMainW(w2);
-    };
-    const up = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-      document.body.style.userSelect = "";
-      try {
-        localStorage.setItem("qqjt-main-w", String(mainWRef.v));
-      } catch {
-      }
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-  };
-  const [skinWide, setSkinWide] = react.exports.useState(() => typeof window === "undefined" ? true : window.innerWidth >= 860);
-  react.exports.useEffect(() => {
-    const upd = () => setSkinWide(window.innerWidth >= 860);
-    upd();
-    window.addEventListener("resize", upd);
-    return () => window.removeEventListener("resize", upd);
-  }, []);
-  const [lyrMax, setLyrMax] = react.exports.useState(false);
-  const [showLrc, setShowLrc] = react.exports.useState(() => {
-    try {
-      return localStorage.getItem("qqjt-showlrc") !== "0";
-    } catch {
-      return true;
-    }
-  });
-  const fitLrcWidth = (on) => {
-    var _a2, _b2, _c, _d;
-    try {
-      const app = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
-      if (on) {
-        let pw = 1190;
-        try {
-          pw = Number(localStorage.getItem("qqjt-prev-w") || 1190) || 1190;
-        } catch {
-        }
-        (_c = app == null ? void 0 : app.FitWindowWidth) == null ? void 0 : _c.call(app, Math.max(460, pw));
-      } else {
-        try {
-          localStorage.setItem("qqjt-prev-w", String(Math.round(window.innerWidth)));
-        } catch {
-        }
-        (_d = app == null ? void 0 : app.FitWindowWidth) == null ? void 0 : _d.call(app, 320);
-      }
-    } catch {
-    }
-  };
-  const toggleLrc = () => {
-    const next = !showLrc;
-    setShowLrc(next);
-    fitLrcWidth(next);
-    try {
-      localStorage.setItem("qqjt-showlrc", next ? "1" : "0");
-    } catch {
-    }
-    if (!next && tab === "lyric")
-      setTab("home");
-  };
   const [lyricMode, setLyricMode] = react.exports.useState(() => {
     return localStorage.getItem("qqjt-lrcmode") === "scroll" ? "scroll" : "karaoke";
   });
@@ -13636,53 +13139,7 @@ function App() {
     setLyricMode(next);
     localStorage.setItem("qqjt-lrcmode", next);
   };
-  const SKIN_ORDER = ["winamp", "tt", "light", "glass", "hifi", "steel", "green"];
-  const [skinTheme, setSkinTheme] = react.exports.useState(() => {
-    const v2 = localStorage.getItem("qqjt-skin");
-    return SKIN_ORDER.includes(v2) ? v2 : "glass";
-  });
-  const SKIN_THEME = {
-    winamp: "dark",
-    tt: "amber",
-    light: "light",
-    glass: "light",
-    hifi: "dark",
-    steel: "light",
-    green: "green"
-  };
-  const THEME_SKIN = {
-    dark: "winamp",
-    amber: "tt",
-    light: "light",
-    teal: "hifi",
-    green: "green"
-  };
-  const applySkin = (s) => {
-    setSkinTheme(s);
-    try {
-      localStorage.setItem("qqjt-skin", s);
-    } catch {
-    }
-  };
-  const pickTheme = (t2) => {
-    setTheme(t2);
-    applySkin(THEME_SKIN[t2]);
-  };
-  const switchSkin = () => {
-    const next = SKIN_ORDER[(SKIN_ORDER.indexOf(skinTheme) + 1) % SKIN_ORDER.length];
-    applySkin(next);
-    setTheme(SKIN_THEME[next]);
-  };
-  const SKIN_NAME = {
-    winamp: "\u7D2B\u591C Winamp",
-    tt: "\u4EAE\u6A59",
-    light: "\u51B7\u767D\u6D45\u84DD",
-    glass: "\u5929\u84DD\u73BB\u7483",
-    hifi: "HiFi \u94F6\u7070\u6DF1\u7EFF",
-    steel: "Steel \u94F6\u767D\u7EFF",
-    green: "\u62A4\u773C\u7EFF"
-  };
-  const skinName = SKIN_NAME[skinTheme];
+  const pickTheme = (t2) => setTheme(t2);
   const [repeatOne, setRepeatOne] = react.exports.useState(false);
   const [queue, setQueue] = react.exports.useState({
     list: [],
@@ -14719,7 +14176,7 @@ function App() {
             children: "\u6765\u6E90"
           }), /* @__PURE__ */ jsx("span", {
             children: "\u65F6\u957F"
-          }), /* @__PURE__ */ jsx("span", {}), /* @__PURE__ */ jsx("span", {}), layout === "desk" && /* @__PURE__ */ jsx("span", {})]
+          }), /* @__PURE__ */ jsx("span", {}), /* @__PURE__ */ jsx("span", {}), /* @__PURE__ */ jsx("span", {})]
         }), localTracks.map((t2, i) => /* @__PURE__ */ jsxs("div", {
           className: "row" + ((cur == null ? void 0 : cur.id) === t2.id ? " on" : ""),
           children: [/* @__PURE__ */ jsx("button", {
@@ -14764,7 +14221,7 @@ function App() {
             className: "heart" + (lib.some((x2) => x2.id === t2.id) ? " on" : ""),
             onClick: () => fav(t2),
             children: "\u2665"
-          }), layout === "desk" && /* @__PURE__ */ jsx("button", {
+          }), /* @__PURE__ */ jsx("button", {
             className: "addpl",
             title: "\u52A0\u5165\u81EA\u5EFA\u6B4C\u5355",
             onClick: (e) => {
@@ -14986,7 +14443,7 @@ function App() {
           children: "\u6765\u6E90"
         }), /* @__PURE__ */ jsx("span", {
           children: "\u65F6\u957F"
-        }), /* @__PURE__ */ jsx("span", {}), /* @__PURE__ */ jsx("span", {}), layout === "desk" && /* @__PURE__ */ jsx("span", {})]
+        }), /* @__PURE__ */ jsx("span", {}), /* @__PURE__ */ jsx("span", {}), /* @__PURE__ */ jsx("span", {})]
       }), loading && /* @__PURE__ */ jsx("div", {
         className: "empty",
         children: "\u52A0\u8F7D\u4E2D\u2026"
@@ -15078,7 +14535,7 @@ function App() {
           className: "heart" + (lib.some((x2) => x2.id === t2.id) ? " on" : ""),
           onClick: () => fav(t2),
           children: "\u2665"
-        }), layout === "desk" && t2.source !== "radio" && /* @__PURE__ */ jsx("button", {
+        }), t2.source !== "radio" && /* @__PURE__ */ jsx("button", {
           className: "addpl",
           title: "\u52A0\u5165\u81EA\u5EFA\u6B4C\u5355",
           onClick: (e) => {
@@ -15099,8 +14556,7 @@ function App() {
     })]
   });
   return /* @__PURE__ */ jsxs("div", {
-    className: "app" + (layout === "desk" ? " desk-mode" : " skin") + (mini ? " mini-mode" : ""),
-    "data-skin": skinTheme,
+    className: "app desk-mode" + (mini ? " mini-mode" : ""),
     children: [!mini && /* @__PURE__ */ jsxs(Fragment, {
       children: [/* @__PURE__ */ jsx("div", {
         className: "edge-resize left",
@@ -15155,7 +14611,7 @@ function App() {
           })
         })]
       })]
-    }), layout === "desk" ? /* @__PURE__ */ jsxs("div", {
+    }), /* @__PURE__ */ jsxs("div", {
       className: "desk",
       children: [/* @__PURE__ */ jsxs("aside", {
         className: "desk-nav",
@@ -15501,14 +14957,6 @@ function App() {
             onClick: () => pickTheme(NEXT_THEME[theme]),
             title: "\u4E3B\u9898\uFF1A" + THEME_LABEL[theme],
             children: THEME_ICON[theme]
-          }), /* @__PURE__ */ jsx("button", {
-            className: "dn-skin",
-            onClick: () => switchLayout("skin"),
-            title: "\u5207\u5230\u76AE\u80A4\u754C\u9762",
-            children: /* @__PURE__ */ jsx(Fi, {
-              n: "layers",
-              size: 14
-            })
           })]
         })]
       }), /* @__PURE__ */ jsxs("section", {
@@ -15560,14 +15008,6 @@ function App() {
               children: /* @__PURE__ */ jsx(Fi, {
                 n: "minimize-2",
                 size: 14
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "ghost-btn icon-only",
-              onClick: () => switchLayout("skin"),
-              title: "\u5207\u56DE\u76AE\u80A4\u754C\u9762",
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "layers",
-                size: 15
               })
             })]
           })]
@@ -15889,597 +15329,6 @@ function App() {
           })]
         })]
       })]
-    }) : /* @__PURE__ */ jsxs("div", {
-      className: "skin-page" + (skinWide ? "" : " one-col") + (showLrc ? "" : " only-left") + (lyrMax ? " lyr-max" : "") + (skinWide && showLrc && !lyrMax && mainW < 520 ? " compact-main" : ""),
-      style: {
-        ["--sk-main-w"]: mainW + "px"
-      },
-      children: [/* @__PURE__ */ jsxs("div", {
-        className: "sk-col",
-        children: [/* @__PURE__ */ jsxs("section", {
-          className: "sk-panel sk-win",
-          children: [/* @__PURE__ */ jsxs("div", {
-            className: "sk-title",
-            children: [/* @__PURE__ */ jsx("img", {
-              src: logoHulu,
-              alt: ""
-            }), /* @__PURE__ */ jsx("span", {
-              className: "t",
-              children: "\u5343\u5343\u9759\u542C"
-            }), /* @__PURE__ */ jsx("span", {
-              className: "sk-time",
-              style: {
-                marginLeft: "auto"
-              },
-              children: isLive ? "LIVE" : fmt(pos)
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-wb",
-              title: "\u5207\u6362\u5230\u684C\u9762\u754C\u9762\uFF08\u5DE6\u4FA7\u7AD6\u6392\u5BFC\u822A + \u5E95\u90E8\u64AD\u653E\u6761\uFF09",
-              onClick: () => switchLayout("desk"),
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "layout",
-                size: 11
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-wb sk-win-mini",
-              title: "\u5C0F\u7A97\u53E3\u6A21\u5F0F\uFF08\u7F29\u6210\u8FF7\u4F60\u6761\u5E76\u7F6E\u9876\uFF0C\u6309 Esc \u6216\u6761\u4E0A\u6309\u94AE\u8FD8\u539F\uFF09",
-              onClick: () => toggleMini(true),
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "minimize-2",
-                size: 11
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-wb sk-skin-sw",
-              title: "\u5207\u6362\u76AE\u80A4\uFF08\u5F53\u524D\uFF1A" + skinName + "\uFF09",
-              onClick: switchSkin,
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "layers",
-                size: 13
-              })
-            })]
-          }), /* @__PURE__ */ jsxs("div", {
-            className: "sk-body",
-            children: [/* @__PURE__ */ jsx(Visualizer, {
-              ensure: ensureVis,
-              playing
-            }), /* @__PURE__ */ jsxs("div", {
-              className: "sk-side",
-              children: [/* @__PURE__ */ jsxs("div", {
-                className: "sk-line",
-                children: [/* @__PURE__ */ jsx("span", {
-                  className: "k",
-                  children: "\u827A\u672F\u5BB6"
-                }), /* @__PURE__ */ jsx("span", {
-                  className: "v",
-                  children: cur ? cur.artist || "\u672A\u77E5\u827A\u4EBA" : "\u2014"
-                })]
-              }), /* @__PURE__ */ jsxs("div", {
-                className: "sk-line",
-                children: [/* @__PURE__ */ jsx("span", {
-                  className: "k",
-                  children: "\u66F2\u76EE"
-                }), /* @__PURE__ */ jsx("span", {
-                  className: "v",
-                  children: cur ? cur.name : "\u672A\u5728\u64AD\u653E"
-                })]
-              }), /* @__PURE__ */ jsxs("div", {
-                className: "sk-status",
-                children: [/* @__PURE__ */ jsx("span", {
-                  className: "sk-led" + (playing ? "" : " off")
-                }), /* @__PURE__ */ jsxs("span", {
-                  children: ["\u72B6\u6001: ", playing ? "\u64AD\u653E" : "\u6682\u505C", " ", isLive ? "\u76F4\u64AD" : "\u7ACB\u4F53\u58F0"]
-                })]
-              }), /* @__PURE__ */ jsxs("div", {
-                className: "sk-mini-btns",
-                children: [/* @__PURE__ */ jsx("button", {
-                  className: "on",
-                  title: "\u64AD\u653E\u5217\u8868",
-                  onClick: () => setTab("search"),
-                  children: /* @__PURE__ */ jsx(Fi, {
-                    n: "search",
-                    size: 13
-                  })
-                }), /* @__PURE__ */ jsx("button", {
-                  className: showEq ? "on" : "",
-                  title: "\u5747\u8861\u5668",
-                  onClick: () => setShowEq(!showEq),
-                  children: /* @__PURE__ */ jsx(Fi, {
-                    n: "sliders",
-                    size: 13
-                  })
-                }), /* @__PURE__ */ jsx("button", {
-                  className: showLrc ? "on" : "",
-                  title: "\u6B4C\u8BCD\u79C0",
-                  onClick: toggleLrc,
-                  children: /* @__PURE__ */ jsx(Fi, {
-                    n: "type",
-                    size: 13
-                  })
-                })]
-              })]
-            })]
-          }), isLive ? /* @__PURE__ */ jsx("div", {
-            className: "sk-seek",
-            children: /* @__PURE__ */ jsx("span", {
-              className: "tt",
-              children: "\u76F4\u64AD\u4E2D"
-            })
-          }) : /* @__PURE__ */ jsxs("div", {
-            className: "sk-seek",
-            children: [/* @__PURE__ */ jsx("span", {
-              className: "tt",
-              children: fmt(pos)
-            }), /* @__PURE__ */ jsx("input", {
-              type: "range",
-              min: 0,
-              max: dur || 1,
-              value: Math.min(pos, dur || 1),
-              onChange: (e) => {
-                const a = audio.current;
-                if (a)
-                  a.currentTime = Number(e.target.value) / 1e3;
-              }
-            }), /* @__PURE__ */ jsx("span", {
-              className: "tt",
-              children: fmt(dur)
-            })]
-          }), /* @__PURE__ */ jsxs("div", {
-            className: "sk-controls",
-            children: [/* @__PURE__ */ jsx("button", {
-              className: "sk-ctl",
-              title: "\u505C\u6B62",
-              disabled: !cur,
-              onClick: () => {
-                const a = audio.current;
-                if (a) {
-                  a.pause();
-                  a.currentTime = 0;
-                }
-                setPlaying(false);
-                setPos(0);
-              },
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "square",
-                size: 13
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-ctl",
-              title: "\u4E0A\u4E00\u9996",
-              disabled: !cur || busy,
-              onClick: () => step(-1),
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "skip-back",
-                size: 13
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-ctl big play",
-              title: playing ? "\u6682\u505C" : "\u64AD\u653E",
-              disabled: !cur,
-              onClick: toggle,
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: FN(playing ? "pause" : "play"),
-                size: 17
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-ctl big",
-              title: "\u4E0B\u4E00\u9996",
-              disabled: !cur || busy,
-              onClick: () => step(1),
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "skip-forward",
-                size: 13
-              })
-            }), /* @__PURE__ */ jsxs("div", {
-              className: "sk-vol",
-              children: [/* @__PURE__ */ jsx("button", {
-                className: "sk-ctl",
-                style: {
-                  width: 22,
-                  height: 22,
-                  fontSize: 10
-                },
-                title: volume > 0 ? "\u9759\u97F3" : "\u6062\u590D\u97F3\u91CF",
-                onClick: () => setVolumeState(volume > 0 ? 0 : 0.5),
-                children: /* @__PURE__ */ jsx(Fi, {
-                  n: FN(volume > 0 ? "volume-high" : "volume-mute"),
-                  size: 13
-                })
-              }), /* @__PURE__ */ jsx("input", {
-                type: "range",
-                min: 0,
-                max: 1,
-                step: 0.01,
-                value: volume,
-                onChange: (e) => setVolumeState(Number(e.target.value))
-              })]
-            }), /* @__PURE__ */ jsxs("button", {
-              className: "sk-pl-btn",
-              title: "\u97F3\u4E50\u7A97",
-              onClick: () => cur && setNpOpen(true),
-              children: [/* @__PURE__ */ jsx(Fi, {
-                n: "disc",
-                size: 12
-              }), /* @__PURE__ */ jsx("span", {
-                children: "\u97F3\u4E50\u7A97"
-              })]
-            })]
-          })]
-        }), showEq && /* @__PURE__ */ jsxs("section", {
-          className: "sk-panel sk-eq",
-          children: [/* @__PURE__ */ jsxs("div", {
-            className: "sk-title",
-            children: [/* @__PURE__ */ jsxs("span", {
-              className: "sk-ver",
-              children: ["v", BUILD_TAG]
-            }), /* @__PURE__ */ jsx("span", {
-              className: "t",
-              children: skinTheme === "tt" || skinTheme === "hifi" || skinTheme === "steel" ? "EQUALIZER \u5747\u8861\u5668" : "\u5747\u8861\u5668"
-            }), /* @__PURE__ */ jsxs("div", {
-              className: "sk-eq-on",
-              children: [/* @__PURE__ */ jsx("button", {
-                className: eqOn ? "on" : "off",
-                title: "\u5F00\u5173\u5747\u8861\u5668\uFF08\u771F\u5B9E\u4F5C\u7528\u4E8E\u97F3\u9891\uFF09",
-                onClick: toggleEq,
-                children: "ON"
-              }), /* @__PURE__ */ jsx("button", {
-                onClick: resetEq,
-                children: "RESET"
-              }), /* @__PURE__ */ jsx("button", {
-                title: eqPreset >= 0 ? "\u5F53\u524D\u9884\u8BBE\uFF1A" + EQ_PRESETS[eqPreset].name : "\u9884\u8BBE",
-                onClick: nextPreset,
-                children: "PRESETS"
-              })]
-            }), /* @__PURE__ */ jsx("div", {
-              className: "sk-win-btns",
-              children: /* @__PURE__ */ jsx("button", {
-                className: "sk-wb",
-                title: "\u6536\u8D77\u5747\u8861\u5668",
-                onClick: () => setShowEq(false),
-                children: /* @__PURE__ */ jsx(Fi, {
-                  n: "x",
-                  size: 13
-                })
-              })
-            })]
-          }), /* @__PURE__ */ jsxs("div", {
-            className: "sk-eq-body",
-            children: [/* @__PURE__ */ jsxs("div", {
-              className: "sk-eq-row",
-              children: [/* @__PURE__ */ jsx("div", {
-                className: "lab",
-                children: "\u524D\u7F6E\u653E\u5927"
-              }), /* @__PURE__ */ jsx("input", {
-                type: "range",
-                min: 0.2,
-                max: 2,
-                step: 0.01,
-                value: preamp,
-                onChange: (e) => setPreamp(Number(e.target.value))
-              }), /* @__PURE__ */ jsx("div", {
-                className: "lab",
-                children: "\u97F3\u91CF"
-              }), /* @__PURE__ */ jsx("input", {
-                type: "range",
-                min: 0,
-                max: 1,
-                step: 0.01,
-                value: volume,
-                onChange: (e) => setVolumeState(Number(e.target.value))
-              })]
-            }), /* @__PURE__ */ jsxs("div", {
-              className: "sk-eq-faders",
-              children: [/* @__PURE__ */ jsxs("div", {
-                className: "scale",
-                children: [/* @__PURE__ */ jsx("span", {
-                  children: "+12dB"
-                }), /* @__PURE__ */ jsx("span", {
-                  children: "0dB"
-                }), /* @__PURE__ */ jsx("span", {
-                  children: "\u221212dB"
-                })]
-              }), EQ_FREQS.map((f2, i) => {
-                const g = eqGains[i] || 0;
-                return /* @__PURE__ */ jsxs("div", {
-                  className: "sk-fader",
-                  children: [/* @__PURE__ */ jsx("input", {
-                    className: "sk-fader-in",
-                    type: "range",
-                    min: -12,
-                    max: 12,
-                    step: 1,
-                    value: g,
-                    title: (f2 >= 1e3 ? f2 / 1e3 + "k" : f2) + "Hz  " + (g > 0 ? "+" : "") + g + "dB",
-                    onChange: (e) => {
-                      const v2 = Number(e.target.value);
-                      setEqGains((prev) => prev.map((x2, k2) => k2 === i ? v2 : x2));
-                      setEqPreset(-1);
-                    }
-                  }), /* @__PURE__ */ jsx("div", {
-                    className: "track",
-                    children: /* @__PURE__ */ jsx("span", {
-                      className: "knob",
-                      style: {
-                        bottom: (g + 12) / 24 * 100 + "%"
-                      }
-                    })
-                  }), /* @__PURE__ */ jsx("div", {
-                    className: "hz",
-                    children: f2 >= 1e3 ? f2 / 1e3 + "k" : f2
-                  })]
-                }, f2);
-              })]
-            })]
-          })]
-        }), /* @__PURE__ */ jsxs("section", {
-          className: "sk-panel sk-pl",
-          children: [/* @__PURE__ */ jsxs("div", {
-            className: "sk-title",
-            children: [/* @__PURE__ */ jsx("span", {
-              className: "t",
-              children: skinTheme === "tt" || skinTheme === "hifi" || skinTheme === "steel" ? "PLAYLIST \u64AD\u653E\u5217\u8868" : "\u64AD\u653E\u5217\u8868"
-            }), /* @__PURE__ */ jsxs("span", {
-              style: {
-                fontSize: 10.5,
-                color: "#b7bff0"
-              },
-              children: [tab === "local" ? localTracks.length : tab === "library" ? lib.length : tab === "queue" ? queue.list.length : shown.length, " \u9996"]
-            }), /* @__PURE__ */ jsx("div", {
-              className: "sk-win-btns",
-              children: /* @__PURE__ */ jsx("button", {
-                className: "sk-wb sk-win-mini",
-                title: "\u5C0F\u7A97\u53E3\u6A21\u5F0F",
-                onClick: () => toggleMini(true),
-                children: /* @__PURE__ */ jsx(Fi, {
-                  n: "minimize-2",
-                  size: 10
-                })
-              })
-            })]
-          }), /* @__PURE__ */ jsxs("div", {
-            className: "sk-tools",
-            children: [/* @__PURE__ */ jsxs("button", {
-              className: tab === "search" ? "on" : "",
-              onClick: () => setTab("search"),
-              children: [/* @__PURE__ */ jsx(Fi, {
-                n: "search",
-                size: 12
-              }), /* @__PURE__ */ jsx("span", {
-                children: "\u641C\u7D22"
-              })]
-            }), /* @__PURE__ */ jsxs("button", {
-              className: tab === "local" ? "on" : "",
-              onClick: () => {
-                var _a2, _b2;
-                setTab("local");
-                (_b2 = (_a2 = G()) == null ? void 0 : _a2.LocalDirs) == null ? void 0 : _b2.call(_a2).then((d) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {
-                });
-              },
-              children: [/* @__PURE__ */ jsx(Fi, {
-                n: "folder",
-                size: 12
-              }), /* @__PURE__ */ jsx("span", {
-                children: "\u4E50\u5E93"
-              })]
-            }), /* @__PURE__ */ jsxs("button", {
-              className: tab === "queue" ? "on" : "",
-              onClick: () => setTab("queue"),
-              children: [/* @__PURE__ */ jsx(Fi, {
-                n: "list",
-                size: 12
-              }), /* @__PURE__ */ jsx("span", {
-                children: "\u5F85\u64AD"
-              })]
-            }), /* @__PURE__ */ jsxs("div", {
-              className: "sk-search",
-              children: [/* @__PURE__ */ jsx(Fi, {
-                n: "search",
-                size: 12
-              }), /* @__PURE__ */ jsx("input", {
-                value: q2,
-                placeholder: "\u641C\u6B4C\u3001\u6B4C\u624B",
-                onChange: (e) => setQ(e.target.value),
-                onKeyDown: (e) => e.key === "Enter" && doSearch()
-              }), /* @__PURE__ */ jsx("button", {
-                onClick: doSearch,
-                disabled: loading,
-                children: loading ? "\u2026" : "\u641C"
-              })]
-            })]
-          }), contentArea, /* @__PURE__ */ jsxs("div", {
-            className: "sk-pl-foot",
-            title: "\u64AD\u653E\u5217\u8868\u5FEB\u6377\u64CD\u4F5C",
-            children: [/* @__PURE__ */ jsx("button", {
-              className: "sk-pbtn sk-pbtn-M",
-              title: "\u4E50\u5E93\uFF08\u672C\u5730\u6B4C\u66F2\uFF09",
-              onClick: () => {
-                var _a2, _b2;
-                setTab("local");
-                (_b2 = (_a2 = G()) == null ? void 0 : _a2.LocalDirs) == null ? void 0 : _b2.call(_a2).then((d) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {
-                });
-              },
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "folder",
-                size: 13
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-pbtn",
-              title: "\u5F85\u64AD\u6B4C\u5355",
-              onClick: () => setTab("queue"),
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "clipboard",
-                size: 13
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-pbtn",
-              title: "\u5B9A\u4F4D\u5F53\u524D\u6B4C\u66F2",
-              onClick: () => {
-                setTab("queue");
-                window.setTimeout(() => {
-                  const main = document.querySelector(".sk-pl .main");
-                  if (!main)
-                    return;
-                  const g = main.querySelector(".q-group");
-                  if (g)
-                    g.scrollIntoView({
-                      block: "start",
-                      behavior: "smooth"
-                    });
-                  else
-                    main.scrollTop = 0;
-                }, 180);
-              },
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "crosshair",
-                size: 13
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-pbtn sk-pbtn-ico" + (tab === "radio" ? " on" : ""),
-              title: "\u7535\u53F0",
-              onClick: () => setTab("radio"),
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "radio",
-                size: 13
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-pbtn sk-pbtn-ico" + (tab === "podcast" ? " on" : ""),
-              title: "\u542C\u4E66",
-              onClick: () => setTab("podcast"),
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "book-open",
-                size: 13
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-pbtn sk-pbtn-ico" + (tab === "plugins" ? " on" : ""),
-              title: "\u63D2\u4EF6\uFF08\u6211\u7684\u97F3\u6E90\u63D2\u4EF6\uFF09",
-              onClick: () => setTab("plugins"),
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "package",
-                size: 13
-              })
-            }), /* @__PURE__ */ jsx("button", {
-              className: "sk-pbtn sk-pbtn-ico",
-              title: "\u8BBE\u7F6E",
-              onClick: () => setTab("settings"),
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "settings",
-                size: 13
-              })
-            })]
-          })]
-        })]
-      }), skinWide && /* @__PURE__ */ jsx("div", {
-        className: "sk-split",
-        title: "\u62D6\u52A8\u8C03\u6574\u4E3B\u533A\u5BBD\u5EA6\uFF08\u53CC\u51FB\u6062\u590D 230px\uFF09",
-        onPointerDown: startSplit,
-        onDoubleClick: () => {
-          setMainW(230);
-          try {
-            localStorage.setItem("qqjt-main-w", "230");
-          } catch {
-          }
-        }
-      }), /* @__PURE__ */ jsx("div", {
-        className: "sk-col sk-col-r",
-        children: showLrc && /* @__PURE__ */ jsxs("section", {
-          className: "sk-panel sk-lyr",
-          children: [/* @__PURE__ */ jsxs("div", {
-            className: "sk-title",
-            children: [/* @__PURE__ */ jsx("span", {
-              className: "t",
-              children: skinTheme === "tt" || skinTheme === "hifi" || skinTheme === "steel" ? "LYRIC \u6B4C\u8BCD\u79C0" : "\u6B4C\u8BCD\u79C0"
-            }), /* @__PURE__ */ jsx("span", {
-              style: {
-                fontSize: 10.5,
-                color: "#b7bff0"
-              },
-              children: isLive ? "\u7535\u53F0\u65E0\u6B4C\u8BCD" : ""
-            }), /* @__PURE__ */ jsxs("div", {
-              className: "sk-win-btns",
-              children: [/* @__PURE__ */ jsx("button", {
-                className: "sk-wb sk-lrc-mode",
-                title: lyricMode === "karaoke" ? "\u5F53\u524D\uFF1A\u5361\u62C9OK \u4E24\u884C\uFF08\u70B9\u51FB\u5207\u6574\u6BB5\u6EDA\u52A8\uFF09" : "\u5F53\u524D\uFF1A\u6574\u6BB5\u6EDA\u52A8\uFF08\u70B9\u51FB\u5207\u5361\u62C9OK \u4E24\u884C\uFF09",
-                onClick: switchLyricMode,
-                children: lyricMode === "karaoke" ? "K" : "\u2261"
-              }), /* @__PURE__ */ jsx("button", {
-                className: "sk-wb",
-                title: lyrMax ? "\u8FD8\u539F\u6B4C\u8BCD\u79C0" : "\u6700\u5927\u5316\u6B4C\u8BCD\u79C0\uFF08\u5DE6\u4FA7\u4E3B\u533A\u6536\u8D77\uFF09",
-                onClick: () => setLyrMax((v2) => !v2),
-                children: /* @__PURE__ */ jsx(Fi, {
-                  n: lyrMax ? "minimize-2" : "maximize-2",
-                  size: 11
-                })
-              }), /* @__PURE__ */ jsx("button", {
-                className: "sk-wb",
-                title: "\u6536\u8D77\u6B4C\u8BCD\uFF08\u7A97\u53E3\u6536\u6210\u4E00\u5217 320\uFF09",
-                onClick: () => {
-                  setShowLrc(false);
-                  setLyrMax(false);
-                  fitLrcWidth(false);
-                },
-                children: "\xD7"
-              })]
-            })]
-          }), /* @__PURE__ */ jsx("div", {
-            className: "sk-lyr-body",
-            title: "\u53CC\u51FB\u653E\u5927 / \u8FD8\u539F\u6B4C\u8BCD\u79C0",
-            onDoubleClick: () => setLyrMax((v2) => !v2),
-            children: lyric.length > 0 ? /* @__PURE__ */ jsxs(Fragment, {
-              children: [/* @__PURE__ */ jsx("div", {
-                className: "song",
-                children: cur ? cur.name : ""
-              }), /* @__PURE__ */ jsx("div", {
-                className: "meta",
-                children: cur ? (cur.artist || "") + (cur.album ? " \xB7 " + cur.album : "") : ""
-              }), lyricMode === "karaoke" ? /* @__PURE__ */ jsxs("div", {
-                className: "kara",
-                children: [/* @__PURE__ */ jsx("div", {
-                  className: "krow now",
-                  children: curIndex >= 0 && lyric[curIndex] ? /* @__PURE__ */ jsxs("span", {
-                    className: "kowrap",
-                    children: [/* @__PURE__ */ jsx("span", {
-                      className: "kbase",
-                      children: lyric[curIndex].text
-                    }), /* @__PURE__ */ jsx("span", {
-                      className: "kfill",
-                      style: {
-                        width: kProgress * 100 + "%"
-                      },
-                      children: lyric[curIndex].text
-                    })]
-                  }) : /* @__PURE__ */ jsx("span", {
-                    className: "kbase",
-                    children: " "
-                  })
-                }), /* @__PURE__ */ jsx("div", {
-                  className: "krow next",
-                  children: curIndex >= 0 && lyric[curIndex + 1] ? lyric[curIndex + 1].text : " "
-                })]
-              }) : lyric.map((l2, k2) => k2 === curIndex ? /* @__PURE__ */ jsx("div", {
-                className: "ln on",
-                children: /* @__PURE__ */ jsxs("span", {
-                  className: "kowrap",
-                  children: [/* @__PURE__ */ jsx("span", {
-                    className: "kbase",
-                    children: l2.text
-                  }), /* @__PURE__ */ jsx("span", {
-                    className: "kfill",
-                    style: {
-                      width: kProgress * 100 + "%"
-                    },
-                    children: l2.text
-                  })]
-                })
-              }, k2) : /* @__PURE__ */ jsx("div", {
-                className: "ln",
-                children: l2.text
-              }, k2))]
-            }) : /* @__PURE__ */ jsx("div", {
-              className: "none",
-              children: busy ? "\u53D6\u6D41\u4E2D\u2026" : cur ? "\u8FD9\u9996\u6B4C\u8FD8\u6CA1\u6709\u6B4C\u8BCD" : "\u9009\u4E00\u9996\u6B4C\u5F00\u59CB"
-            })
-          })]
-        })
-      })]
     }), mini && /* @__PURE__ */ jsx(MiniPlayer, {
       cur,
       lyricText: cur && Array.isArray(lyric) && lyric.length ? curLine : "",
@@ -16491,14 +15340,6 @@ function App() {
       onPrev: () => step(-1),
       onNext: () => step(1),
       onExpand: () => toggleMini(false),
-      onDesk: () => {
-        toggleMini(false);
-        switchLayout("desk");
-      },
-      onSkin: () => {
-        toggleMini(false);
-        switchLayout("skin");
-      },
       onClose: () => {
         var _a2, _b2, _c, _d;
         try {
@@ -16629,7 +15470,7 @@ createRoot(container).render(/* @__PURE__ */ jsx(React.StrictMode, {
   <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
-/* 深色（:root 就是深色，data-theme="dark" 不用再写一份） */
+
 :root{
   --bg:#12141a;--panel:#181b23;--line:#242936;--txt:#e8eaf0;--dim:#8b93a7;
   --acc:#7b8cff;--acc2:#a06bff;
@@ -16640,7 +15481,7 @@ createRoot(container).render(/* @__PURE__ */ jsx(React.StrictMode, {
   --shadow:none;
 }
 
-/* 浅色 */
+
 :root[data-theme="light"]{
   --bg:#f5f6fa;--panel:#ffffff;--line:#e2e6ef;--txt:#1a1e26;--dim:#6a7280;
   --acc:#12a56a;--acc2:#2979ff;
@@ -16651,7 +15492,7 @@ createRoot(container).render(/* @__PURE__ */ jsx(React.StrictMode, {
   --shadow:0 1px 2px rgba(16,24,40,.04);
 }
 
-/* 橘黄（暖色浅底，主色是橘黄，强调色偏暖红） */
+
 :root[data-theme="amber"]{
   --bg:#fdf6ec;--panel:#fffcf6;--line:#f0dfc6;--txt:#2b2116;--dim:#8b7561;
   --acc:#e8861a;--acc2:#d9542d;
@@ -16662,7 +15503,7 @@ createRoot(container).render(/* @__PURE__ */ jsx(React.StrictMode, {
   --shadow:0 1px 2px rgba(120,80,20,.06);
 }
 
-/* 深青（暗底 + 青绿主色，介于深色和皮肤界面的青色之间） */
+
 :root[data-theme="teal"]{
   --bg:#0b1517;--panel:#101e20;--line:#1d3033;--txt:#e0efed;--dim:#7da39f;
   --acc:#22c8b2;--acc2:#35a0d8;
@@ -16673,7 +15514,7 @@ createRoot(container).render(/* @__PURE__ */ jsx(React.StrictMode, {
   --shadow:none;
 }
 
-/* 护眼绿（豆沙绿浅底 + 深绿主色，长时间看最不刺眼） */
+
 :root[data-theme="green"]{
   --bg:#cde5cb;--panel:#e8f5e3;--line:#b4d3b1;--txt:#1c3324;--dim:#5b7a62;
   --acc:#1f9b5c;--acc2:#2f8fae;
@@ -16688,7 +15529,7 @@ html,body,#root{height:100%}
 body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden;transition:background .18s,color .18s}
 .app{display:grid;grid-template-columns:1fr;grid-template-rows:36px 58px 1fr 96px 26px;height:100%;min-height:0}
 
-/* ── 顶部菜单栏（对应 Audacious 的 File / Playback / Playlist …） ── */
+
 .menubar{display:flex;flex-direction:row;align-items:center;gap:4px;padding:0 10px;background:var(--panel);
   border-bottom:1px solid var(--line);min-width:0;overflow:hidden}
 .bar-logo{width:22px;height:22px;border-radius:5px;object-fit:cover;flex:0 0 auto}
@@ -16705,7 +15546,7 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 .menus button.on .count{background:rgba(255,255,255,.24);opacity:.95}
 .mb-right{margin-left:auto;display:flex;align-items:center;gap:4px;flex:0 0 auto}
 
-/* ── 工具栏（对应 Audacious 的播放控制 + 进度 + 音量） ── */
+
 .toolbar{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);
   border-bottom:1px solid var(--line);min-width:0}
 .tb-search{display:flex;gap:4px;flex:0 0 auto;width:250px}
@@ -16726,7 +15567,7 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 .tb-vol input{width:84px}
 .live-tag{font-size:11px;color:var(--acc);border:1px solid var(--line);border-radius:999px;padding:2px 9px;flex:0 0 auto}
 
-/* ── Audacious 底部深色 Now Playing 信息带 ── */
+
 .nowband{display:flex;align-items:center;gap:14px;padding:10px 14px;background:#111318;color:#fff;
   border-top:1px solid rgba(255,255,255,.06);cursor:pointer;overflow:hidden}
 .nowband:hover{background:#15171e}
@@ -16755,14 +15596,14 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 .nb-vis.paused i{animation-play-state:paused}
 @keyframes vis{from{transform:scaleY(.35)}to{transform:scaleY(1)}}
 
-/* ── 状态栏（Audacious 最底下一行：格式信息 / 时间） ── */
+
 .statusbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 12px;
   background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--dim);
   white-space:nowrap;overflow:hidden}
 .sb-left{overflow:hidden;text-overflow:ellipsis}
 .sb-right{flex:0 0 auto;font-variant-numeric:tabular-nums}
 
-/* ── 播放列表表格：列头 + 对齐的行 ── */
+
 .thead{display:flex;align-items:center;gap:12px;padding:0 10px 6px;font-size:11.5px;color:var(--dim);
   border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:1}
 .thead>span:nth-child(1){flex:0 0 24px}
@@ -16773,15 +15614,9 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 .thead>span:nth-child(6){flex:0 0 28px}
 .thead>span:nth-child(7){flex:0 0 28px}
 .thead span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* 迷你模式：窗口被 Go 端缩成 356×104 并去掉了标题栏，四角由 Win32 圆角区域裁掉，
-   所以这里的卡片要铺满整个窗口，圆角和裁剪保持一致 */
-/* 迷你播放器：桌面上的小浮卡。
-   窗口 348×124 是「卡片 + 探出去的圆封面」的整体轮廓，Win32 那边按同一组坐标裁区域，
-   所以卡片圆角外、封面圆外的像素都不存在，看起来就是贴在桌面上的一张贴纸。
-   下面这些固定像素要和 win_floating.go 里的 miniW、miniH、mCard、mCov 常量保持一致。
-   配色一律用主题变量，橘黄 / 冷白 / 深色下都跟主界面同一套。 */
-.app.mini-mode{display:block;grid-template-columns:none;grid-template-rows:none;background:var(--bg)}
-.app.mini-mode > .skin-page,.app.mini-mode > .menubar,.app.mini-mode > .toolbar,.app.mini-mode > main,
+
+
+.app.mini-mode{display:block;grid-template-columns:none;grid-template-rows:none;background:var(--bg)}.app.mini-mode > .menubar,.app.mini-mode > .toolbar,.app.mini-mode > main,
 .app.mini-mode > .nowband,.app.mini-mode > .statusbar,.app.mini-mode > footer{display:none}
 
 .mini-player{position:fixed;left:0;top:0;width:348px;height:124px;z-index:50;
@@ -16799,7 +15634,7 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 .mini-cover,.mini-cover.empty{padding:0;box-sizing:border-box}
 .mini-card .mini-cover{height:94px;min-height:94px;max-height:94px}
 .mini-cover-ph{font-size:30px;color:var(--dim)}
-/* 卡片上半条留给歌词，下半条给按钮；右列三个小按钮不动 */
+
 .mini-lyric{position:absolute;left:100px;right:40px;top:6px;height:17px;line-height:17px;
   font-size:11.5px;color:var(--dim);white-space:nowrap;overflow:hidden;
   pointer-events:none;letter-spacing:.1px;
@@ -16820,7 +15655,7 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 .mini-ops .mini-play:hover{filter:brightness(1.08);transform:scale(1.05)}
 .mini-ops .mini-play:disabled{background:var(--acc);color:var(--on-acc-text);box-shadow:none;filter:none;opacity:.72}
 
-/* 右列竖排：主题／桌面／皮肤／关闭。卡片只有 88 高，四个 20 的按钮排一列正好 */
+
 .mini-tools{position:absolute;right:5px;top:4px;display:flex;flex-direction:column;gap:1px}
 .mini-tools button{width:22px;height:20px;border:none;background:transparent;color:var(--dim);
   cursor:pointer;padding:0;border-radius:6px;
@@ -16831,7 +15666,7 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
   border-radius:8px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .mini-btn:hover{color:var(--acc);background:var(--hover)}
 
-/* 侧边栏 */
+
 .side{grid-row:1/2;background:var(--panel);border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;transition:background .18s}
 .brand{display:flex;gap:10px;align-items:center;padding:2px 6px}
 .dot{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--acc),var(--acc2))}
@@ -16859,7 +15694,7 @@ nav button.on{background:var(--sel);color:var(--txt)}
 .chart:hover{background:var(--hover);color:var(--txt)}
 .chart.on{color:var(--acc);background:var(--now-bar)}
 
-/* 主区 */
+
 .main{padding:12px 16px 10px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;min-height:0}
 .head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:0 4px;flex:0 0 auto}
 .head h1{font-size:15px;font-weight:600;color:var(--txt)}
@@ -16892,7 +15727,7 @@ nav button.on{background:var(--sel);color:var(--txt)}
 .heart.on{color:var(--heart-on)}
 .empty{color:var(--dim);font-size:13px;padding:60px 0;text-align:center}
 
-/* 播放条 */
+
 .bar{grid-column:1/3;display:grid;grid-template-columns:300px auto 1fr 1fr;align-items:center;gap:20px;background:var(--panel);border-top:1px solid var(--line);padding:0 22px;transition:background .18s}
 .now{display:flex;align-items:center;gap:10px;min-width:0}
 .mini{width:44px;height:44px;flex:0 0 44px;border-radius:9px;background-color:var(--cover);background-position:center;background-size:cover;background-repeat:no-repeat}
@@ -16905,7 +15740,7 @@ nav button.on{background:var(--sel);color:var(--txt)}
 .prog input::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--acc);border:0;cursor:pointer}
 .lyric{font-size:12.5px;color:var(--dim);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* 电台卡片 */
+
 .station{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;color:var(--txt);text-align:left;box-shadow:var(--shadow)}
 .station:hover{border-color:var(--acc);transform:translateY(-1px)}
 .st-logo{width:44px;height:44px;flex:0 0 44px;border-radius:10px;background-color:var(--cover);background-position:center;background-size:cover;background-repeat:no-repeat}
@@ -16914,7 +15749,7 @@ nav button.on{background:var(--sel);color:var(--txt)}
 .st-desc{font-size:11.5px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .st-region{font-size:11px;color:var(--acc);border:1px solid var(--tag-line);border-radius:5px;padding:1px 6px}
 
-/* 听书 */
+
 .pod-wrap{display:flex;flex-direction:column;gap:14px}
 .pod-bar{display:flex;gap:8px;align-items:center;max-width:560px}
 .pod-bar input{flex:1;background:var(--input);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:8px 10px;font-size:13px;outline:none}
@@ -16932,12 +15767,12 @@ nav button.on{background:var(--sel);color:var(--txt)}
 .live-dot{width:7px;height:7px;border-radius:50%;background:var(--acc);display:inline-block;animation:pulse 1.6s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
-/* 浅色下滚动条也换掉，否则默认深色很突兀 */
+
 :root[data-theme="amber"] ::-webkit-scrollbar,:root[data-theme="light"] ::-webkit-scrollbar{width:10px;height:10px}
 :root[data-theme="amber"] ::-webkit-scrollbar-thumb,:root[data-theme="light"] ::-webkit-scrollbar-thumb{background:#cfd5e2;border-radius:6px}
 :root[data-theme="amber"] ::-webkit-scrollbar-track,:root[data-theme="light"] ::-webkit-scrollbar-track{background:transparent}
 
-/* ---------- 设置页 / 插件页 ---------- */
+
 .set-page,.plug-page{display:flex;flex-direction:column;gap:14px;max-width:760px;padding-bottom:20px}
 .set-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
 .set-card h3{font-size:13.5px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
@@ -16996,7 +15831,7 @@ select{background:var(--input);border:1px solid var(--line);border-radius:8px;co
 .plug-test{display:flex;gap:8px;align-items:center;margin-bottom:12px}
 .empty.small{padding:20px 0;font-size:12.5px}
 
-/* ---------- 二级播放界面（Now Playing） ---------- */
+
 .np{
   position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;
   --np-acc:#7d93ff;--np-track:rgba(255,255,255,.16);
@@ -17047,7 +15882,7 @@ select{background:var(--input);border:1px solid var(--line);border-radius:8px;co
 .np-err{font-size:12px;color:#ff8199;max-width:100%}
 
 .np-right{flex:1;min-width:0;position:relative}
-/* 二级页右侧待播清单 */
+
 .np-queue{width:236px;flex:0 0 auto;display:flex;flex-direction:column;min-height:0;
   border-left:1px solid rgba(255,255,255,.14);padding-left:22px}
 .npq-head{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.6px;
@@ -17106,7 +15941,7 @@ select{background:var(--input);border:1px solid var(--line);border-radius:8px;co
 .np-play:disabled{opacity:.4;cursor:default}
 .np-vol{position:absolute;left:56px;bottom:34px;display:flex;align-items:center;gap:9px;color:var(--np-dim)}
 
-/* 浅色主题 */
+
 :root[data-theme="light"] .np{
   --np-acc:#4f68e0;--np-track:rgba(22,32,60,.14);
   --np-txt:#1c2138;--np-dim:rgba(28,33,56,.5);--np-bg:#f5f3fb;
@@ -17130,7 +15965,7 @@ select{background:var(--input);border:1px solid var(--line);border-radius:8px;co
 :root[data-theme="light"] .np-range::-webkit-slider-thumb{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.22)}
 :root[data-theme="light"] .np-err{color:#d43b60}
 
-/* 橘黄主题的二级播放页：和浅色同构，色相换暖 */
+
 :root[data-theme="amber"] .np{
   --np-acc:#e8861a;--np-track:rgba(90,55,15,.16);
   --np-txt:#2b2116;--np-dim:rgba(43,33,22,.55);--np-bg:#fff6e6;
@@ -17155,11 +15990,11 @@ select{background:var(--input);border:1px solid var(--line);border-radius:8px;co
 :root[data-theme="amber"] .np-err{color:#cc3d22}
 :root[data-theme="amber"] .mask{background:rgba(60,40,20,.35)}
 
-/* 底部播放条：点击进二级 */
+
 .now{cursor:pointer;border-radius:9px;padding:3px 6px;margin-left:-6px;transition:background .16s}
 .now:hover{background:var(--hover)}
 
-/* 插件规范徽标：区分 MyGo（目录插件）和 MusicFree（单文件） */
+
 .plug-kind {
   font-size: 11px;
   padding: 1px 6px;
@@ -17174,7 +16009,7 @@ html[data-theme='dark'] .plug-kind {
   color: #aab4ff;
 }
 
-/* 扫码登录弹窗 */
+
 .mask{
   position:fixed;inset:0;z-index:60;
   background:rgba(8,10,14,.55);
@@ -17197,7 +16032,7 @@ html[data-theme='dark'] .plug-kind {
 .qr-fallback code{display:block;margin-top:8px;font-size:11px;color:var(--txt)}
 .qr-ops{margin-top:16px;display:flex;justify-content:center}
 
-/* 插件设置项 */
+
 .plug-settings{display:flex;flex-direction:column;gap:12px;margin-top:8px}
 .set-row{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;align-items:center}
 .set-label{font-size:12px;color:var(--dim)}
@@ -17208,7 +16043,7 @@ html[data-theme='dark'] .plug-kind {
 .set-row input:focus{border-color:var(--acc2)}
 .set-help{grid-column:2;font-style:normal;font-size:11px;color:var(--dim);line-height:1.6}
 
-/* 插件账号 */
+
 .acct{display:flex;align-items:center;gap:12px;margin-top:6px}
 .acct img,.acct .acct-ico{
   width:36px;height:36px;border-radius:50%;flex:none;object-fit:cover;
@@ -17218,7 +16053,7 @@ html[data-theme='dark'] .plug-kind {
 .acct em{display:block;font-style:normal;font-size:11px;color:var(--dim);margin-top:2px}
 .acct button{margin-left:auto}
 
-/* 搜索结果里「插件要登录」的提示条上那几个扫码按钮 */
+
 .need-login {
   display: flex;
   gap: 8px;
@@ -17231,12 +16066,12 @@ html[data-theme='dark'] .plug-kind {
   border-radius: 8px;
 }
 
-/* 只有文字、没有二维码的提示（插件登录成功后的「Signed in」） */
+
 .qr-title.ok{color:var(--acc)}
 .qr-from{font-size:11px;color:var(--dim);letter-spacing:.4px;margin-bottom:2px}
 
-/* 已登录账号条 + 登出 */
-/* 设置页：账号列表 */
+
+
 .set-hint{font-size:12px;color:var(--dim);margin:-4px 0 10px;line-height:1.6}
 .acct-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
 .acct-row{display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -17246,7 +16081,7 @@ html[data-theme='dark'] .plug-kind {
 .acct-main em{font-style:normal;font-size:12px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .acct-empty{font-size:13px;color:var(--dim);padding:10px 0 12px}
 
-/* 轻提示 */
+
 .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);z-index:60;
   background:rgba(20,22,30,.86);color:#fff;font-size:13px;padding:8px 16px;border-radius:999px;
   pointer-events:none;animation:toast-in .18s ease-out}
@@ -17257,7 +16092,7 @@ html[data-theme='dark'] .plug-kind {
 .ghost-btn.danger{color:var(--heart-on)}
 .acct-ops{display:flex;gap:8px;margin-left:auto}
 
-/* 本地乐库 */
+
 .local-page{display:flex;flex-direction:column;gap:12px;min-height:0}
 .local-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .dir-chip{display:inline-flex;align-items:center;gap:6px;max-width:360px;padding:5px 6px 5px 11px;
@@ -17266,15 +16101,15 @@ html[data-theme='dark'] .plug-kind {
 .dir-chip button{border:none;background:transparent;color:var(--dim);cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;border-radius:6px}
 .dir-chip button:hover{background:var(--heart-on);color:#fff}
 
-/* 播放列表 */
+
 .queue-page{display:flex;flex-direction:column;gap:10px;min-height:0}
 .queue-head{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--dim)}
 .row .rm{border:none;background:transparent;color:var(--dim);cursor:pointer;font-size:15px;padding:2px 8px;border-radius:6px}
-/* 加入待播 */
+
 .row .add{border:1px dashed var(--line);background:transparent;color:var(--dim);cursor:pointer;
   font-size:13px;line-height:1;padding:5px 7px;border-radius:7px;margin-right:2px;transition:.15s}
 .row .add:hover{border-color:var(--acc);color:var(--acc);background:var(--hover)}
-/* 待播清单分组 */
+
 .q-ops{display:flex;gap:8px;align-items:center}
 .q-ops .ghost-btn{font-size:12px;padding:5px 10px}
 .q-group{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.4px;
@@ -17285,909 +16120,39 @@ html[data-theme='dark'] .plug-kind {
 .q-tip{padding:6px 2px 2px}
 .list.dim{opacity:.62}
 .row .rm:hover{background:var(--heart-on);color:#fff}
-
-/* ══════════════════════════════════════════════════════
-   千千静听经典皮肤（Winamp2 风格四窗堆叠）
-   ══════════════════════════════════════════════════════ */
-.skin{display:block;height:100%;background:#0e1020}
-.skin-page{height:100%;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;
-  background:linear-gradient(180deg,#151832,#0b0d1c 60%,#0a0b16);align-items:stretch;
-  max-width:820px;margin:0 auto;box-sizing:border-box}
-
-.sk-panel{background:linear-gradient(180deg,#303680 0%,#1c1f5c 38%,#151748 100%);
-  border:1px solid #0a0b28;border-radius:3px;overflow:hidden;color:#d9ddff;font-size:12px;flex:0 0 auto;
-  box-shadow:inset 0 1px 0 rgba(190,200,255,.28),inset 1px 0 0 rgba(190,200,255,.10),
-             inset 0 -1px 0 rgba(0,0,0,.55),0 3px 12px rgba(0,0,0,.45)}
-
-.sk-title{display:flex;align-items:center;gap:7px;height:25px;padding:0 6px;flex:0 0 auto;
-  background:linear-gradient(180deg,#5b63c0 0%,#3a4198 48%,#262b72 100%);
-  border-bottom:1px solid #0a0b28;font-size:11.5px;color:#eef0ff;
-  text-shadow:0 1px 1px rgba(0,0,0,.65);letter-spacing:.3px}
-.sk-title img{width:15px;height:15px;border-radius:3px;object-fit:cover;flex:0 0 auto}
-.sk-title .t{margin-left:2px}
-.sk-win-btns{margin-left:auto;display:flex;gap:3px}
-.sk-wb{width:15px;height:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;
-  background:linear-gradient(180deg,#c6cbff,#7d85dd 60%,#4e56b4);border:1px solid #23266b;border-radius:2px;
-  color:#1b1e50;font-size:10px;line-height:1;padding:0}
-.sk-wb:active{background:linear-gradient(180deg,#98a0ee,#5c64c2)}
-
-/* 主窗口 */
-.sk-win{padding-bottom:6px}
-.sk-body{display:flex;gap:8px;padding:6px 7px 2px}
-.sk-spec{flex:1;min-width:0;height:84px;display:flex;align-items:flex-end;gap:2px;padding:6px 5px;
-  background:repeating-linear-gradient(180deg,#0a0c26 0 7px,#0d1030 7px 8px);
-  border:1px solid #0a0b28;border-radius:2px;box-shadow:inset 0 0 14px rgba(0,0,0,.75)}
-.sk-spec i{display:block;flex:1;min-width:2px;height:100%;border-radius:1px 1px 0 0;
-  background:linear-gradient(180deg,#c9cfff 0%,#7d88ff 45%,#3c45c8 100%);
-  transform-origin:bottom;transform:scaleY(.15);animation:skvis 1.1s ease-in-out infinite alternate}
-.sk-spec.paused i{animation-play-state:paused;transform:scaleY(.3)}
-.sk-spec i:nth-child(3n){animation-delay:.3s}.sk-spec i:nth-child(4n){animation-delay:.55s}
-.sk-spec i:nth-child(5n){animation-delay:.75s}.sk-spec i:nth-child(7n){animation-delay:.95s}
-.sk-spec i:nth-child(2n){animation-delay:.18s}.sk-spec i:nth-child(9n){animation-delay:1.25s}
 @keyframes skvis{from{transform:scaleY(.1)}to{transform:scaleY(.92)}}
 
-/* ── 可视化面板（频谱 / 示波器 / UV 电平表） ── */
-.sk-spec.sk-vis{position:relative;display:block;padding:0;overflow:hidden;
-  --vis-lo:#3c45c8;--vis-mid:#7d88ff;--vis-hi:#c9cfff;--vis-line:#c9cfff;
-  --vis-dial:#8a93ea;--vis-needle:#ff8a4d;--vis-dim:#6a74c0;--vis-hot:#ff5252}
-.sk-vis-cv{position:absolute;inset:0;width:100%;height:100%;display:block}
-.sk-vis-tabs{position:absolute;right:3px;top:3px;display:flex;gap:2px;opacity:.4;
-  transition:opacity .15s ease;z-index:2}
-.sk-vis:hover .sk-vis-tabs,.sk-vis-tabs:focus-within{opacity:1}
-.sk-vis-tabs button{font-family:inherit;font-size:9px;line-height:1;padding:2px 5px;cursor:pointer;
-  color:#dfe3ff;background:rgba(10,12,38,.72);border:1px solid rgba(180,190,255,.3);border-radius:2px}
-.sk-vis-tabs button.on{background:rgba(126,138,240,.9);color:#fff;border-color:rgba(226,232,255,.65)}
-.sk-vis-idle{position:absolute;left:0;right:0;bottom:5px;text-align:center;font-size:10px;
-  color:#8b95d8;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-.skin[data-skin="tt"] .sk-vis{--vis-lo:#a34a00;--vis-mid:#ff9d20;--vis-hi:#fff0c0;
-  --vis-line:#ffe6a8;--vis-dial:#c07a1a;--vis-needle:#3a1a00;--vis-dim:#8a5620;--vis-hot:#ff3b1b}
-.skin[data-skin="light"] .sk-vis,.skin[data-skin="glass"] .sk-vis{--vis-lo:#1f95c6;--vis-mid:#4cc7e8;
-  --vis-hi:#eafcff;--vis-line:#0f5f86;--vis-dial:#2b7e9f;--vis-needle:#c0392b;--vis-dim:#6b93ad;--vis-hot:#e03b2d}
-.skin[data-skin="hifi"] .sk-vis{--vis-lo:#0b8f45;--vis-mid:#42ff92;--vis-hi:#d8ffe8;
-  --vis-line:#8affc0;--vis-dial:#1f9d5e;--vis-needle:#ffe066;--vis-dim:#2b7a52;--vis-hot:#ff6b3d}
-.skin[data-skin="steel"] .sk-vis{--vis-lo:#0f7a45;--vis-mid:#42d98a;--vis-hi:#d9ffe8;
-  --vis-line:#a8f5cd;--vis-dial:#2f7f5a;--vis-needle:#7fffc4;--vis-dim:#3a6b57;--vis-hot:#ff6b3d}
-.skin[data-skin="winamp"] .sk-vis{--vis-lo:#5b3fd0;--vis-mid:#a98cff;--vis-hi:#efe6ff;
-  --vis-line:#d7c9ff;--vis-dial:#8f74e8;--vis-needle:#ffb26b;--vis-dim:#6a5aa8;--vis-hot:#ff5252}
-.skin[data-skin="light"] .sk-vis-tabs button,.skin[data-skin="glass"] .sk-vis-tabs button,.skin[data-skin="green"] .sk-vis-tabs button{
-  color:#0f3f63;background:rgba(255,255,255,.82);border-color:rgba(120,169,198,.6)}
-.skin[data-skin="light"] .sk-vis-tabs button.on,.skin[data-skin="glass"] .sk-vis-tabs button.on,.skin[data-skin="green"] .sk-vis-tabs button.on{
-  background:rgba(76,199,232,.9);color:#08324d}
-.skin[data-skin="light"] .sk-vis-idle,.skin[data-skin="glass"] .sk-vis-idle,.skin[data-skin="green"] .sk-vis-idle{
-  color:#5b7f99;text-shadow:0 1px 1px rgba(255,255,255,.7)}
 
-.sk-side{width:190px;flex:0 0 auto;display:flex;flex-direction:column;gap:5px;justify-content:flex-start}
-.sk-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12px;
-  color:#eef0ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sk-line .k{color:#aab3f2;font-size:11px}
-.sk-line .v{color:#fff;overflow:hidden;text-overflow:ellipsis}
-.sk-time{font-variant-numeric:tabular-nums;color:#fff;font-size:12px;letter-spacing:.5px}
-.sk-status{font-size:11px;color:#a9b2ea;display:flex;align-items:center;gap:6px}
-.sk-led{width:6px;height:6px;border-radius:50%;background:#3ddc84;box-shadow:0 0 6px #3ddc84}
-.sk-led.off{background:#3a3f78;box-shadow:none}
-.sk-mini-btns{display:flex;gap:4px;margin-top:auto}
-.sk-mini-btns button{flex:0 0 auto;width:38px;height:19px;font-size:10.5px;letter-spacing:.5px;color:#dfe3ff;cursor:pointer;
-  background:linear-gradient(180deg,#7e87e2,#4a52ab 55%,#333a8f);border:1px solid #23266b;border-radius:2px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
-.sk-mini-btns button.on{background:linear-gradient(180deg,#a9b2ff,#6a72d6 55%,#434aa6);color:#fff}
-
-/* 进度条 */
-.sk-seek{display:flex;align-items:center;gap:6px;padding:4px 8px 0}
-.sk-seek .tt{font-size:10.5px;color:#b7bff0;font-variant-numeric:tabular-nums;flex:0 0 auto}
-.sk-seek input{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;
-  background:linear-gradient(180deg,#0a0c26,#1a1d52);border:1px solid #0a0b28;outline:none;cursor:pointer}
-.sk-seek input::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:15px;border-radius:2px;
-  background:linear-gradient(180deg,#e3e8ff,#8a93ea 55%,#4a52ab);border:1px solid #23266b;cursor:pointer}
-
-/* 控制键 */
-.sk-controls{display:flex;align-items:center;justify-content:center;gap:9px;padding:7px 8px 3px}
-.sk-ctl{width:30px;height:30px;border-radius:50%;cursor:pointer;color:#e8ebff;font-size:12px;
-  display:flex;align-items:center;justify-content:center;padding:0;line-height:1;
-  background:radial-gradient(circle at 50% 22%,#8f99f0,#4a52ab 58%,#242a70);
-  border:1px solid #1a1d55;box-shadow:inset 0 2px 0 rgba(255,255,255,.4),0 2px 5px rgba(0,0,0,.5)}
-.sk-ctl:active{box-shadow:inset 0 2px 6px rgba(0,0,0,.55)}
-.sk-ctl:disabled{opacity:.45;cursor:default}
-.sk-ctl.big{width:42px;height:42px;font-size:16px}
-.sk-ctl.play{background:radial-gradient(circle at 50% 22%,#b3bcff,#5f68d4 58%,#2c3382)}
-.sk-pl-btn{margin-left:auto;height:22px;padding:0 10px;font-size:11px;color:#eef0ff;cursor:pointer;
-  background:linear-gradient(180deg,#7e87e2,#4a52ab 55%,#333a8f);border:1px solid #23266b;border-radius:3px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.32)}
-.sk-vol{display:flex;align-items:center;gap:6px;width:110px;flex:0 0 auto}
-.sk-vol input{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;
-  background:#0a0c26;border:1px solid #0a0b28;outline:none;cursor:pointer}
-.sk-vol input::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:13px;border-radius:2px;
-  background:linear-gradient(180deg,#e3e8ff,#8a93ea 55%,#4a52ab);border:1px solid #23266b}
-
-/* 均衡器 */
-.sk-eq-body{display:flex;gap:10px;padding:7px 8px 9px;align-items:stretch}
-.sk-eq-row{display:flex;flex-direction:column;gap:6px;justify-content:center;width:120px;flex:0 0 auto}
-.sk-eq-row .lab{font-size:10px;color:#aab3f2;margin-bottom:-2px}
-.sk-eq-row input{-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;
-  background:linear-gradient(180deg,#0a0c26,#1a1d52);border:1px solid #0a0b28;outline:none;cursor:pointer}
-.sk-eq-row input::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:14px;border-radius:2px;
-  background:linear-gradient(180deg,#e3e8ff,#8a93ea 55%,#4a52ab);border:1px solid #23266b}
-.sk-eq-faders{flex:1;display:flex;align-items:flex-end;gap:6px;justify-content:space-between;position:relative;
-  padding:14px 10px 6px 34px;background:linear-gradient(180deg,#0b0d2a,#101238);border:1px solid #0a0b28;border-radius:2px}
-.sk-eq-faders .scale{position:absolute;left:4px;top:12px;bottom:6px;display:flex;flex-direction:column;
-  justify-content:space-between;font-size:9px;color:#7d86cf}
-.sk-fader{width:9px;height:100%;display:flex;flex-direction:column;align-items:center;gap:0}
-.sk-fader .track{flex:1;width:3px;background:linear-gradient(180deg,#3a3f8f,#23276a);border-radius:2px;position:relative}
-.sk-fader .knob{position:absolute;left:-4px;width:11px;height:8px;border-radius:2px;
-  background:linear-gradient(180deg,#cfd5ff,#7e87e2 55%,#454ca8);border:1px solid #23266b}
-
-/* 播放列表 */
-.sk-pl{flex:1 1 auto;min-height:340px;display:flex;flex-direction:column}
-/* 允许换行：两列时间列表那一列会窄到 480 左右，硬挤一行会把搜索框和「搜」挤出去 */
-.sk-tools{display:flex;align-items:center;gap:3px;padding:5px 6px;flex:0 0 auto;flex-wrap:wrap;
-  background:linear-gradient(180deg,#262b72,#1b1e56);border-bottom:1px solid #0a0b28}
-.sk-tools button{height:22px;padding:0 8px;font-size:10.5px;letter-spacing:.3px;cursor:pointer;
-  color:#dfe3ff;background:linear-gradient(180deg,#7e87e2,#4a52ab 55%,#333a8f);
-  border:1px solid #23266b;border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.3);white-space:nowrap}
-.sk-tools button.on{background:linear-gradient(180deg,#a9b2ff,#6a72d6 55%,#434aa6);color:#fff}
-.sk-tools .sk-search{display:flex;gap:3px;margin-left:auto;flex:0 0 auto;width:210px}
-.sk-tools .sk-search input{flex:1;min-width:0;height:22px;padding:0 6px;font-size:11px;color:#eef0ff;
-  background:#0a0c26;border:1px solid #0a0b28;border-radius:2px;outline:none}
-.sk-tools .sk-search input::placeholder{color:#6f78bd}
-
-/* 歌词秀 */
-.sk-lyr-body{flex:1;min-height:150px;padding:10px 14px;text-align:center;overflow-y:auto;
-  background:linear-gradient(180deg,#0d1030,#0a0c24);display:flex;flex-direction:column;justify-content:center}
-.sk-lyr-body .song{font-size:13px;color:#eef0ff;margin-bottom:2px}
-.sk-lyr-body .meta{font-size:10.5px;color:#7d86cf;margin-bottom:10px}
-.sk-lyr-body .ln{font-size:12px;line-height:2.05;color:#8b93d8}
-.sk-lyr-body .ln.on{color:#fff;font-size:13.5px;text-shadow:0 0 10px rgba(150,160,255,.55)}
-.sk-lyr-body .none{font-size:12px;color:#6f78bd}
-
-/* 皮肤里的列表与卡片：跟着深蓝底走 */
-.skin .main{padding:8px 8px 10px;gap:8px;background:transparent;color:#d9ddff}
-.skin .info{grid-template-columns:1fr 118px 110px;gap:8px}
-.skin .thead .tinfo{grid-template-columns:1fr 118px 110px;gap:8px}
-.skin .thead>span:nth-child(4){flex:0 0 56px}
-.skin .thead>span:nth-child(5){flex:0 0 46px}
-.skin .head h1{color:#eef0ff}
-.skin .head p,.skin .err{color:#a9b2ea}
-.skin .thead{color:#8f98d8;border-bottom-color:rgba(255,255,255,.10);background:transparent}
-.skin .row{color:#d9ddff}
-.skin .row:hover{background:rgba(140,155,255,.14)}
-.skin .row.on{background:rgba(140,155,255,.26)}
-.skin .row .name{color:#e6e9ff}
-.skin .row .ca,.skin .row .cb,.skin .sub{color:#9aa3e0}
-.skin .idx{color:#b8c0f5;border-color:#31377e;background:rgba(255,255,255,.05)}
-.skin .tag{color:#b8c0f5;border-color:#31377e}
-.skin .dur{color:#b8c0f5}
-.skin .empty{color:#8f98d8}
-.skin .cover{background-color:#1a1d52}
-.skin .add,.skin .rm,.skin .heart{color:#b8c0f5}
-/* 设置 / 插件 / 乐库页在深蓝底下的配色覆盖 */
-.skin .set-page,.skin .plugins-page,.skin .local-page,.skin .q-group{
-  --panel:rgba(255,255,255,.05); --bg:transparent; --txt:#e6e9ff; --dim:#9aa3e0;
-  --line:rgba(255,255,255,.14); --hover:rgba(255,255,255,.10); --input:#0a0c26; --cover:#1a1d52;
-}
-.skin .set-page .card,.skin .plugins-page .card,.skin .local-page .card{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)}
-
-/* ══════════════════════════════════════════════════════
-   亮橙皮肤（第二套，data-skin="tt"）
-   ══════════════════════════════════════════════════════ */
-.skin[data-skin="tt"] .sk-panel{
-  background:linear-gradient(180deg,#4b2708 0%,#331a05 42%,#201003 100%);
-  border-color:#100701;
-  box-shadow:inset 0 1px 0 rgba(255,196,120,.55),inset 1px 0 0 rgba(255,170,90,.18),
-             inset 0 -1px 0 rgba(0,0,0,.6),0 3px 12px rgba(0,0,0,.5);
-  color:#ffe6bd}
-.skin[data-skin="tt"] .sk-title{
-  background:linear-gradient(180deg,#ffbe58 0%,#f78a14 48%,#c2560a 100%);
-  border-bottom-color:#7a3505;color:#3a1a00;text-shadow:0 1px 0 rgba(255,226,178,.75)}
-.skin[data-skin="tt"] .sk-title .sk-time{color:#3a1a00;font-weight:600}
-.skin[data-skin="tt"] .sk-wb{background:linear-gradient(180deg,#ffe0a8,#ff9b28 60%,#d05f08);
-  border-color:#8a3c04;color:#3a1a00}
-.skin[data-skin="tt"] .sk-wb:active{background:linear-gradient(180deg,#ffc266,#e07a10)}
-
-/* 频谱 */
-.skin[data-skin="tt"] .sk-spec{background:repeating-linear-gradient(180deg,#1d0e02 0 7px,#2a1503 7px 8px);
-  border-color:#100701;box-shadow:inset 0 0 14px rgba(0,0,0,.8)}
-.skin[data-skin="tt"] .sk-spec i{background:linear-gradient(180deg,#fff6cf 0%,#ffc24d 38%,#f07a10 100%);
-  box-shadow:0 0 6px rgba(255,150,40,.7)}
-
-/* 主窗口文字 */
-.skin[data-skin="tt"] .sk-line{color:#ffe6bd}
-.skin[data-skin="tt"] .sk-line .k{color:#e59a4e}
-.skin[data-skin="tt"] .sk-line .v{color:#fff6e2}
-.skin[data-skin="tt"] .sk-status{color:#e8a860}
-.skin[data-skin="tt"] .sk-led{background:#ffb43c;box-shadow:0 0 7px #ffa62d}
-.skin[data-skin="tt"] .sk-led.off{background:#5a3410;box-shadow:none}
-
-/* PL / EQ / LRC 圆钮 */
-.skin[data-skin="tt"] .sk-mini-btns{gap:6px;justify-content:flex-end}
-.skin[data-skin="tt"] .sk-mini-btns button{width:24px;height:24px;border-radius:50%;font-size:8.5px;letter-spacing:0;
-  background:radial-gradient(circle at 50% 25%,#ffd48a,#f08a18 60%,#9d4a05);border-color:#7a3505;color:#3a1a00;
-  box-shadow:inset 0 1px 0 rgba(255,240,200,.8),0 1px 3px rgba(0,0,0,.5);text-shadow:none}
-.skin[data-skin="tt"] .sk-mini-btns button.on{background:radial-gradient(circle at 50% 25%,#fff0c0,#ffa62d 60%,#c25a06);color:#2e1400}
-
-/* 进度条 */
-.skin[data-skin="tt"] .sk-seek .tt{color:#e5a460}
-.skin[data-skin="tt"] .sk-seek input{background:linear-gradient(180deg,#170b02,#3a1d06);border-color:#100701}
-.skin[data-skin="tt"] .sk-seek input::-webkit-slider-thumb{background:linear-gradient(180deg,#ffe6b0,#ff9b2c 55%,#c25a06);border-color:#8a3c04}
-
-/* 控制键 */
-.skin[data-skin="tt"] .sk-ctl{background:radial-gradient(circle at 50% 22%,#ffd189,#f0891a 58%,#8f4304);
-  border-color:#6b2f03;color:#fff2d6;box-shadow:inset 0 2px 0 rgba(255,238,200,.75),0 2px 6px rgba(0,0,0,.55)}
-.skin[data-skin="tt"] .sk-ctl.play{background:radial-gradient(circle at 50% 22%,#ffe8b0,#ffa021 58%,#a54c04)}
-.skin[data-skin="tt"] .sk-pl-btn{background:linear-gradient(180deg,#ffcf7a,#f08816 55%,#b15206);
-  border-color:#7a3505;color:#3a1a00;box-shadow:inset 0 1px 0 rgba(255,240,200,.7)}
-.skin[data-skin="tt"] .sk-vol input{background:#170b02;border-color:#100701}
-.skin[data-skin="tt"] .sk-vol input::-webkit-slider-thumb{background:linear-gradient(180deg,#ffe6b0,#ff9b2c 55%,#c25a06);border-color:#8a3c04}
-
-/* 均衡器：宽发光推子 */
-.skin[data-skin="tt"] .sk-eq-row .lab{color:#e59a4e}
-.skin[data-skin="tt"] .sk-eq-row input{background:linear-gradient(180deg,#170b02,#3a1d06);border-color:#100701}
-.skin[data-skin="tt"] .sk-eq-row input::-webkit-slider-thumb{background:linear-gradient(180deg,#ffe6b0,#ff9b2c 55%,#c25a06);border-color:#8a3c04}
-.skin[data-skin="tt"] .sk-eq-faders{background:linear-gradient(180deg,#1d0e02,#2a1503);border-color:#100701}
-.skin[data-skin="tt"] .sk-eq-faders .scale{color:#c07a34}
-.skin[data-skin="tt"] .sk-fader{width:14px}
-.skin[data-skin="tt"] .sk-fader .track{width:8px;border-radius:4px;
-  background:linear-gradient(180deg,#ffe08a,#ffab2e 45%,#8a4305);
-  box-shadow:0 0 10px rgba(255,150,40,.55),inset 0 0 5px rgba(255,225,160,.45)}
-.skin[data-skin="tt"] .sk-fader .knob{left:1px;width:12px;height:9px;
-  background:linear-gradient(180deg,#ffe9ae,#ffb02e 55%,#c86206);border-color:#7a3505;
-  box-shadow:0 0 8px rgba(255,160,40,.85)}
-
-/* 播放列表 */
-.skin[data-skin="tt"] .sk-tools{background:linear-gradient(180deg,#c96a12,#a04a07);border-bottom-color:#5a2a04}
-.skin[data-skin="tt"] .sk-tools button{background:linear-gradient(180deg,#ffd486,#f09018 55%,#b15206);
-  border-color:#7a3505;color:#3a1a00;box-shadow:inset 0 1px 0 rgba(255,240,200,.7)}
-.skin[data-skin="tt"] .sk-tools button.on{background:linear-gradient(180deg,#fff3c8,#ffb43c 55%,#cc6a08);color:#2e1400}
-.skin[data-skin="tt"] .sk-tools .sk-search input{background:#1d0e02;border-color:#5a2a04;color:#ffe6bd}
-.skin[data-skin="tt"] .sk-tools .sk-search input::placeholder{color:#a06a34}
-
-/* 歌词秀 */
-.skin[data-skin="tt"] .sk-lyr-body{background:linear-gradient(180deg,#f6a251 0%,#e07c24 45%,#c66414 100%);color:#3a1a00}
-.skin[data-skin="tt"] .sk-lyr-body .song{color:#3a1a00;font-weight:600}
-.skin[data-skin="tt"] .sk-lyr-body .meta{color:#7a3a06}
-.skin[data-skin="tt"] .sk-lyr-body .ln{color:#6b3203}
-.skin[data-skin="tt"] .sk-lyr-body .ln.on{color:#fff8d8;text-shadow:0 1px 2px rgba(120,50,0,.65);font-weight:600}
-.skin[data-skin="tt"] .sk-lyr-body .none{color:#7a3a06}
-
-/* 列表与页面 → 暖色 */
-.skin[data-skin="tt"] .main{color:#ffe6bd}
-.skin[data-skin="tt"] .head h1{color:#fff2d8}
-.skin[data-skin="tt"] .head p,.skin[data-skin="tt"] .err{color:#e8a860}
-.skin[data-skin="tt"] .thead{color:#d1913f;border-bottom-color:rgba(255,190,120,.22)}
-.skin[data-skin="tt"] .row{color:#ffe6bd}
-.skin[data-skin="tt"] .row:hover{background:rgba(255,170,70,.16)}
-.skin[data-skin="tt"] .row.on{background:rgba(255,170,70,.3)}
-.skin[data-skin="tt"] .row .name{color:#fff3d9}
-.skin[data-skin="tt"] .row .ca,.skin[data-skin="tt"] .row .cb,.skin[data-skin="tt"] .sub{color:#e0a35a}
-.skin[data-skin="tt"] .idx{color:#ffd48a;border-color:#7a3c08;background:rgba(255,180,80,.1)}
-.skin[data-skin="tt"] .tag{color:#ffd48a;border-color:#7a3c08}
-.skin[data-skin="tt"] .dur{color:#e8b070}
-.skin[data-skin="tt"] .empty{color:#c68a48}
-.skin[data-skin="tt"] .cover{background-color:#3a1d06}
-.skin[data-skin="tt"] .set-page,.skin[data-skin="tt"] .plugins-page,.skin[data-skin="tt"] .local-page,.skin[data-skin="tt"] .q-group{
-  --panel:rgba(255,180,90,.08); --bg:transparent; --txt:#ffe6bd; --dim:#dfa864;
-  --line:rgba(255,190,120,.22); --hover:rgba(255,180,90,.14); --input:#1d0e02; --cover:#3a1d06;
-}
-
-/* ══════════════════════════════════════════════════════
-   双列布局：左列（主窗口 / 均衡器 / 播放列表）+ 右列（歌词秀）
-   ══════════════════════════════════════════════════════ */
-.skin-page{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:8px;
-  align-items:stretch;max-width:1080px;margin:0 auto;padding:8px;box-sizing:border-box;
-  height:100%;overflow-y:auto;background:linear-gradient(180deg,#151832,#0b0d1c 60%,#0a0b16)}
-.sk-col{display:flex;flex-direction:column;gap:6px;min-width:0}
-.sk-col-r{height:100%}
-.sk-col-r .sk-lyr{flex:1 1 auto;display:flex;flex-direction:column}
-.sk-col-r .sk-lyr .sk-lyr-body{flex:1}
-.sk-pl{flex:1 1 auto;min-height:220px;display:flex;flex-direction:column}
-.sk-col-r .sk-lyr{min-height:0}
-.skin-page .sk-win,.skin-page .sk-eq,.skin-page .sk-pl{flex:0 0 auto}
-.skin-page .sk-pl{flex:1 1 auto}
-.skin-page .sk-panel .main{min-height:0}
-
-/* 均衡器 ON / RESET / PRESETS */
-.sk-eq-on{display:flex;gap:4px;margin-left:12px}
-.sk-eq-on button{height:16px;padding:0 7px;font-size:9px;letter-spacing:.4px;cursor:pointer;border-radius:2px;
-  color:#dfe3ff;background:linear-gradient(180deg,#7e87e2,#4a52ab 55%,#333a8f);border:1px solid #23266b;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
-.sk-eq-on button.on{background:linear-gradient(180deg,#a9b2ff,#6a72d6 55%,#434aa6)}
-.sk-eq-on button.off{opacity:.5}
-
-/* ══════════════════════════════════════════════════════
-   第三套：千千静听浅蓝皮肤（data-skin="light"）
-   ══════════════════════════════════════════════════════ */
-.skin[data-skin="light"]{background:#dbe9f5}
-.skin[data-skin="light"] .skin-page{background:linear-gradient(180deg,#eaf4fd,#d7e8f6 60%,#cfdfef)}
-.skin[data-skin="light"] .sk-panel{
-  background:linear-gradient(180deg,#ffffff 0%,#eef7ff 40%,#dcecf9 100%);
-  border-color:#93b8d4;color:#16456c;
-  box-shadow:inset 0 1px 0 #ffffff,inset 0 -1px 0 rgba(120,160,190,.35),0 3px 10px rgba(70,110,150,.22)}
-.skin[data-skin="light"] .sk-title{
-  background:linear-gradient(180deg,#f4fbff 0%,#d8ecfc 45%,#b7d5ec 100%);
-  border-bottom-color:#8fb4d2;color:#0f452f;color:#12496f;text-shadow:0 1px 0 #ffffff}
-.skin[data-skin="light"] .sk-title .sk-time{color:#12496f;font-weight:600}
-.skin[data-skin="light"] .sk-wb{background:linear-gradient(180deg,#ffffff,#cfe6f7 60%,#a9cbe4);
-  border-color:#87aecc;color:#12496f}
-.skin[data-skin="light"] .sk-spec{background:linear-gradient(180deg,#eaf6ff,#cfe7f8);
-  border-color:#9dbed8;box-shadow:inset 0 0 10px rgba(120,170,210,.45)}
-.skin[data-skin="light"] .sk-spec i{background:linear-gradient(180deg,#a9ecff 0%,#4cc7e8 45%,#1f95c6 100%);
-  box-shadow:0 0 5px rgba(60,190,230,.6)}
-.skin[data-skin="light"] .sk-line{color:#16456c}
-.skin[data-skin="light"] .sk-line .k{color:#547e9e}
-.skin[data-skin="light"] .sk-line .v{color:#0f3f63}
-.skin[data-skin="light"] .sk-status{color:#547e9e}
-.skin[data-skin="light"] .sk-led{background:#28c78a;box-shadow:0 0 6px #4bd6a0}
-.skin[data-skin="light"] .sk-led.off{background:#b9cfdf;box-shadow:none}
-.skin[data-skin="light"] .sk-mini-btns button{background:linear-gradient(180deg,#dcf2ff,#9fd6ef 55%,#5fb3d6);
-  border-color:#78a9c6;color:#0f3f63;box-shadow:inset 0 1px 0 #ffffff}
-.skin[data-skin="light"] .sk-mini-btns button.on{background:linear-gradient(180deg,#c3ecff,#7ccdee 55%,#3fa6cf);color:#08324d}
-.skin[data-skin="light"] .sk-seek .tt{color:#4a7492}
-.skin[data-skin="light"] .sk-seek input{background:linear-gradient(180deg,#d3e6f4,#b6d3e8);border-color:#8fb4d2}
-.skin[data-skin="light"] .sk-seek input::-webkit-slider-thumb{background:linear-gradient(180deg,#ffffff,#a9dcf0 55%,#57b6da);border-color:#78a9c6}
-.skin[data-skin="light"] .sk-ctl{background:radial-gradient(circle at 50% 22%,#ffffff,#a4def4 55%,#4aa6c9);
-  border-color:#79a8c4;color:#0d3c58;box-shadow:inset 0 2px 0 #ffffff,0 2px 4px rgba(90,130,160,.35)}
-.skin[data-skin="light"] .sk-ctl.play{background:radial-gradient(circle at 50% 22%,#ffffff,#8ed8f2 55%,#369bc0)}
-.skin[data-skin="light"] .sk-pl-btn{background:linear-gradient(180deg,#e5f6ff,#a8daf0 55%,#61b3d4);
-  border-color:#78a9c6;color:#0f3f63;box-shadow:inset 0 1px 0 #ffffff}
-.skin[data-skin="light"] .sk-vol input{background:#c8dcea;border-color:#8fb4d2}
-.skin[data-skin="light"] .sk-vol input::-webkit-slider-thumb{background:linear-gradient(180deg,#fff,#a9dcf0 55%,#57b6da);border-color:#78a9c6}
-.skin[data-skin="light"] .sk-eq-on button{background:linear-gradient(180deg,#f0faff,#b6ddf3 55%,#7bc0dd);border-color:#78a9c6;color:#0f3f63}
-.skin[data-skin="light"] .sk-eq-on button.on{background:linear-gradient(180deg,#d6f2ff,#8ed3ef 55%,#4aa6c9);color:#08324d}
-.skin[data-skin="light"] .sk-eq-row .lab{color:#547e9e}
-.skin[data-skin="light"] .sk-eq-row input{background:#c8dcea;border-color:#8fb4d2}
-.skin[data-skin="light"] .sk-eq-row input::-webkit-slider-thumb{background:linear-gradient(180deg,#fff,#a9dcf0 55%,#57b6da);border-color:#78a9c6}
-.skin[data-skin="light"] .sk-eq-faders{background:linear-gradient(180deg,#f6fbff,#e2f1fb);border-color:#9dbed8}
-.skin[data-skin="light"] .sk-eq-faders .scale{color:#6b93b0}
-.skin[data-skin="light"] .sk-fader .track{background:linear-gradient(180deg,#d3e6f4,#a9cbe4);border-radius:2px;
-  box-shadow:inset 0 1px 2px rgba(110,150,180,.5)}
-.skin[data-skin="light"] .sk-fader .knob{background:linear-gradient(180deg,#ffffff,#b6ddf3 55%,#6fb5d4);border-color:#78a9c6}
-.skin[data-skin="light"] .sk-tools{background:linear-gradient(180deg,#ffffff,#e6f3fd);border-bottom-color:#a9cbe4}
-.skin[data-skin="light"] .sk-tools button{background:linear-gradient(180deg,#ffffff,#d6ecfa 55%,#b0d5ea);
-  border-color:#8fb4d2;color:#0f3f63;box-shadow:inset 0 1px 0 #fff}
-.skin[data-skin="light"] .sk-tools button.on{background:linear-gradient(180deg,#ffffff,#8ed8f2 55%,#35a0c8);color:#08324d}
-.skin[data-skin="light"] .sk-tools .sk-search input{background:#ffffff;border-color:#8fb4d2;color:#12496f}
-.skin[data-skin="light"] .sk-tools .sk-search input::placeholder{color:#8fb0c8}
-.skin[data-skin="light"] .sk-lyr-body{background:linear-gradient(180deg,#ffffff,#f2f9ff 55%,#e6f3fd);color:#16456c}
-.skin[data-skin="light"] .sk-lyr-body .song{color:#0f3f63;font-weight:600}
-.skin[data-skin="light"] .sk-lyr-body .meta{color:#6b93b0}
-.skin[data-skin="light"] .sk-lyr-body .ln{color:#7ea6c0}
-.skin[data-skin="light"] .sk-lyr-body .ln.on{color:#0a6fa8;font-weight:600;text-shadow:0 0 8px rgba(120,200,235,.5)}
-.skin[data-skin="light"] .sk-lyr-body .none{color:#7ea6c0}
-.skin[data-skin="light"] .main{color:#16456c}
-.skin[data-skin="light"] .head h1{color:#0f3f63}
-.skin[data-skin="light"] .head p,.skin[data-skin="light"] .err{color:#5b83a6}
-.skin[data-skin="light"] .thead{color:#6b93b0;border-bottom-color:rgba(120,160,190,.35)}
-.skin[data-skin="light"] .row{color:#16456c}
-.skin[data-skin="light"] .row:hover{background:rgba(140,200,235,.25)}
-.skin[data-skin="light"] .row.on{background:rgba(110,190,230,.35)}
-.skin[data-skin="light"] .row .name{color:#0f3f63}
-.skin[data-skin="light"] .row .ca,.skin[data-skin="light"] .row .cb,.skin[data-skin="light"] .sub{color:#6b93b0}
-.skin[data-skin="light"] .idx{color:#3f7fa6;border-color:#a9cbe4;background:rgba(255,255,255,.7)}
-.skin[data-skin="light"] .tag{color:#3f7fa6;border-color:#a9cbe4}
-.skin[data-skin="light"] .dur{color:#5b83a6}
-.skin[data-skin="light"] .empty{color:#7ea6c0}
-.skin[data-skin="light"] .cover{background-color:#dbe9f5}
-.skin[data-skin="light"] .set-page,.skin[data-skin="light"] .plugins-page,.skin[data-skin="light"] .local-page,.skin[data-skin="light"] .q-group{
-  --panel:rgba(255,255,255,.82); --bg:transparent; --txt:#16456c; --dim:#5b83a6;
-  --line:rgba(130,170,200,.4); --hover:rgba(140,200,235,.25); --input:#ffffff; --cover:#dbe9f5;
-}
-
-/* 双列里的列表列宽收紧 */
-.skin .info{grid-template-columns:minmax(0,1fr) 82px 70px;gap:6px}
-.skin .thead .tinfo{grid-template-columns:minmax(0,1fr) 82px 70px;gap:6px}
-.skin .thead>span:nth-child(4){flex:0 0 44px}
-.skin .thead>span:nth-child(5){flex:0 0 40px}
-.skin .thead>span:nth-child(6){flex:0 0 24px}
-.skin .thead>span:nth-child(7){flex:0 0 20px}
-.skin .sk-tools .sk-search{width:170px}
-.skin .sk-lyr-body{justify-content:flex-start;padding-top:18px}
-.skin .sk-lyr-body .song{margin-top:auto}
-.skin .sk-lyr-body>.ln:last-child{margin-bottom:auto}
-/* tt 皮肤里的 EQ 按钮与皮肤切换钮 */
-.skin[data-skin="tt"] .sk-eq-on button{background:linear-gradient(180deg,#ffd486,#f09018 55%,#b15206);
-  border-color:#7a3505;color:#3a1a00;box-shadow:inset 0 1px 0 rgba(255,240,200,.7)}
-.skin[data-skin="tt"] .sk-eq-on button.on{background:linear-gradient(180deg,#fff3c8,#ffb43c 55%,#cc6a08);color:#2e1400}
-.skin[data-skin="tt"] .sk-skin-sw{background:linear-gradient(180deg,#ffe0a8,#ff9b28 60%,#d05f08);border-color:#8a3c04;color:#3a1a00}
-
-/* 右列不再被歌词内容撑高，歌词区内部滚动 */
-.skin-page .sk-col-r{height:0;min-height:100%;overflow:hidden}
-.skin-page .sk-col-r .sk-lyr{height:100%;min-height:0;display:flex;flex-direction:column}
-.skin-page .sk-col-r .sk-lyr-body{flex:1 1 0;min-height:0;overflow-y:auto;scroll-behavior:smooth}
-
-/* ══════════ 真实可拖动的 10 段推子 ══════════ */
-.sk-eq-faders{align-items:stretch}
-.sk-eq-faders .scale{padding-top:2px}
-.sk-fader{position:relative;width:18px;display:flex;flex-direction:column;align-items:center;min-height:110px}
-.sk-fader .sk-fader-in{position:absolute;left:50%;top:0;transform:translateX(-50%);
-  width:56px;height:calc(100% - 14px);margin:0;opacity:0;cursor:ns-resize;z-index:4;
-  writing-mode:vertical-lr;direction:rtl}
-.sk-fader .track{position:relative;width:5px;flex:1 1 auto;margin:2px 0 1px;
-  background:linear-gradient(180deg,#333866,#20244a);border-radius:3px;
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
-.sk-fader .knob{position:absolute;left:50%;transform:translateX(-50%);width:13px;height:8px;border-radius:2px;
-  background:linear-gradient(180deg,#dfe4ff,#8f98e0 55%,#5a63bd);border:1px solid #2a2f6b;
-  box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(0,0,0,.5);pointer-events:none}
-.sk-fader .hz{font-size:7.5px;line-height:9px;color:#8e97d8;letter-spacing:.2px;white-space:nowrap}
-.skin[data-skin="tt"] .sk-fader .track{background:linear-gradient(180deg,#4a2408,#2a1204)}
-.skin[data-skin="tt"] .sk-fader .knob{background:linear-gradient(180deg,#ffe9b8,#ffab35 55%,#d2690a);border-color:#7a3505}
-.skin[data-skin="tt"] .sk-fader .hz{color:#d99a54}
-.skin[data-skin="light"] .sk-fader .track{background:linear-gradient(180deg,#c3d9ea,#9dbfd9)}
-.skin[data-skin="light"] .sk-fader .knob{background:linear-gradient(180deg,#fff,#a9dcf0 55%,#57b6da);border-color:#78a9c6}
-.skin[data-skin="light"] .sk-fader .hz{color:#5b83a6}
-
-/* 皮肤区占满窗口，去掉两侧留白 */
-.skin-page{max-width:none;width:100%;padding:10px;gap:10px;
-  grid-template-columns:var(--sk-main-w,230px) 7px minmax(0,1fr)}
-/* 两列之间的拖拽分隔条 */
-.sk-split{width:7px;align-self:stretch;cursor:col-resize;border-radius:3px;
-  background:linear-gradient(90deg,rgba(0,0,0,.04),rgba(0,0,0,.22),rgba(0,0,0,.04));
-  touch-action:none;user-select:none}
-.sk-split:hover,.sk-split:active{background:linear-gradient(90deg,rgba(120,160,255,.30),rgba(120,160,255,.78),rgba(120,160,255,.30))}
-.skin-page.one-col .sk-split{display:none}
-/* 歌词从顶部开始排，不再整体垂直居中 */
-.skin .sk-lyr-body{justify-content:flex-start;padding-top:12px}
-.skin .sk-lyr-body .song{margin-top:0;margin-bottom:2px}
-.skin .sk-lyr-body>.ln:last-child{margin-bottom:0}
-/* 空歌词时那句提示仍居中 */
-.skin .sk-lyr-body .none{margin:auto 0}
-/* 宽窗口下主窗口侧栏别太窄，频谱交给 flex 撑开 */
-@media (min-width: 1400px){
-  .skin .sk-side{width:210px}
-}
-
-/* 宽屏下列表列宽跟着放大，标题列不再被拉得过散 */
-@media (min-width: 1400px){
-  .skin .info,.skin .thead .tinfo{grid-template-columns:minmax(0,1fr) 132px 112px;gap:10px}
-  .skin .thead>span:nth-child(4){flex:0 0 54px}
-  .skin .thead>span:nth-child(5){flex:0 0 48px}
-  .skin .row .cov{width:26px;height:26px}
-}
-
-/* ══════════ 歌单内部滚动条 ══════════ */
-.skin-page .sk-col{height:0;min-height:100%}
-.skin-page .sk-pl{flex:1 1 auto;min-height:170px;overflow:hidden}
-.skin-page .sk-pl .main{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden}
-.skin-page .sk-pl .main::-webkit-scrollbar{width:9px}
-.skin-page .sk-pl .main::-webkit-scrollbar-track{background:rgba(0,0,0,.28);border-radius:5px}
-.skin-page .sk-pl .main::-webkit-scrollbar-thumb{
-  background:linear-gradient(180deg,#8f98e0,#5a63bd);border-radius:5px;border:1px solid #2a2f6b}
-.skin-page .sk-pl .main::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#b6beff,#7b84d6)}
-.skin[data-skin="tt"] .sk-pl .main::-webkit-scrollbar-track{background:rgba(60,26,4,.5)}
-.skin[data-skin="tt"] .sk-pl .main::-webkit-scrollbar-thumb{
-  background:linear-gradient(180deg,#ffcf85,#e07a12);border-color:#7a3505}
-.skin[data-skin="light"] .sk-pl .main::-webkit-scrollbar-track{background:rgba(150,180,205,.25)}
-.skin[data-skin="light"] .sk-pl .main::-webkit-scrollbar-thumb{
-  background:linear-gradient(180deg,#ffffff,#93c8e4);border-color:#78a9c6}
-
-/* ══════════ 小窗口适配：窗口变矮时逐级收起面板、压缩主窗口 ══════════ */
-@media (max-height: 560px){
-  .skin-page{padding:6px;gap:6px}
-  .skin-page .sk-eq{display:none}
-  .skin-page .sk-pl{min-height:110px}
-}
-@media (max-height: 330px){
-  .skin-page{padding:6px;gap:6px}
-  .skin-page .sk-eq{display:none}
-  .skin-page .sk-pl{display:none}
-  .sk-col{gap:4px}
-  .sk-win{padding-bottom:4px}
-  .sk-title{height:21px;padding:0 5px;gap:5px}
-  .sk-title img{width:13px;height:13px}
-  .sk-title .t{font-size:10px}
-  .sk-body{gap:6px;padding:5px 6px 1px}
-  .sk-spec{height:58px;padding:4px}
-  .sk-side{width:168px;gap:3px}
-  .sk-line{font-size:10px;line-height:1.35}
-  .sk-line .k{font-size:9.5px}
-  .sk-status{font-size:9.5px}
-  .sk-mini-btns{gap:3px}
-  .sk-mini-btns button{width:32px;height:17px;font-size:9.5px}
-  .sk-seek{padding:3px 7px 0;gap:5px}
-  .sk-seek .tt{font-size:9.5px}
-  .sk-seek input{height:4px}
-  .sk-controls{gap:6px;padding:5px 7px 2px}
-  .sk-ctl{width:25px;height:25px;font-size:11px}
-  .sk-ctl.play{width:31px;height:31px;font-size:13px}
-  .sk-vol{gap:4px}
-  .sk-pl-btn{height:20px;font-size:10px;padding:0 8px}
-  .sk-lyr-body{padding:6px 10px;min-height:0}
-  .sk-lyr-body .song{font-size:12px;margin-bottom:0}
-  .sk-lyr-body .meta{font-size:9.5px;margin-bottom:5px}
-  .sk-lyr-body .ln{font-size:11px;line-height:1.6}
-  .sk-lyr-body .ln.on{font-size:12px}
-}
-
-@media (max-height: 560px){
-  /* 矮窗口下把列表头的标题/统计/按钮压紧，多留几行歌 */
-  .skin .sk-pl .main .head{margin:2px 0 5px}
-  .skin .sk-pl .main .head h1{font-size:13px}
-  .skin .sk-pl .main .head p{font-size:9.5px;margin-top:1px}
-  .skin .sk-pl .main .local-page>div:first-child{margin-bottom:4px}
-  .skin .sk-pl .main .row{padding-top:3px;padding-bottom:3px}
-}
-
-@media (max-height: 560px){
-  /* 矮窗口下省掉「乐库 / 搜索结果」大标题与统计行，把空间留给歌 */
-  .skin .sk-pl .main .head h1{display:none}
-  .skin .sk-pl .main .head p{display:none}
-  .skin .sk-pl .main .head{padding:0;margin:0;gap:4px}
-  .skin .sk-pl .main .local-head{padding:2px 0}
-  .skin .sk-pl .main .local-head .primary-btn{height:22px;font-size:10px;padding:0 9px}
-  .skin .sk-pl .main .local-head .dir-chip{font-size:9.5px;padding:0 5px}
-  .skin .sk-pl .main .thead{font-size:9.5px;padding-top:2px;padding-bottom:2px}
-}
-
-/* ══════════ 歌词：卡拉OK 逐字填充 ══════════ */
 .kowrap{position:relative;display:inline-block;white-space:nowrap;max-width:100%}
 .kbase{color:inherit}
 .kfill{position:absolute;left:0;top:0;width:0;overflow:hidden;white-space:nowrap;
   color:#ffffff;text-shadow:0 0 10px rgba(160,170,255,.6);pointer-events:none}
-.skin .sk-lyr-body .ln.on .kbase{color:inherit}
 
-/* 卡拉OK 两行模式 */
+
 .kara{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;padding:6px 0}
 .kara .krow{max-width:100%;overflow:hidden}
 .kara .krow.now{font-size:19px;line-height:1.5;color:#7d86cf}
 .kara .krow.now .kfill{color:#ffffff;text-shadow:0 0 12px rgba(150,160,255,.7)}
 .kara .krow.next{font-size:13px;line-height:1.5;color:#5d669f}
-.skin[data-skin="tt"] .kara .krow.now{color:#a1662e}
-.skin[data-skin="tt"] .kara .krow.now .kfill{color:#ffd68a;text-shadow:0 0 12px rgba(255,170,60,.7)}
-.skin[data-skin="tt"] .kara .krow.next{color:#9c6329}
-.skin[data-skin="light"] .kara .krow.now{color:#a2c1d4}
-.skin[data-skin="light"] .kara .krow.now .kfill{color:#0a6fa8;text-shadow:0 0 10px rgba(90,190,235,.55)}
-.skin[data-skin="light"] .kara .krow.next{color:#a9c6d8}
-.sk-title .sk-lrc-mode{width:22px;font-size:10px;font-weight:600}
 @media (max-height: 330px){
   .kara{gap:8px}
   .kara .krow.now{font-size:15px}
-  .kara .krow.next{font-size:11px}
-}
+  .kara .krow.next{font-size:11px}}
 
-/* 卡拉OK 未唱部分的可读性：比"已唱"暗，但要看得清 */
-.skin .kara .krow.now{color:#9aa3e0}
-.skin[data-skin="tt"] .kara .krow.now{color:#b57a35}
-.skin[data-skin="light"] .kara .krow.now{color:#7ba2bd}
 
-/* 整段滚动模式里的当前行也做卡拉OK 对比色 */
-.skin .sk-lyr-body .ln.on{color:#8b93d8}
-.skin .sk-lyr-body .ln.on .kbase{color:#8b93d8}
-.skin .sk-lyr-body .ln.on .kfill{color:#ffffff;text-shadow:0 0 10px rgba(150,160,255,.65)}
-.skin[data-skin="tt"] .sk-lyr-body .ln.on{color:#a4722f}
-.skin[data-skin="tt"] .sk-lyr-body .ln.on .kbase{color:#a4722f}
-.skin[data-skin="tt"] .sk-lyr-body .ln.on .kfill{color:#ffd68a;text-shadow:0 0 10px rgba(255,170,60,.6)}
-.skin[data-skin="light"] .sk-lyr-body .ln.on{color:#7ba2bd}
-.skin[data-skin="light"] .sk-lyr-body .ln.on .kbase{color:#7ba2bd}
-.skin[data-skin="light"] .sk-lyr-body .ln.on .kfill{color:#0a6fa8;text-shadow:0 0 8px rgba(90,190,235,.45)}
-
-/* ══════════════════════════════════════════════════════
-   第四套：HiFi 21 银灰绿（data-skin="hifi"）
-   ══════════════════════════════════════════════════════ */
-.skin[data-skin="hifi"]{background:#8d9699}
-.skin[data-skin="hifi"] .skin-page{background:linear-gradient(180deg,#9aa3a5,#7e878a)}
-.skin[data-skin="hifi"] .sk-panel{
-  background:linear-gradient(180deg,#d5dbd8 0%,#b2bab7 42%,#8e9794 100%);
-  border-color:#5d6663;color:#bfffd6;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -1px 0 rgba(40,50,45,.5),0 3px 9px rgba(20,30,25,.45)}
-.skin[data-skin="hifi"] .sk-title{
-  background:linear-gradient(180deg,#2c4636 0%,#152a1d 55%,#0b1a12 100%);
-  border-bottom-color:#050b07;color:#a8ffc4;text-shadow:0 0 6px rgba(80,255,150,.55);letter-spacing:.06em}
-.skin[data-skin="hifi"] .sk-title .sk-time{color:#8fffb0;font-weight:600;text-shadow:0 0 7px rgba(90,255,150,.6)}
-.skin[data-skin="hifi"] .sk-wb{background:linear-gradient(180deg,#e6ebe8,#b6bdba 58%,#828b88);
-  border-color:#4f5855;color:#0d2416;text-shadow:none}
-.skin[data-skin="hifi"] .sk-spec{background:linear-gradient(180deg,#020a06,#04170e);
-  border-color:#16281d;box-shadow:inset 0 0 12px rgba(0,0,0,.85)}
-.skin[data-skin="hifi"] .sk-spec i{background:linear-gradient(180deg,#d8ffe8 0%,#42ff92 38%,#0b8f45 100%);
-  box-shadow:0 0 6px rgba(60,255,140,.55)}
-.skin[data-skin="hifi"] .sk-line{color:#7fe0a4}
-.skin[data-skin="hifi"] .sk-line .k{color:#3f9c66}
-.skin[data-skin="hifi"] .sk-line .v{color:#bcffd5}
-.skin[data-skin="hifi"] .sk-status{color:#4fbf7d}
-.skin[data-skin="hifi"] .sk-led{background:#3dff8e;box-shadow:0 0 8px #38ff86}
-.skin[data-skin="hifi"] .sk-led.off{background:#1d3a29;box-shadow:none}
-.skin[data-skin="hifi"] .sk-mini-btns button{background:linear-gradient(180deg,#e6ebe8,#b2b9b6 55%,#7c8582);
-  border-color:#4f5855;color:#0c2215;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
-.skin[data-skin="hifi"] .sk-mini-btns button.on{background:linear-gradient(180deg,#a8ffc4,#42cc74 55%,#137a3e);color:#02120a}
-.skin[data-skin="hifi"] .sk-seek .tt{color:#4fbf7d}
-.skin[data-skin="hifi"] .sk-seek input{background:linear-gradient(180deg,#04120a,#0d2418);border-color:#050d08}
-.skin[data-skin="hifi"] .sk-seek input::-webkit-slider-thumb{background:linear-gradient(180deg,#e8ede9,#a9b1ae 55%,#6f7875);border-color:#3f4845}
-.skin[data-skin="hifi"] .sk-ctl{background:radial-gradient(circle at 50% 22%,#f2f5f3,#a9b1ae 55%,#5c6562);
-  border-color:#3f4845;color:#0b2416;box-shadow:inset 0 2px 0 rgba(255,255,255,.85),0 2px 4px rgba(10,20,15,.55)}
-.skin[data-skin="hifi"] .sk-ctl.play{background:radial-gradient(circle at 50% 22%,#d8ffe6,#5fe08f 55%,#146335)}
-.skin[data-skin="hifi"] .sk-pl-btn{background:linear-gradient(180deg,#e8ece9,#b4bbb8 55%,#7e8784);
-  border-color:#4f5855;color:#0c2215;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
-.skin[data-skin="hifi"] .sk-vol input{background:#0a1a11;border-color:#050d08}
-.skin[data-skin="hifi"] .sk-vol input::-webkit-slider-thumb{background:linear-gradient(180deg,#e8ede9,#a9b1ae 55%,#6f7875);border-color:#3f4845}
-.skin[data-skin="hifi"] .sk-eq-on button{background:linear-gradient(180deg,#e8ece9,#b4bbb8 55%,#7e8784);
-  border-color:#4f5855;color:#0c2215;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
-.skin[data-skin="hifi"] .sk-eq-on button.on{background:linear-gradient(180deg,#a8ffc4,#3cc96f 55%,#0f6d37);color:#02120a}
-.skin[data-skin="hifi"] .sk-eq-row .lab{color:#3f9c66}
-.skin[data-skin="hifi"] .sk-eq-row input{background:#0a1a11;border-color:#050d08}
-.skin[data-skin="hifi"] .sk-eq-row input::-webkit-slider-thumb{background:linear-gradient(180deg,#e8ede9,#a9b1ae 55%,#6f7875);border-color:#3f4845}
-.skin[data-skin="hifi"] .sk-eq-faders{background:linear-gradient(180deg,#03110a,#0a2216);border-color:#1c2f23}
-.skin[data-skin="hifi"] .sk-eq-faders .scale{color:#3f9c66}
-.skin[data-skin="hifi"] .sk-fader .track{background:linear-gradient(180deg,#0b2417,#04120b);border-radius:2px;
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.8)}
-.skin[data-skin="hifi"] .sk-fader .knob{background:linear-gradient(180deg,#eff3f0,#a9b1ae 55%,#6b7471);
-  border-color:#3f4845;box-shadow:0 1px 2px rgba(0,0,0,.6)}
-.skin[data-skin="hifi"] .sk-tools{background:linear-gradient(180deg,#c4cbc8,#9aa29f 60%,#828b88);border-bottom-color:#5d6663}
-.skin[data-skin="hifi"] .sk-tools button{background:linear-gradient(180deg,#f0f4f1,#c3cac7 55%,#959d9a);
-  border-color:#5a6360;color:#0c2215;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)}
-.skin[data-skin="hifi"] .sk-tools button.on{background:linear-gradient(180deg,#b8ffd2,#4bd47c 55%,#14763c);color:#02120a}
-.skin[data-skin="hifi"] .sk-tools .sk-search input{background:#04120a;border-color:#3d4844;color:#a8ffc4}
-.skin[data-skin="hifi"] .sk-tools .sk-search input::placeholder{color:#3f9c66}
-.skin[data-skin="hifi"] .sk-lyr-body{background:linear-gradient(180deg,#05160d 0%,#03100a 60%,#020b07 100%);color:#a8ffc4}
-.skin[data-skin="hifi"] .sk-lyr-body .song{color:#d8ffe6;font-weight:600;text-shadow:0 0 9px rgba(80,255,150,.5)}
-.skin[data-skin="hifi"] .sk-lyr-body .meta{color:#3f9c66}
-.skin[data-skin="hifi"] .sk-lyr-body .ln{color:#2f7f52}
-.skin[data-skin="hifi"] .sk-lyr-body .ln.on{color:#a8ffc8;font-weight:600;text-shadow:0 0 10px rgba(80,255,150,.65)}
-.skin[data-skin="hifi"] .sk-lyr-body .none{color:#2f7f52}
-.skin[data-skin="hifi"] .main{color:#a8ffc4}
-.skin[data-skin="hifi"] .head h1{color:#d8ffe6}
-.skin[data-skin="hifi"] .head p,.skin[data-skin="hifi"] .err{color:#4fbf7d}
-.skin[data-skin="hifi"] .thead{color:#3f9c66;border-bottom-color:rgba(90,200,140,.28)}
-.skin[data-skin="hifi"] .row{color:#a8ffc4}
-.skin[data-skin="hifi"] .row:hover{background:rgba(70,220,130,.16)}
-.skin[data-skin="hifi"] .row.on{background:rgba(70,230,140,.3)}
-.skin[data-skin="hifi"] .row .name{color:#d8ffe6}
-.skin[data-skin="hifi"] .row .ca,.skin[data-skin="hifi"] .row .cb,.skin[data-skin="hifi"] .sub{color:#4fbf7d}
-.skin[data-skin="hifi"] .idx{color:#6bff9e;border-color:#2b5c3f;background:rgba(60,230,130,.12)}
-.skin[data-skin="hifi"] .tag{color:#6bff9e;border-color:#2b5c3f}
-.skin[data-skin="hifi"] .dur{color:#3f9c66}
-.skin[data-skin="hifi"] .empty{color:#2f7f52}
-.skin[data-skin="hifi"] .cover{background-color:#0d2418}
-.skin[data-skin="hifi"] .sk-skin-sw{background:linear-gradient(180deg,#e8ece9,#b4bbb8 55%,#7e8784);
-  border-color:#4f5855;color:#0c2215}
-.skin[data-skin="hifi"] .sk-tools .sk-search input{color:#a8ffc4}
-.skin[data-skin="hifi"] .set-page,.skin[data-skin="hifi"] .plugins-page,.skin[data-skin="hifi"] .local-page,.skin[data-skin="hifi"] .q-group{
-  --panel:rgba(6,26,16,.72); --bg:transparent; --txt:#a8ffc4; --dim:#4fbf7d;
-  --line:rgba(90,200,140,.3); --hover:rgba(70,220,130,.16); --input:#04120a; --cover:#0d2418;
-}
-/* 播放列表整体深绿底 */
-.skin[data-skin="hifi"] .sk-pl .main,
-.skin[data-skin="hifi"] .sk-pl .local-page{background:#04120a}
-/* 卡拉OK 在 hifi 皮肤下的配色 */
-.skin[data-skin="hifi"] .kara .krow.now{color:#2f7f52}
-.skin[data-skin="hifi"] .kara .krow.now .kfill{color:#b8ffd4;text-shadow:0 0 12px rgba(80,255,150,.7)}
-.skin[data-skin="hifi"] .kara .krow.next{color:#245a3b}
-.skin[data-skin="hifi"] .sk-lyr-body .ln.on .kbase{color:#2f7f52}
-.skin[data-skin="hifi"] .sk-lyr-body .ln.on .kfill{color:#b8ffd4;text-shadow:0 0 10px rgba(80,255,150,.65)}
-
-/* 小窗口（迷你）切换按钮 */
-.sk-title .sk-win-mini,
-.sk-title .sk-win-mini button{display:flex;align-items:center;justify-content:center}
-.sk-title .sk-win-mini{width:18px;min-width:18px}
-.sk-title .sk-win-mini svg{width:9px;height:9px;opacity:.85}
-.sk-title .sk-win-mini:hover svg{opacity:1}
-
-/* 小窗口按钮再明显一点 */
-.sk-title .sk-win-mini{width:20px;min-width:20px}
-.sk-title .sk-win-mini svg{width:10px;height:10px}
-
-/* ══════════════════════════════════════════════════════
-   皮肤颜色校正（按用户六张参考图重新取样）
-   A 紫夜 #252639/#332959 · B HiFi 深青绿 #09302f/#798a94
-   C 冷白浅蓝 #d4e7f4 · D 天蓝玻璃 #7accfd/#359bcb
-   E 亮橙 #f58a43/#c25021 · F Steel 银白 #b0c9cb + 深蓝歌词 #2c4e8f
-   ══════════════════════════════════════════════════════ */
-
-/* ── 1. 紫夜 Winamp（A） ── */
-.skin[data-skin="winamp"]{background:#1b1c2c}
-.skin[data-skin="winamp"] .skin-page{background:linear-gradient(180deg,#2b2c44,#1e1f30 60%,#181929)}
-.skin[data-skin="winamp"] .sk-panel{
-  background:linear-gradient(180deg,#3f4163 0%,#2f3048 45%,#232438 100%);
-  border-color:#121325;color:#e6e4ff;
-  box-shadow:inset 0 1px 0 rgba(160,150,255,.22),inset 0 -1px 0 rgba(0,0,0,.55),0 3px 9px rgba(0,0,0,.5)}
-.skin[data-skin="winamp"] .sk-title{
-  background:linear-gradient(180deg,#3d3f5d,#2d2f43 60%,#1e2033);
-  border-bottom-color:#0f1020;color:#cfcaff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-.skin[data-skin="winamp"] .sk-title .sk-time{color:#b6b0ff;font-weight:600}
-.skin[data-skin="winamp"] .sk-wb{background:linear-gradient(180deg,#6a6da3,#3b3d66 60%,#24263f);
-  border-color:#121325;color:#d3cfff}
-.skin[data-skin="winamp"] .sk-spec{background:linear-gradient(180deg,#2e2551,#1d1738);
-  border-color:#100c22;box-shadow:inset 0 0 12px rgba(0,0,0,.75)}
-.skin[data-skin="winamp"] .sk-spec i{background:linear-gradient(180deg,#efe6ff 0%,#a98cff 40%,#5b3fd0 100%);
-  box-shadow:0 0 6px rgba(150,120,255,.55)}
-.skin[data-skin="winamp"] .sk-line{color:#c2bdf0}
-.skin[data-skin="winamp"] .sk-line .k{color:#8d89bf}
-.skin[data-skin="winamp"] .sk-line .v{color:#eae7ff}
-.skin[data-skin="winamp"] .sk-status{color:#8d89bf}
-.skin[data-skin="winamp"] .sk-lyr-body{background:linear-gradient(180deg,#303148,#26273b 55%,#1e1f30);color:#d8d5ff}
-.skin[data-skin="winamp"] .sk-lyr-body .ln{color:#7e7ba8}
-.skin[data-skin="winamp"] .sk-lyr-body .ln.on{color:#f2efff;text-shadow:0 0 9px rgba(150,120,255,.6)}
-.skin[data-skin="winamp"] .main{color:#d8d5ff}
-.skin[data-skin="winamp"] .row{color:#d8d5ff}
-.skin[data-skin="winamp"] .row:hover{background:rgba(150,120,255,.16)}
-.skin[data-skin="winamp"] .row.on{background:rgba(150,120,255,.3)}
-.skin[data-skin="winamp"] .row .name{color:#eae7ff}
-.skin[data-skin="winamp"] .row .ca,.skin[data-skin="winamp"] .row .cb,.skin[data-skin="winamp"] .sub{color:#8d89bf}
-.skin[data-skin="winamp"] .thead{color:#8d89bf;border-bottom-color:rgba(150,145,220,.22)}
-.skin[data-skin="winamp"] .kara .krow.now{color:#8f8bc0}
-.skin[data-skin="winamp"] .kara .krow.now .kfill{color:#ffffff;text-shadow:0 0 12px rgba(150,120,255,.7)}
-.skin[data-skin="winamp"] .kara .krow.next{color:#6e6b96}
-
-/* ── 2. 亮橙皮肤（E） ── */
-.skin[data-skin="tt"]{background:#c4521f}
-.skin[data-skin="tt"] .skin-page{background:linear-gradient(180deg,#f58a43,#d0662c 60%,#b04f1d)}
-.skin[data-skin="tt"] .sk-panel{
-  background:linear-gradient(180deg,#ffa765 0%,#f58a43 45%,#c25021 100%);
-  border-color:#7a2c0c;color:#3a1503}
-.skin[data-skin="tt"] .sk-title{background:linear-gradient(180deg,#a8491a,#7d3210 60%,#5c2408);
-  border-bottom-color:#3a1503;color:#ffd9b4}
-.skin[data-skin="tt"] .sk-lyr-body{background:linear-gradient(180deg,#ffa765 0%,#f58a43 45%,#d0662c 100%);color:#3a1503}
-.skin[data-skin="tt"] .sk-lyr-body .ln{color:#7d3210}
-.skin[data-skin="tt"] .sk-lyr-body .ln.on{color:#fff6dd}
-
-/* ── 3. 冷白浅蓝（C） ── */
-.skin[data-skin="light"]{background:#e6f1f9}
-.skin[data-skin="light"] .skin-page{background:linear-gradient(180deg,#f7fcff,#e2eef8 55%,#d4e7f4)}
-.skin[data-skin="light"] .sk-panel{background:linear-gradient(180deg,#ffffff 0%,#f2f9fe 40%,#e4f1fb 100%);border-color:#b4cdda}
-.skin[data-skin="light"] .sk-title{background:linear-gradient(180deg,#ffffff 0%,#e8f3fb 45%,#cfe4f2 100%);border-bottom-color:#a9c4d4}
-.skin[data-skin="light"] .sk-spec{background:linear-gradient(180deg,#eaf6ff,#d7eefb)}
-.skin[data-skin="light"] .sk-lyr-body{background:linear-gradient(180deg,#ffffff,#fafbfc 55%,#eff6fb)}
-
-/* ── 4. 天蓝玻璃（D） ── */
-.skin[data-skin="glass"]{background:#bcdff0}
-.skin[data-skin="glass"] .skin-page{background:linear-gradient(180deg,#dff0fa,#c3e1f0 60%,#acd8ed)}
-.skin[data-skin="glass"] .sk-panel{
-  background:linear-gradient(180deg,#fdfeff 0%,#eaf5fa 42%,#d8edf7 100%);
-  border-color:#83bfdd;color:#0b4b6e;
-  box-shadow:inset 0 1px 0 #ffffff,inset 0 -1px 0 rgba(90,150,185,.4),0 3px 10px rgba(50,110,150,.25)}
-.skin[data-skin="glass"] .sk-title{
-  background:linear-gradient(180deg,#e4f4fd 0%,#b9e1f5 45%,#7accfd 100%);
-  border-bottom-color:#6aaed2;color:#073c5c;text-shadow:0 1px 0 #ffffff}
-.skin[data-skin="glass"] .sk-title .sk-time{color:#07527a;font-weight:600}
-.skin[data-skin="glass"] .sk-wb{background:linear-gradient(180deg,#ffffff,#a9dff6 60%,#59b3dc);
-  border-color:#63a8c9;color:#073c5c}
-.skin[data-skin="glass"] .sk-spec{background:linear-gradient(180deg,#dff1fb,#c3e4f5);
-  border-color:#8fc3de;box-shadow:inset 0 0 10px rgba(70,150,195,.5)}
-.skin[data-skin="glass"] .sk-spec i{background:linear-gradient(180deg,#d8f6ff 0%,#4cc7ef 45%,#2383b2 100%);
-  box-shadow:0 0 6px rgba(40,160,220,.6)}
-.skin[data-skin="glass"] .sk-line{color:#0b4b6e}
-.skin[data-skin="glass"] .sk-line .k{color:#5d8ba6}
-.skin[data-skin="glass"] .sk-line .v{color:#073c5c}
-.skin[data-skin="glass"] .sk-ctl{background:radial-gradient(circle at 50% 22%,#ffffff,#9fd8f2 55%,#359bcb);
-  border-color:#63a8c9;color:#073c5c}
-.skin[data-skin="glass"] .sk-ctl.play{background:radial-gradient(circle at 50% 22%,#ffffff,#7fd0f2 55%,#2383b2)}
-.skin[data-skin="glass"] .sk-mini-btns button{background:linear-gradient(180deg,#ffffff,#b6e3f7 55%,#62b8dc);
-  border-color:#63a8c9;color:#073c5c}
-.skin[data-skin="glass"] .sk-tools{background:linear-gradient(180deg,#f6fcff,#cdeaf8);border-bottom-color:#8fc3de}
-.skin[data-skin="glass"] .sk-tools button{background:linear-gradient(180deg,#ffffff,#cdeaf8 55%,#9dd0ea);
-  border-color:#83bfdd;color:#073c5c}
-.skin[data-skin="glass"] .sk-tools button.on{background:linear-gradient(180deg,#ffffff,#7fd0f2 55%,#2383b2);color:#04314b}
-.skin[data-skin="glass"] .sk-tools .sk-search input{background:#ffffff;border-color:#83bfdd;color:#0b4b6e}
-.skin[data-skin="glass"] .sk-lyr-body{background:linear-gradient(180deg,#eaf6fb,#dff2fa 55%,#d0e8f4);color:#0b4b6e}
-.skin[data-skin="glass"] .sk-lyr-body .song{color:#073c5c;font-weight:600}
-.skin[data-skin="glass"] .sk-lyr-body .meta{color:#5d8ba6}
-.skin[data-skin="glass"] .sk-lyr-body .ln{color:#7baac4}
-.skin[data-skin="glass"] .sk-lyr-body .ln.on{color:#0b5f92;font-weight:600;text-shadow:0 0 9px rgba(90,190,235,.55)}
-.skin[data-skin="glass"] .layer,
-.skin[data-skin="glass"] .main{color:#0b4b6e}
-.skin[data-skin="glass"] .head h1{color:#073c5c}
-.skin[data-skin="glass"] .head p{color:#5d8ba6}
-.skin[data-skin="glass"] .thead{color:#6b9cb8;border-bottom-color:rgba(100,170,205,.4)}
-.skin[data-skin="glass"] .row{color:#0b4b6e}
-.skin[data-skin="glass"] .row:hover{background:rgba(120,205,240,.28)}
-.skin[data-skin="glass"] .row.on{background:rgba(90,185,230,.4)}
-.skin[data-skin="glass"] .row .name{color:#073c5c}
-.skin[data-skin="glass"] .row .ca,.skin[data-skin="glass"] .row .cb,.skin[data-skin="glass"] .sub{color:#5d8ba6}
-.skin[data-skin="glass"] .idx{color:#2383b2;border-color:#a9d8ee;background:rgba(255,255,255,.75)}
-.skin[data-skin="glass"] .tag{color:#2383b2;border-color:#a9d8ee}
-.skin[data-skin="glass"] .cover{background-color:#cfe9f5}
-.skin[data-skin="glass"] .sk-eq-faders{background:linear-gradient(180deg,#f8fdff,#e2f2fa);border-color:#9ac8e0}
-.skin[data-skin="glass"] .sk-fader .track{background:linear-gradient(180deg,#cfe6f4,#a9d3ea)}
-.skin[data-skin="glass"] .sk-fader .knob{background:linear-gradient(180deg,#fff,#b6e3f7 55%,#6fbde0);border-color:#63a8c9}
-.skin[data-skin="glass"] .sk-skin-sw{background:linear-gradient(180deg,#ffffff,#b6e3f7 60%,#62b8dc);border-color:#63a8c9;color:#073c5c}
-.skin[data-skin="glass"] .set-page,.skin[data-skin="glass"] .plugins-page,.skin[data-skin="glass"] .local-page,.skin[data-skin="glass"] .q-group{
-  --panel:rgba(255,255,255,.85); --bg:transparent; --txt:#0b4b6e; --dim:#5d8ba6;
-  --line:rgba(110,175,210,.45); --hover:rgba(120,205,240,.28); --input:#ffffff; --cover:#cfe9f5;
-}
-.skin[data-skin="glass"] .kara .krow.now{color:#7baac4}
-.skin[data-skin="glass"] .kara .krow.now .kfill{color:#0b5f92;text-shadow:0 0 10px rgba(90,190,235,.55)}
-.skin[data-skin="glass"] .kara .krow.next{color:#93bdd4}
-
-/* ── 5. HiFi 银灰深绿（B，校正） ── */
-.skin[data-skin="hifi"]{background:#798a94}
-.skin[data-skin="hifi"] .skin-page{background:linear-gradient(180deg,#8e9aa2,#6c7b84)}
-.skin[data-skin="hifi"] .sk-panel{
-  background:linear-gradient(180deg,#adb8bd 0%,#798a94 45%,#4b5a61 100%);
-  border-color:#2f3a3f;color:#a8ffc4}
-.skin[data-skin="hifi"] .sk-title{background:linear-gradient(180deg,#1b3838 0%,#0f2828 60%,#082625 100%);
-  border-bottom-color:#04100f;color:#8effb8}
-.skin[data-skin="hifi"] .sk-spec{background:linear-gradient(180deg,#04100e,#09302f)}
-.skin[data-skin="hifi"] .sk-spec i{background:linear-gradient(180deg,#d8ffea 0%,#2affa0 38%,#0a8f52 100%)}
-.skin[data-skin="hifi"] .sk-lyr-body{background:linear-gradient(180deg,#1b1e20 0%,#141719 60%,#0d1012)}
-
-/* ── 6. Steel 银白绿（F） ── */
-.skin[data-skin="steel"]{background:#9fadc0}
-.skin[data-skin="steel"] .skin-page{background:linear-gradient(180deg,#c2cedd,#95a5ba)}
-.skin[data-skin="steel"] .sk-panel{
-  background:linear-gradient(180deg,#f2f6fb 0%,#d7dfea 45%,#bacee0 100%);
-  border-color:#6b7f99;color:#18284c;
-  box-shadow:inset 0 1px 0 #ffffff,inset 0 -1px 0 rgba(60,80,110,.45),0 3px 9px rgba(20,35,60,.4)}
-.skin[data-skin="steel"] .sk-title{
-  background:linear-gradient(180deg,#eef3f9 0%,#d7dfea 50%,#b0bdcf 100%);
-  border-bottom-color:#6b7f99;color:#18284c}
-.skin[data-skin="steel"] .sk-title .sk-time{color:#22406e;font-weight:600}
-.skin[data-skin="steel"] .sk-wb{background:linear-gradient(180deg,#ffffff,#d7dfea 58%,#a7b7cb);
-  border-color:#6b7f99;color:#18284c}
-.skin[data-skin="steel"] .sk-spec{background:linear-gradient(180deg,#0f1116,#181b24);
-  border-color:#2a3040;box-shadow:inset 0 0 12px rgba(0,0,0,.8)}
-.skin[data-skin="steel"] .sk-spec i{background:linear-gradient(180deg,#d9ffe8 0%,#42d98a 38%,#0f7a45 100%);
-  box-shadow:0 0 5px rgba(60,220,140,.5)}
-.skin[data-skin="steel"] .sk-line{color:#2b4370}
-.skin[data-skin="steel"] .sk-line .k{color:#67809f}
-.skin[data-skin="steel"] .sk-line .v{color:#18284c}
-.skin[data-skin="steel"] .sk-status{color:#67809f}
-.skin[data-skin="steel"] .sk-led{background:#2fd27a;box-shadow:0 0 7px #3be38a}
-.skin[data-skin="steel"] .sk-ctl{background:radial-gradient(circle at 50% 25%,#ffffff,#d7dfea 55%,#9fb0c4);
-  border-color:#6b7f99;color:#18284c}
-.skin[data-skin="steel"] .sk-ctl.play{background:radial-gradient(circle at 50% 25%,#effff5,#8fe3b4 55%,#2f9d63)}
-.skin[data-skin="steel"] .sk-mini-btns button{background:linear-gradient(180deg,#ffffff,#d2dbe7 55%,#a3b4c8);
-  border-color:#6b7f99;color:#18284c}
-.skin[data-skin="steel"] .sk-mini-btns button.on{background:linear-gradient(180deg,#e6fff0,#7bdfa8 55%,#2f9d63);color:#08291a}
-.skin[data-skin="steel"] .sk-tools{background:linear-gradient(180deg,#eaf0f7,#c8d4e2);border-bottom-color:#8b9db5}
-.skin[data-skin="steel"] .sk-tools button{background:linear-gradient(180deg,#ffffff,#d7dfea 55%,#aebdd0);
-  border-color:#6b7f99;color:#18284c}
-.skin[data-skin="steel"] .sk-tools button.on{background:linear-gradient(180deg,#e6fff0,#7bdfa8 55%,#2f9d63);color:#08291a}
-.skin[data-skin="steel"] .sk-tools .sk-search input{background:#ffffff;border-color:#8b9db5;color:#18284c}
-.skin[data-skin="steel"] .sk-eq-faders{background:linear-gradient(180deg,#eaf0f7,#cedae8);border-color:#8b9db5}
-.skin[data-skin="steel"] .sk-fader .track{background:linear-gradient(180deg,#b9c8da,#9fb0c4)}
-.skin[data-skin="steel"] .sk-fader .knob{background:linear-gradient(180deg,#fff,#d2dbe7 55%,#9fb0c4);border-color:#6b7f99}
-.skin[data-skin="steel"] .sk-skin-sw{background:linear-gradient(180deg,#ffffff,#d7dfea 58%,#a7b7cb);border-color:#6b7f99;color:#18284c}
-/* Steel：歌词区深蓝底 + 绿字（图 F） */
-.skin[data-skin="steel"] .sk-lyr-body{background:linear-gradient(180deg,#2c4e8f 0%,#24406f 55%,#1c3256 100%);color:#cfe6ff}
-.skin[data-skin="steel"] .sk-lyr-body .song{color:#eaf5ff;font-weight:600}
-.skin[data-skin="steel"] .sk-lyr-body .meta{color:#8fb3d6}
-.skin[data-skin="steel"] .sk-lyr-body .ln{color:#7fa7cd}
-.skin[data-skin="steel"] .sk-lyr-body .ln.on{color:#4ade8f;font-weight:600;text-shadow:0 0 10px rgba(60,220,140,.6)}
-.skin[data-skin="steel"] .sk-lyr-body .none{color:#7fa7cd}
-.skin[data-skin="steel"] .kara .krow.now{color:#7fa7cd}
-.skin[data-skin="steel"] .kara .krow.now .kfill{color:#5ce89b;text-shadow:0 0 12px rgba(60,220,140,.7)}
-.skin[data-skin="steel"] .kara .krow.next{color:#5f86ad}
-.skin[data-skin="steel"] .main{color:#18284c}
-.skin[data-skin="steel"] .head h1{color:#18284c}
-.skin[data-skin="steel"] .head p,.skin[data-skin="steel"] .err{color:#5b7699}
-.skin[data-skin="steel"] .thead{color:#67809f;border-bottom-color:rgba(100,130,165,.4)}
-.skin[data-skin="steel"] .row{color:#18284c}
-.skin[data-skin="steel"] .row:hover{background:rgba(120,160,200,.22)}
-.skin[data-skin="steel"] .row.on{background:rgba(90,210,150,.28)}
-.skin[data-skin="steel"] .row .name{color:#18284c}
-.skin[data-skin="steel"] .row .ca,.skin[data-skin="steel"] .row .cb,.skin[data-skin="steel"] .sub{color:#5b7699}
-.skin[data-skin="steel"] .idx{color:#1f7a4d;border-color:#a9bccf;background:rgba(255,255,255,.8)}
-.skin[data-skin="steel"] .tag{color:#1f7a4d;border-color:#a9bccf}
-.skin[data-skin="steel"] .cover{background-color:#d7dfea}
-.skin[data-skin="steel"] .set-page,.skin[data-skin="steel"] .plugins-page,.skin[data-skin="steel"] .local-page,.skin[data-skin="steel"] .q-group{
-  --panel:rgba(255,255,255,.85); --bg:transparent; --txt:#18284c; --dim:#5b7699;
-  --line:rgba(110,140,175,.4); --hover:rgba(120,160,200,.22); --input:#ffffff; --cover:#d7dfea;
-}
-
-/* 关掉歌词秀后：右列不存在，网格回弹成单列铺满 */
-.skin-page.only-left{grid-template-columns:minmax(0,1fr)}
-.skin-page.only-left .sk-col{max-width:none}
-/* 单列时主窗口/列表别被拉得过宽，封顶 1100 居中，剩余部分由面板背景吸收 */
-.skin-page.only-left .sk-col>section{max-width:100%}
-
-/* 单列时让行高撑满，播放列表往下延伸填满整屏 */
-.skin-page.only-left{grid-template-rows:minmax(0,100%)}
-.skin-page.only-left .sk-col{height:100%;min-height:0}
-
-/* 单列回弹再收一档：封顶 1100px 居中，避免主窗口/列表被拉得过宽 */
-.skin-page.only-left .sk-col{max-width:1100px;width:100%;margin:0 auto}
-
-/* 设置页：内容平台主页入口 */
 .home-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .home-url{font-size:11px;opacity:.62;font-family:ui-monospace,Consolas,monospace;letter-spacing:.02em}
 .ghost-btn.home-open{padding:3px 10px}
 
-/* ══════════ 第二套桌面方案：左侧竖排导航 + 右侧内容 + 底部播放条 ══════════ */
-/* ───────────────────── 桌面界面（第二套方案）─────────────────────
-   结构照 QQ 音乐那种：左边一条歌单栏，右下播放条，配色走全局主题变量。
-   皮肤界面（.skin 类）完全不参与这一段，改这里不会动到皮肤。 */
+
+
 .app.desk-mode{display:block}
 .desk{
   height:100%;min-height:0;display:flex;gap:10px;padding:10px;
   background:var(--bg);color:var(--txt);font-size:13px;
 }
 
-/* 侧栏 */
+
 .desk-nav{flex:0 0 208px;min-height:0;display:flex;flex-direction:column;
   background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 10px 8px}
 .dn-user{display:flex;align-items:center;gap:9px;padding:0 4px 12px}
@@ -18237,7 +16202,7 @@ html[data-theme='dark'] .plug-kind {
 .dn-pl-name{flex:1;min-width:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dn-plist em{font-style:normal;font-size:10.5px;color:var(--dim)}
 .dn-empty{padding:6px 10px;font-size:11px;line-height:1.6;color:var(--dim)}
-/* 自建歌单：条目 + hover 出现的删除、行内新建 */
+
 .dn-pl{position:relative;display:flex;align-items:center;gap:9px;padding:6px 10px;border:0;border-radius:8px;
   background:transparent;color:var(--txt);cursor:pointer;text-align:left;min-width:0}
 .dn-pl:hover{background:var(--hover)}
@@ -18260,13 +16225,13 @@ html[data-theme='dark'] .plug-kind {
 .dn-newpl button{padding:0 9px;border:0;border-radius:6px;background:var(--acc);color:var(--on-acc-text);
   font-size:11px;font-weight:600;cursor:pointer;flex:0 0 auto}
 
-/* 列表行尾「加入歌单」 */
+
 .row .addpl{padding:0 7px;border:1px solid transparent;border-radius:6px;background:transparent;
   color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .row .addpl:hover{color:var(--acc2);border-color:var(--line);background:var(--hover)}
 .thead>span:nth-child(8){flex:0 0 28px}
 
-/* 「加入歌单」浮层 */
+
 .plmenu-mask{position:fixed;left:0;top:0;right:0;bottom:0;z-index:80}
 .plmenu{position:fixed;z-index:81;width:196px;max-height:268px;overflow-y:auto;padding:8px;
   display:flex;flex-direction:column;gap:2px;background:var(--panel);
@@ -18287,7 +16252,7 @@ html[data-theme='dark'] .plug-kind {
   cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px}
 .dn-foot button:hover{background:var(--hover);color:var(--acc2)}
 
-/* 主区 */
+
 .desk-main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px}
 .desk-top{display:flex;align-items:center;gap:8px;padding:4px 6px;flex:0 0 auto}
 .dt-round{width:30px;height:30px;flex:0 0 30px;border:1px solid var(--line);border-radius:50%;
@@ -18313,7 +16278,7 @@ html[data-theme='dark'] .plug-kind {
 .desk-body .main::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:6px}
 .desk-body .main::-webkit-scrollbar-track{background:transparent}
 
-/* 歌单头（只在「我的收藏 / 某张专辑」时出现） */
+
 .dpl-hero{display:flex;gap:18px;align-items:center;padding:4px 2px 16px;flex:0 0 auto;width:100%;max-width:1180px;margin:0 auto}
 .dpl-cover{width:120px;height:120px;flex:0 0 120px;border-radius:50%;
   background:var(--cover) center/cover no-repeat;display:flex;align-items:center;justify-content:center;
@@ -18329,7 +16294,7 @@ html[data-theme='dark'] .plug-kind {
 .dpl-sub:hover{border-color:var(--acc2);color:var(--acc2)}
 .dpl-btns button:disabled{opacity:.45;cursor:default}
 
-/* 歌单排序条：拖动排序 / 按时间 / 按名称 / 按拼音。拖动那一档只在自建歌单里出现 */
+
 .dpl-sort{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px}
 .dpl-sort button{padding:5px 13px;border-radius:14px;font-size:12px;cursor:pointer;
   border:1px solid var(--line);background:var(--input);color:var(--dim)}
@@ -18337,7 +16302,7 @@ html[data-theme='dark'] .plug-kind {
 .dpl-sort button.on{background:var(--acc);border-color:var(--acc);color:#0a1a20;font-weight:600}
 .dpl-sort-tip{font-size:11.5px;color:var(--dim)}
 
-/* 拖动排序：整行可拖，左边「握把」只是提示（不吃事件，避免挡住播放按钮） */
+
 .row.can-drag{cursor:grab}
 .row.can-drag:active{cursor:grabbing}
 .dgrip{position:absolute;left:1px;top:50%;transform:translateY(-50%);width:8px;
@@ -18347,7 +16312,7 @@ html[data-theme='dark'] .plug-kind {
 .row.drag-src{opacity:.35}
 .row.drop-on{box-shadow:inset 0 2px 0 var(--acc)}
 
-/* 底部播放条 */
+
 .desk-now{flex:0 0 auto;display:grid;grid-template-columns:minmax(180px,1fr) minmax(360px,2fr) 110px;
   align-items:center;gap:16px;padding:10px 16px;background:var(--panel);
   border:1px solid var(--line);border-radius:12px}
@@ -18355,7 +16320,7 @@ html[data-theme='dark'] .plug-kind {
 .dnp-cover{width:44px;height:44px;flex:0 0 44px;border-radius:6px;
   background:var(--cover) center/cover no-repeat;display:flex;align-items:center;justify-content:center;
   font-size:16px;color:var(--dim)}
-/* 底栏这枚小封面就是当前播放的专辑封面，点它推开「正在播放」全屏页 */
+
 .dnp-cover.can-open{cursor:pointer;transition:transform .14s,box-shadow .14s}
 .dnp-cover.can-open:hover{transform:scale(1.06);box-shadow:0 4px 14px rgba(0,0,0,.18)}
 .dnp-cover.can-open:active{transform:scale(1.01)}
@@ -18384,7 +16349,7 @@ html[data-theme='dark'] .plug-kind {
   background:var(--input);color:var(--dim);font-size:12px;cursor:pointer}
 .dnp-right button:hover{color:var(--acc2);border-color:var(--acc2)}
 
-/* 桌面模式里的列表：行更高、封面圆角、右侧心形 */
+
 .desk .row{padding:7px 8px;border-radius:8px}
 .desk .row:hover{background:var(--hover)}
 .desk .row.on{background:var(--sel)}
@@ -18408,15 +16373,15 @@ html[data-theme='dark'] .plug-kind {
 .app.mini-mode > .desk{display:none}
 .desk .row.on{background:var(--sel)}
 
-/* 桌面顶栏图标按钮 */
+
 .desk-top-right .ghost-btn.icon-only{display:inline-flex;align-items:center;justify-content:center;
   width:34px;height:32px;padding:0}
 .desk-top-right .ghost-btn.icon-only svg{display:block}
-/* 侧栏底部：衣服图标 + 文字 */
+
 .desk-switch{display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .desk-switch svg{flex:0 0 auto}
 
-/* ══════════ 桌面版歌词界面 ══════════ */
+
 .dlp{display:flex;flex-direction:column;min-height:0;flex:1;padding:6px 4px 0}
 .dlp-head{display:flex;align-items:center;gap:14px;padding:0 4px 10px;flex:0 0 auto}
 .dlp-song{display:flex;flex-direction:column;min-width:0}
@@ -18442,13 +16407,12 @@ html[data-theme='dark'] .plug-kind {
 .dlp-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;border:2px solid transparent;background-clip:content-box}
 .dlp-body::-webkit-scrollbar-track{background:transparent}
 
-/* 插件账号卡片的提示与报错 */
+
 .acct-hint{margin:8px 0 0;font-size:12px;color:var(--dim)}
 .acct-err{margin:8px 0 0;font-size:12px;color:#c0392b;line-height:1.6;word-break:break-word}
 
-/* ---------- MyGo 宿主：窗口无边框，页面自己画顶部拖动条 ---------- */
-/* mygo-music 那边窗口是 Frameless 的，没有系统标题栏，所以这里补一条 30px 的条：
-   空白处拖动窗口，右边是最小化/关闭。Wails 版没有 window.mygo，body 不会带这个类。 */
+
+
 body.mygo-frameless .app{box-sizing:border-box;padding-top:30px}
 body.mygo-frameless .app.mini-mode{padding-top:0;background:transparent}
 body.qq-mini{background:transparent}
@@ -18458,8 +16422,7 @@ body.mygo-frameless:has(.app.mini-mode){background:transparent}
   padding:0 84px 0 12px;background:var(--panel);border-bottom:1px solid var(--line);
   color:var(--dim);font-size:12px;z-index:60;--app-region:drag}
 .mygo-bar-title{flex:1;line-height:30px;letter-spacing:.5px;user-select:none}
-/* 窗口按钮单独一层，绝不做 drag 容器的子元素：--app-region 会继承，按钮跟着变 drag
-   的话，点击会被 mygo 当成拖窗户，click 根本到不了 onClick。 */
+
 .mygo-winctl{position:fixed;top:0;right:6px;height:30px;display:flex;align-items:center;gap:2px;
   z-index:70;--app-region:no-drag}
 .mygo-win-btn{width:34px;height:24px;border:none;background:transparent;display:inline-flex;align-items:center;justify-content:center;
@@ -18467,12 +16430,11 @@ body.mygo-frameless:has(.app.mini-mode){background:transparent}
 .mygo-win-btn:hover{background:var(--hover);color:var(--txt)}
 .mygo-win-btn.close:hover{background:#e04b3a;color:#fff}
 
-/* 葫芦窗口（mygo-music 加装的皮肤/迷你窗口）：迷你卡的拖动交给 mygo 的
-   --app-region，窗口自己就是 348×124，不需要前端再算位移。 */
+
 body.qq-owned .mini-player{ --app-region: drag }
 body.qq-owned .mini-card{ cursor: default }
 
-/* ---------- 主面板「首页」：插件 home() 的分区 ---------- */
+
 .home{display:flex;flex-direction:column;gap:18px;padding:2px 2px 18px}
 .home-head{display:flex;align-items:center;gap:12px;margin:0 0 12px}
 .home-head .home-actions{margin-left:auto}
@@ -18517,7 +16479,7 @@ body.qq-owned .mini-card{ cursor: default }
 .home-empty b{color:var(--txt);font-size:14px}
 .home-err{color:#e06c5a;font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel)}
 
-/* ---------- 左右边缘拖宽（无边框窗口自己画）---------- */
+
 .app{position:relative}
 .edge-resize{position:absolute;top:0;bottom:0;width:8px;z-index:80;cursor:ew-resize;
   --app-region:no-drag;background:transparent}
@@ -18526,7 +16488,7 @@ body.qq-owned .mini-card{ cursor: default }
 .edge-resize:hover{background:var(--acc);opacity:.28}
 body.edge-resizing{cursor:ew-resize;user-select:none}
 
-/* 侧栏顶部：音源下拉选择器 */
+
 .dnp{padding:0 0 10px;gap:2px;position:relative}
 .dnp-box{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:4px 5px;border-radius:9px;
   cursor:pointer;border:0;background:transparent;color:var(--txt);text-align:left;font:inherit}
@@ -18550,7 +16512,7 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .dnp-id b{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:86px}
 .dnp-sub{font-size:9.5px;color:var(--dim);white-space:nowrap}
 
-/* 歌单多选与批量操作 */
+
 .selchk{width:16px;height:16px;flex:0 0 16px;border-radius:50%;border:1.5px solid var(--line);
   display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;
   cursor:pointer;margin-right:2px;transition:background .12s,border-color .12s}
@@ -18565,239 +16527,10 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .dpl-bulk .dpl-bulk-del.on{color:#e05a3a;border-color:#e05a3a}
 .dpl-sub.on{color:var(--txt);border-color:var(--acc);background:var(--sel)}
 
-/* ══════════ 窄窗口断点（放在最后，覆盖前面 .skin-page/.sk-pl 的固定写法）══════════
-   窗口被缩到一半左右时，两列皮肤会互相挤压：左列按钮和搜索框挤成一行、右列歌词被压成一条。
-   窄屏统一改成单列：歌词不再并排，整块堆到播放列表下面；工具条允许换行。 */
-@media (max-width:860px){
-  .skin-page{display:flex;flex-direction:column;gap:6px;padding:6px;height:auto;min-height:100vh;overflow-x:hidden}
-  /* 单列时面板别铺满整屏，封顶 760 居中，两侧由面板底色吸掉 */
-  .sk-win,.sk-eq,.sk-lyr,.sk-pl{width:100%;max-width:660px;margin-left:auto;margin-right:auto}
-  .skin-page .sk-col{flex:1 1 auto;height:auto;min-height:0;gap:6px}
-  .skin-page .sk-col-r{flex:0 0 auto;height:auto;min-height:0;overflow:visible}
-  .skin-page .sk-pl{flex:1 1 auto;min-height:340px;overflow:hidden}
-  .skin-page .sk-pl .main{flex:1 1 auto;min-height:0}
-  .skin-page .sk-col-r .sk-lyr{flex:0 0 auto;height:auto;min-height:150px;max-height:34vh}
-  /* 窄屏下让两列容器「透明」，四块面板直接由 .skin-page 排：主 → 均衡器 → 歌词 → 列表，
-     和参考样张（TTPLAYER）的面板顺序一致 */
-  .skin-page .sk-col,.skin-page .sk-col-r{display:contents}
-  .sk-win{order:1}
-  .sk-eq{order:2}
-  .sk-lyr{order:3}
-  .sk-pl{order:4}
-  .sk-side{width:150px}
-  .sk-tools{flex-wrap:wrap;gap:4px}
-  .sk-tools .sk-search{width:100%;margin-left:0;order:9}
-  .sk-eq-faders{gap:2px}
-}
-/* 再窄一档（缩到 760 以下）：均衡器的推子改横向滚动，别把面板撑破 */
-@media (max-width:760px){
-  .skin-page{padding:4px;gap:4px}
-  .sk-eq-faders{overflow-x:auto;overflow-y:hidden;padding-bottom:2px}
-  .sk-eq-row{width:80px}
-  .sk-win,.sk-eq,.sk-pl{min-width:0}
-  .sk-mini-btns button{width:32px}
-  .sk-vol{width:80px}
-}
 
-/* ══════════ 再窄一档（≈460px，窗口缩到一张竖屏截图的宽度）══════════
-   目标：工具条的 8 个选项卡 + 搜索框挤在一行不换行，均衡器 10 段推子整排可见不出现横向滚动。 */
-@media (max-width:560px){
-  /* 最小尺寸（≈460×1043）下的比例：控件比「勉强塞下」稍大一档，更贴近参考截图 */
-  .skin-page{padding:5px;gap:5px}
-  .sk-body{gap:6px}
-  .sk-side{width:146px}
-  .sk-tools{padding:5px 5px;gap:3px;flex-wrap:wrap}
-  .sk-tools button{height:23px;padding:0 6px;font-size:10.5px;letter-spacing:0;flex:0 1 auto;min-width:0}
-  .sk-tools .sk-search{width:104px;margin-left:auto;order:0;gap:2px}
-  .sk-tools .sk-search input{height:23px;padding:0 4px;font-size:10px}
-  .sk-tools .sk-search button{padding:0 5px;height:23px}
-  .sk-eq-body{gap:6px;padding:6px 6px 8px}
-  .sk-eq-row{width:72px;gap:5px}
-  .sk-eq-row .lab{font-size:9px;margin-bottom:-3px;white-space:nowrap}
-  .sk-eq-row input{height:6px}
-  .sk-eq-faders{padding:12px 4px 4px 24px;gap:0;overflow:visible}
-  .sk-eq-faders .scale{left:2px;font-size:8px}
-  .sk-fader{width:17px;min-height:104px}
-  .sk-fader .hz{font-size:7.5px;letter-spacing:0}
-  .sk-controls{gap:4px}
-  .sk-vol{width:80px;gap:4px}
-  .sk-mini-btns button{height:16px;padding:0 6px;font-size:9px}
-  .sk-wb{width:19px;height:19px;font-size:10px}
-}
+@media (max-width:480px){ .pl-tabs button{font-size:10px;padding:0 5px}}
 
-/* ══════════════════════════════════════════════════════
-   第七套：护眼绿（data-skin="green"）——浅豆沙绿底、深绿控件
-   ══════════════════════════════════════════════════════ */
-.skin[data-skin="green"]{background:#b7d5b4}
-.skin[data-skin="green"] .skin-page{background:linear-gradient(180deg,#d9ecd5,#aecbab)}
-.skin[data-skin="green"] .sk-panel{
-  background:linear-gradient(180deg,#f0f9ec 0%,#dce8d8 42%,#c4dbc0 100%);
-  border-color:#8aa888;color:#1c3324;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(60,90,60,.3),0 3px 9px rgba(40,70,45,.26)}
-.skin[data-skin="green"] .sk-title{
-  background:linear-gradient(180deg,#315f3d 0%,#1e4128 55%,#12291a 100%);
-  border-bottom-color:#0d1f12;color:#c9f6cf;text-shadow:0 0 6px rgba(110,230,140,.45);letter-spacing:.06em}
-.skin[data-skin="green"] .sk-title .sk-time{color:#b8ffc0;font-weight:600;text-shadow:0 0 7px rgba(120,240,150,.5)}
-.skin[data-skin="green"] .sk-wb{background:linear-gradient(180deg,#f6fcf3,#dcebd8 58%,#c1d7bd);
-  border-color:#8aa888;color:#17321f;text-shadow:none}
-.skin[data-skin="green"] .sk-spec{background:linear-gradient(180deg,#0c2114,#06160c);
-  border-color:#22402b;box-shadow:inset 0 0 12px rgba(0,0,0,.72)}
-.skin[data-skin="green"] .sk-spec i{background:linear-gradient(180deg,#e8ffe9 0%,#5fe483 38%,#1f9b4f 100%);
-  box-shadow:0 0 6px rgba(90,230,130,.5)}
-.skin[data-skin="green"] .sk-line{color:#2f7a4b}
-.skin[data-skin="green"] .sk-line .k{color:#5f9170}
-.skin[data-skin="green"] .sk-line .v{color:#17402a}
-.skin[data-skin="green"] .sk-status{color:#2f7a4b}
-.skin[data-skin="green"] .sk-led{background:#2fd66a;box-shadow:0 0 8px #2fd66a}
-.skin[data-skin="green"] .sk-led.off{background:#3c5d47;box-shadow:none}
-.skin[data-skin="green"] .sk-mini-btns button{background:linear-gradient(180deg,#f2f9ee,#cfe2ca 55%,#a8c3a4);
-  border-color:#7e9a7c;color:#17321f;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)}
-.skin[data-skin="green"] .sk-mini-btns button.on{background:linear-gradient(180deg,#b9f7c9,#4bcb74 55%,#13753c);color:#04170c}
-.skin[data-skin="green"] .sk-seek .tt{color:#2f7a4b}
-.skin[data-skin="green"] .sk-seek input{background:linear-gradient(180deg,#1a3a24,#0d2416);border-color:#0a1c10}
-.skin[data-skin="green"] .sk-seek input::-webkit-slider-thumb{background:linear-gradient(180deg,#f4fbf1,#c9dcc5 55%,#94ad91);border-color:#6b8669}
-.skin[data-skin="green"] .sk-ctl{background:radial-gradient(circle at 50% 22%,#f8fdf5,#c9dcc5 55%,#8ea78b);
-  border-color:#6b8669;color:#12301c;box-shadow:inset 0 2px 0 rgba(255,255,255,.9),0 2px 4px rgba(20,45,25,.45)}
-.skin[data-skin="green"] .sk-ctl.play{background:radial-gradient(circle at 50% 22%,#dcffe4,#5fdc86 55%,#116b36)}
-.skin[data-skin="green"] .sk-pl-btn{background:linear-gradient(180deg,#f2f9ee,#cfe2ca 55%,#a8c3a4);
-  border-color:#7e9a7c;color:#17321f;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)}
-.skin[data-skin="green"] .sk-vol input{background:#123021;border-color:#0a1c10}
-.skin[data-skin="green"] .sk-vol input::-webkit-slider-thumb{background:linear-gradient(180deg,#f4fbf1,#c9dcc5 55%,#94ad91);border-color:#6b8669}
-.skin[data-skin="green"] .sk-eq-on button{background:linear-gradient(180deg,#f2f9ee,#cfe2ca 55%,#a8c3a4);
-  border-color:#7e9a7c;color:#17321f;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)}
-.skin[data-skin="green"] .sk-eq-on button.on{background:linear-gradient(180deg,#b9f7c9,#42c96d 55%,#116b36);color:#04170c}
-.skin[data-skin="green"] .sk-eq-row .lab{color:#5f9170}
-.skin[data-skin="green"] .sk-eq-row input{background:#123021;border-color:#0a1c10}
-.skin[data-skin="green"] .sk-eq-row input::-webkit-slider-thumb{background:linear-gradient(180deg,#f4fbf1,#c9dcc5 55%,#94ad91);border-color:#6b8669}
-.skin[data-skin="green"] .sk-eq-faders{background:linear-gradient(180deg,#0b2113,#0a2216);border-color:#22402b}
-.skin[data-skin="green"] .sk-eq-faders .scale{color:#5f9170}
-.skin[data-skin="green"] .sk-fader .track{background:linear-gradient(180deg,#0b2417,#04120b);border-radius:2px;
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.75)}
-.skin[data-skin="green"] .sk-fader .knob{background:linear-gradient(180deg,#f6fcf2,#c9dcc5 55%,#8ea78b);
-  border-color:#6b8669;box-shadow:0 1px 2px rgba(0,0,0,.55)}
-.skin[data-skin="green"] .sk-tools{background:linear-gradient(180deg,#cfe4ca,#b2cdaf 60%,#9dba99);border-bottom-color:#8aa888}
-.skin[data-skin="green"] .sk-tools button{background:linear-gradient(180deg,#f6fcf2,#d7e8d2 55%,#b1c9ad);
-  border-color:#7e9a7c;color:#17321f;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)}
-.skin[data-skin="green"] .sk-tools button.on{background:linear-gradient(180deg,#c4fad3,#4dd47a 55%,#13753c);color:#04170c}
-.skin[data-skin="green"] .sk-vis{--vis-lo:#1f8f4f;--vis-mid:#42d98a;--vis-hi:#e8ffe9;
-  --vis-line:#2f7a4b;--vis-dial:#2f7a4b;--vis-needle:#c0392b;--vis-dim:#7fa98b;--vis-hot:#d93b2d}
 
-/* ══════════ 再窄一档（≈460px，竖屏长条 460×1043）══════════
-   上一档 560 的规则是按「刚好塞下」写的，453~460 宽时工具条仍会顶出去、
-   均衡器最后一根 16k 推子贴边被切。这一档把整体再收一档比例，
-   并把工具条改成两行：8 个选项卡一行，搜索框独占一行。 */
-@media (max-width:480px){
-  .skin-page{padding:4px;gap:4px}
-  .sk-panel{border-radius:3px}
-  /* 工具条：选项卡一行、搜索框另起一行 */
-  .sk-tools{padding:4px 4px;gap:2px 2px;flex-wrap:wrap}
-  .sk-tools button{height:22px;padding:0 5px;font-size:10px;letter-spacing:0;flex:0 0 auto}
-  .sk-tools .sk-search{flex:0 0 100%;width:auto;max-width:none;margin-left:0;order:9;gap:3px}
-  .sk-tools .sk-search input{height:22px;font-size:10.5px;padding:0 5px;flex:1 1 auto;min-width:0}
-  .sk-tools .sk-search button{height:22px;padding:0 8px;font-size:10.5px}
-  /* 主面板右栏 */
-  .sk-side{width:120px;gap:4px}
-  .sk-line{font-size:10px}
-  .sk-status{font-size:9.5px}
-  .sk-mini-btns{gap:2px}
-  .sk-mini-btns button{height:15px;width:30px;font-size:9px;padding:0 4px}
-  .sk-title{padding:2px 4px;gap:3px}
-  .sk-title .t{font-size:11.5px}
-  .sk-title .sk-time{font-size:10px}
-  .sk-wb{width:17px;height:17px;font-size:9px}
-  .sk-win-mini svg{width:10px;height:10px}
-  .sk-gear{font-size:11.5px;line-height:1;display:block}
-  /* 播放控制 */
-  .sk-seek .tt{font-size:9px}
-  .sk-controls{gap:3px;padding:5px 4px 2px}
-  .sk-ctl{width:26px;height:26px;font-size:10.5px}
-  .sk-ctl.big{width:36px;height:36px;font-size:14px}
-  .sk-vol{width:72px;gap:3px}
-  .sk-pl-btn{height:20px;font-size:9.5px;padding:0 6px}
-  /* 均衡器 */
-  .sk-eq-body{gap:5px;padding:5px 5px 6px}
-  .sk-eq-row{width:58px;gap:4px}
-  .sk-eq-row .lab{font-size:8.5px}
-  .sk-eq-faders{padding:11px 2px 3px 18px;gap:0;overflow:visible}
-  .sk-eq-faders .scale{left:1px;font-size:7px}
-  .sk-fader{width:15px;min-height:96px}
-  .sk-fader .hz{font-size:6.5px;letter-spacing:0}
-  .sk-eq-faders .scale span{font-size:7px}
-  /* 歌词秀 */
-  .skin-page .sk-col-r .sk-lyr{flex:0 0 auto;height:auto;min-height:132px;max-height:34vh}
-  .skin-page .sk-col-r .sk-lyr-body{min-height:104px}
-  .sk-lyr-body{padding:7px 8px;min-height:110px}
-  .sk-lyr-body .song{font-size:11.5px}
-  .sk-lyr-body .meta{font-size:9px;margin-bottom:6px}
-  .sk-lyr-body .ln{font-size:10.5px;line-height:1.9}
-  .sk-lyr-body .ln.on{font-size:12px;text-shadow:0 0 6px rgba(150,160,255,.4)}
-  .sk-lyr-body .none{font-size:10.5px}
-  /* 播放列表 / 歌词 / 其余 */
-  .sk-pl .main{padding:0 2px}
-  .sk-tab-bar button, .pl-tabs button{font-size:10px;padding:0 5px}
-  .sk-eq-on button{height:15px;font-size:9px;padding:0 5px}
-}
-
-/* 歌词正文：窗口宽的时候别让一行字拉得太长，封顶 520 居中 */
-.skin-page .sk-col-r .sk-lyr-body{max-width:560px;margin-left:auto;margin-right:auto}
-
-/* ── 按真实可用宽度切列（skinWide 判断）────────────────────────
-   和下面 840px 断点是一套规则，只是改由 JS 按 window.innerWidth 判定，
-   避免系统缩放时「看着窗口挺宽、实际 CSS 宽度不够」而一直单列。 */
-.skin-page.one-col{display:flex;flex-direction:column;gap:6px;padding:6px;height:auto;min-height:0;overflow-x:hidden}
-.skin-page.one-col .sk-col{flex:1 1 auto;height:auto;min-height:0;gap:6px}
-.skin-page.one-col .sk-col-r{flex:0 0 auto;height:auto;min-height:0;overflow:visible}
-.skin-page.one-col .sk-pl{flex:1 1 auto;min-height:340px;overflow:hidden}
-.skin-page.one-col .sk-pl .main{flex:1 1 auto;min-height:0}
-.skin-page.one-col .sk-col,.skin-page.one-col .sk-col-r{display:contents}
-.skin-page.one-col .sk-win{order:1}
-.skin-page.one-col .sk-eq{order:2}
-.skin-page.one-col .sk-lyr{order:3}
-.skin-page.one-col .sk-pl{order:4}
-.skin-page.one-col .sk-win,.skin-page.one-col .sk-eq,.skin-page.one-col .sk-lyr,.skin-page.one-col .sk-pl{
-  width:100%;max-width:660px;margin-left:auto;margin-right:auto}
-.skin-page.one-col .sk-side{width:150px}
-.skin-page.one-col .sk-tools{flex-wrap:wrap;gap:4px}
-.skin-page.one-col .sk-tools .sk-search{width:100%;margin-left:0;order:9}
-.skin-page.one-col .sk-eq-faders{gap:2px}
-.skin-page.one-col .sk-col-r .sk-lyr{flex:0 0 auto;height:auto;min-height:150px;max-height:34vh}
-
-/* 版本号小字 */
-.sk-ver{font-size:9.5px;opacity:.5;letter-spacing:0;margin-right:4px}
-
-/* 皮肤标题栏齿轮按钮（设置） */
-.sk-set svg{width:10px;height:10px}
-
-/* ── tt 亮橙皮肤补可读性 ──
-   橙色面板上的浅色字只看得到轮廓（设置页、播放列表、右栏尤其严重），
-   这里统一把皮肤界面里的正文、图标压成深棕。 */
-.skin[data-skin="tt"] .sk-line{color:#3a1a00}
-.skin[data-skin="tt"] .sk-line .k{color:#78400e}
-.skin[data-skin="tt"] .sk-line .v{color:#2b1200}
-.skin[data-skin="tt"] .sk-status{color:#5a2a02}
-.skin[data-skin="tt"] .sk-wb{color:#5a2800}
-.skin[data-skin="tt"] .sk-set svg{stroke:#5a2800}
-.skin[data-skin="tt"] .sk-ctl{color:#4a2100}
-.skin[data-skin="tt"] .sk-ctl.big.play{color:#5a2200}
-.skin[data-skin="tt"] .sk-ver{color:#7a3a06}
-.skin[data-skin="tt"] .sk-pl .main{color:#331700}
-.skin[data-skin="tt"] .sk-pl .main .muted{color:#7a3a06}
-.skin[data-skin="tt"] .set-page{color:#331700}
-.skin[data-skin="tt"] .set-page .muted,.skin[data-skin="tt"] .set-page .hint{color:#7a3a06}
-.skin[data-skin="tt"] .plug-page{color:#331700}
-.skin[data-skin="tt"] .home-page{color:#331700}
-.skin[data-skin="tt"] .sk-pl .main .page-h1{color:#2b1200}
-.skin[data-skin="tt"] .sk-pl .main p{color:#6b3308}
-.skin[data-skin="tt"] .sk-pl .main .empty,.skin[data-skin="tt"] .sk-pl .main .err{color:#6b3308}
-.skin[data-skin="tt"] .sk-eq-row .lab{color:#4a2100}
-.skin[data-skin="tt"] .sk-lyr-body .none{color:#7a3a06}
-.skin[data-skin="tt"] .set-page p{color:#6b3308}
-.skin[data-skin="tt"] .set-page h3,.skin[data-skin="tt"] .set-page h2{color:#2b1200}
-.skin[data-skin="tt"] .sk-gear{color:#3a1a00}
-
-/* ══════════ 桌面模式最窄一档（≈460px，窗口拖到最小）══════════
-   桌面模式（非皮肤）在 460 下原本会被挤：顶栏搜索框被截、侧栏吃掉一半宽度、
-   底部播放条右侧按钮溢出。这里让顶栏换行、侧栏收窄、播放条改单列堆叠。 */
 @media (max-width:620px){
   .app.desk-mode .desk-nav{flex:0 0 132px}
   .app.desk-mode .dn-empty{display:none}
@@ -18823,236 +16556,15 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   .app.desk-mode .dnp-vol input{width:56px}
   .app.desk-mode .dnp-cover{width:36px;height:36px;flex:0 0 36px}
   .app.desk-mode .dpl-hero{flex-direction:column;gap:10px;padding:12px}
-  .app.desk-mode .dpl-cover{width:96px;height:96px}
-}
-.skin[data-skin="tt"] .set-page .acct-empty{color:#7a3a06}
-.skin[data-skin="tt"] .set-page .acct-main{color:#331700}
-.skin[data-skin="tt"] .set-page .home-url{color:#7a3a06}
-.skin[data-skin="tt"] .set-page .ghost-btn{color:#3a1a00;border-color:#8a4509}
-.skin[data-skin="tt"] .set-page .mini-btn{color:#3a1a00}
-/* 播放列表底部快捷图标条（千千静听风格） */
-.sk-pl-foot{display:flex;align-items:center;justify-content:flex-end;gap:5px;padding:4px 6px;border-top:1px solid rgba(0,0,0,.22);flex:0 0 auto}
-.sk-pbtn{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:19px;padding:0 4px;border:1px solid rgba(0,0,0,.28);border-radius:3px;background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(0,0,0,.06));color:inherit;cursor:pointer;font-size:11px;line-height:1;font-weight:700}
-.sk-pbtn svg{width:12px;height:12px}
-.sk-pbtn:hover{filter:brightness(1.08)}
-.sk-pbtn:active{filter:brightness(.94)}
-.skin[data-skin="tt"] .sk-pbtn{color:#3a1a00;border-color:#8a4509;background:linear-gradient(180deg,#ffcf9a,#f0a255)}
+  .app.desk-mode .dpl-cover{width:96px;height:96px}}
 
-/* ── 极窄 230×1043：再压一档 ───────────────────────────── */
-@media (max-width:300px){
-  .skin-page{padding:2px;gap:3px}
-  .skin-page.one-col{padding:2px;gap:3px}
-  .sk-title{padding:1px 3px;gap:2px}
-  .sk-title .t{font-size:10.5px}
-  .sk-ver{display:none}
-  .sk-wb{width:15px;height:15px;font-size:8.5px}
-  .sk-win-mini svg{width:8px;height:8px}
-  .sk-gear{font-size:10px}
-  .sk-title .sk-time{font-size:9px}
 
-  /* 主面板：可视化与右栏改上下排 */
-  .sk-body{flex-direction:column;gap:3px;padding:4px 4px 0}
-  .sk-vis{min-height:54px;flex:1 1 54px}
-  .sk-vis-idle{font-size:8.5px;bottom:2px}
-  .sk-vis-tabs button{font-size:7.5px;padding:1px 3px}
-  .sk-eq-faders::-webkit-scrollbar{height:4px}
-  .sk-eq-faders::-webkit-scrollbar-thumb{background:rgba(0,0,0,.35);border-radius:2px}
-  .sk-side{width:100%;flex-direction:row;flex-wrap:wrap;gap:2px 6px;align-items:center}
-  .sk-line{font-size:9px}
-  .sk-line .v{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .sk-status{font-size:8.5px}
-  .sk-mini-btns{gap:2px}
-  .sk-mini-btns button{height:13px;width:24px;font-size:8px;padding:0 3px}
-  .sk-seek .tt{font-size:8px}
-  .sk-controls{gap:2px;padding:3px 2px 1px}
-  .sk-ctl{width:21px;height:21px;font-size:9px}
-  .sk-ctl.big{width:27px;height:27px;font-size:11px}
-  .sk-vol{width:48px;gap:2px}
-  .sk-pl-btn{height:16px;font-size:8px;padding:0 4px}
-
-  /* 工具条：3 列网格 + 搜索框整行 */
-  .sk-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:3px}
-  .sk-tools button{height:19px;padding:0 2px;font-size:9px;min-width:0;letter-spacing:-.2px}
-  .sk-tools .sk-search{grid-column:1/-1;display:flex;gap:2px;flex:initial;margin:0;max-width:none;width:auto}
-  .sk-tools .sk-search input{height:19px;font-size:9.5px;padding:0 4px;flex:1 1 auto;min-width:0}
-  .sk-tools .sk-search button{height:19px;padding:0 6px;font-size:9.5px}
-
-  /* 均衡器：推子横向滚动 */
-  .sk-eq-head{gap:2px;padding:2px 3px}
-  .sk-eq-body{gap:3px;padding:3px}
-  .sk-eq-row{width:46px;gap:3px}
-  .sk-eq-row .lab{font-size:7.5px}
-  .sk-eq-faders{overflow-x:auto;overflow-y:hidden;padding:9px 2px 2px 14px}
-  .sk-fader{width:12px;min-height:74px}
-  .sk-fader .hz{font-size:5.5px}
-  .sk-eq-faders .scale{left:1px;font-size:6px}
-  .sk-eq-faders .scale span{font-size:6px}
-  .sk-eq-on button{height:13px;font-size:8px;padding:0 3px}
-
-  /* 歌词秀 */
-  .skin-page .sk-col-r .sk-lyr{min-height:104px;max-height:30vh}
-  .skin-page .sk-col-r .sk-lyr-body{min-height:88px}
-  .sk-lyr-body{padding:4px 5px}
-  .sk-lyr-body .song{font-size:10px}
-  .sk-lyr-body .meta{font-size:8px;margin-bottom:3px}
-  .sk-lyr-body .ln{font-size:9.5px;line-height:1.75}
-  .sk-lyr-body .ln.on{font-size:11px}
-  .sk-lyr-body .none{font-size:9.5px}
-
-  /* 播放列表内容与底部图标条 */
-  .sk-pl .main{padding:0 2px}
-  .sk-pl .main .page-h1{font-size:14px}
-  .sk-pl .main p{font-size:10px}
-  .sk-pl-foot{padding:2px 3px;gap:3px}
-  .sk-pbtn{min-width:18px;height:16px;font-size:9.5px;padding:0 3px}
-  .sk-pbtn svg{width:10px;height:10px}
-  .sk-tab-bar button, .pl-tabs button{font-size:8.5px;padding:0 3px}
-  .skin-page.one-col .sk-pl{min-height:300px}
-}
-
-/* ── 播放列表滚动条：加宽加深，滑块有立体感（浅色皮肤原来太淡看不见） ── */
-.skin-page .sk-pl .main{scrollbar-width:thin;scrollbar-gutter:stable}
-.skin-page .sk-pl .main::-webkit-scrollbar{width:11px;height:11px}
-.skin-page .sk-pl .main::-webkit-scrollbar-track{
-  background:linear-gradient(90deg,rgba(0,0,0,.10),rgba(0,0,0,.24));border-radius:6px;box-shadow:inset 0 0 2px rgba(0,0,0,.4)}
-.skin-page .sk-pl .main::-webkit-scrollbar-thumb{
-  background:linear-gradient(180deg,#b3bcf0,#5f68c2);border:1px solid #3a3f86;border-radius:6px;
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.55),inset 0 -1px 1px rgba(0,0,0,.3)}
-.skin-page .sk-pl .main::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#ccd3ff,#7b84d6)}
-.skin[data-skin="light"] .sk-pl .main{scrollbar-color:#4fa0c8 rgba(120,160,190,.22)}
-.skin[data-skin="light"] .sk-pl .main::-webkit-scrollbar-track{
-  background:linear-gradient(90deg,rgba(120,160,190,.16),rgba(110,150,180,.30));box-shadow:inset 0 0 2px rgba(60,110,140,.35)}
-.skin[data-skin="light"] .sk-pl .main::-webkit-scrollbar-thumb{
-  background:linear-gradient(180deg,#bfe3f4,#4fa0c8);border:1px solid #3d87ad}
-.skin[data-skin="tt"] .sk-pl .main{scrollbar-color:#e07a12 rgba(60,26,4,.45)}
-.skin[data-skin="tt"] .sk-pl .main::-webkit-scrollbar-thumb{
-  background:linear-gradient(180deg,#ffe0a8,#de7508);border-color:#6b2c02}
-.skin[data-skin="green"] .sk-pl .main{scrollbar-color:#2f9c62 rgba(20,60,40,.35)}
-.skin[data-skin="green"] .sk-pl .main::-webkit-scrollbar-thumb{
-  background:linear-gradient(180deg,#a8f3c6,#2f9c62);border-color:#1d6a42}
-.skin[data-skin="hifi"] .sk-pl .main,.skin[data-skin="steel"] .sk-pl .main{scrollbar-color:#42d98a rgba(0,30,16,.4)}
-
-/* 播放列表内容区：常驻轨道 + 窄屏下自己滚，底部图标条常驻可见 */
-.skin-page .sk-pl .main{overflow-y:scroll}
-.skin-page.one-col .sk-pl{max-height:calc(100vh - 44px)}
-.skin-page.one-col .sk-pl .main{flex:1 1 auto;min-height:0;max-height:none}
-@media (max-width:480px){ .skin-page .sk-pl{max-height:calc(100vh - 56px)} }
-@media (max-width:300px){ .skin-page .sk-pl{max-height:calc(100vh - 44px)} }
-/* 底部工具条图标字符（插件 ◈ / 设置 ⚙） */
-.sk-pbtn-ico .sk-ico-glyph{font-size:11px;line-height:1;display:block;font-weight:600}
-.skin[data-skin="tt"] .sk-pbtn-ico .sk-ico-glyph{color:#3a1a00}
-@media (max-width:300px){
-  .sk-pbtn-ico .sk-ico-glyph{font-size:9.5px}
-}
-
-/* ── 两列但左列被拖窄（默认 230px）时的紧凑排版 ── */
-.skin-page.compact-main .sk-body{flex-direction:column;gap:3px;padding:4px 4px 0}
-.skin-page.compact-main .sk-side{width:100%;flex-direction:row;flex-wrap:wrap;gap:2px 6px;align-items:center}
-.skin-page.compact-main .sk-vis{min-height:54px;flex:1 1 54px}
-.skin-page.compact-main .sk-line{font-size:9.5px}
-.skin-page.compact-main .sk-line .v{max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.skin-page.compact-main .sk-status{font-size:8.5px}
-.skin-page.compact-main .sk-mini-btns{gap:2px}
-.skin-page.compact-main .sk-mini-btns button{height:14px;width:26px;font-size:8.5px;padding:0 3px}
-.skin-page.compact-main .sk-title{padding:1px 4px;gap:3px}
-.skin-page.compact-main .sk-title .t{font-size:10.5px}
-.skin-page.compact-main .sk-ver{font-size:8px}
-.skin-page.compact-main .sk-wb{width:16px;height:16px;font-size:8.5px}
-.skin-page.compact-main .sk-seek .tt{font-size:8.5px}
-.skin-page.compact-main .sk-controls{gap:2px;padding:4px 2px 1px}
-.skin-page.compact-main .sk-ctl{width:22px;height:22px;font-size:9.5px}
-.skin-page.compact-main .sk-ctl.big{width:28px;height:28px;font-size:12px}
-.skin-page.compact-main .sk-vol{width:56px;gap:2px}
-.skin-page.compact-main .sk-pl-btn{margin-left:0;height:17px;font-size:8.5px;padding:0 5px}
-.skin-page.compact-main .sk-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:3px}
-.skin-page.compact-main .sk-tools button{height:19px;padding:0 2px;font-size:9px;min-width:0;letter-spacing:-.2px}
-.skin-page.compact-main .sk-tools .sk-search{grid-column:1/-1;display:flex;gap:2px;flex:initial;margin:0;max-width:none;width:auto}
-.skin-page.compact-main .sk-tools .sk-search input{height:19px;font-size:9.5px;padding:0 4px;flex:1 1 auto;min-width:0}
-.skin-page.compact-main .sk-tools .sk-search button{height:19px;padding:0 6px;font-size:9.5px}
-.skin-page.compact-main .sk-eq-body{gap:3px;padding:3px}
-.skin-page.compact-main .sk-eq-row{width:48px;gap:3px}
-.skin-page.compact-main .sk-eq-row .lab{font-size:7.5px}
-.skin-page.compact-main .sk-eq-faders{overflow-x:auto;overflow-y:hidden;padding:9px 2px 2px 14px}
-.skin-page.compact-main .sk-fader{width:12px;min-height:76px}
-.skin-page.compact-main .sk-fader .hz{font-size:5.5px}
-.skin-page.compact-main .sk-eq-faders .scale{left:1px;font-size:6px}
-.skin-page.compact-main .sk-eq-faders .scale span{font-size:6px}
-.skin-page.compact-main .sk-eq-on button{height:13px;font-size:8px;padding:0 3px}
-.skin-page.compact-main .sk-pl .main .page-h1{font-size:14px}
-.skin-page.compact-main .sk-pl .main p{font-size:10px}
-.skin-page.compact-main .sk-pl-foot{padding:2px 3px;gap:3px}
-.skin-page.compact-main .sk-pbtn{min-width:19px;height:16px;font-size:9.5px;padding:0 3px}
-.skin-page.compact-main .sk-pbtn svg{width:10px;height:10px}
-.skin-page.compact-main .sk-lyr-body{padding:4px 5px}
-.skin-page.compact-main .sk-lyr-body .ln{font-size:9.5px;line-height:1.75}
-/* 左列偏窄时推子永远可横滚，不至于被面板裁掉 */
-.skin-page .sk-eq-faders{overflow-x:auto;overflow-y:hidden}
-.skin-page .sk-eq-faders::-webkit-scrollbar{height:5px}
-.skin-page .sk-eq-faders::-webkit-scrollbar-thumb{background:rgba(0,0,0,.3);border-radius:3px}
-
-/* ── Feather 图标层：按钮内图文排版 ── */
-.skin-page .sk-tools button{display:inline-flex;align-items:center;justify-content:center;gap:3px}
-.skin-page .sk-tools .sk-search{display:flex;align-items:center;gap:4px}
-.skin-page .sk-tools .sk-search svg{flex:0 0 auto;opacity:.7;margin-left:4px}
-.skin-page .sk-pl-btn{display:inline-flex;align-items:center;gap:3px}
-.skin-page .sk-wb{display:inline-flex;align-items:center;justify-content:center}
-.skin-page .sk-ctl{display:inline-flex;align-items:center;justify-content:center}
-.skin-page .sk-pbtn{display:inline-flex;align-items:center;justify-content:center}
-.skin-page .sk-mini-btns button{display:inline-flex;align-items:center;justify-content:center}
+@media (max-width:300px){ .pl-tabs button{font-size:8.5px;padding:0 3px}}
 .desk .dn-ico{display:inline-flex;align-items:center;justify-content:center}
 .desk .dn-foot button{display:inline-flex;align-items:center;justify-content:center}
 .desk .dnp-ico,.desk .dnp-play,.desk .dnp-heart,.desk .dnp-right button{display:inline-flex;align-items:center;justify-content:center}
 .mygo-winctl .mygo-win-btn{display:inline-flex;align-items:center;justify-content:center}
 .mini-ops button,.mini-tools button{display:inline-flex;align-items:center;justify-content:center}
-
-/* 播放列表：底部快捷行常驻，内容区让出空间 */
-.skin-page .sk-pl{display:flex;flex-direction:column;min-height:0}
-.skin-page .sk-pl .main{flex:1 1 auto;min-height:0}
-.skin-page .sk-pl-foot{flex:0 0 auto}
-.skin-page.one-col .sk-pl{flex:1 1 auto;min-height:0}
-
-/* 单列窄屏：整页不滚，播放列表吃掉剩余高度，底部快捷行常驻 */
-@media (max-width:480px){
-  .skin-page.one-col{height:calc(100vh - 76px);overflow:hidden}
-  .skin-page.one-col .sk-pl{flex:1 1 0;min-height:0}
-  .skin-page.one-col .sk-win,.skin-page.one-col .sk-eq,.skin-page.one-col .sk-lyr{flex:0 0 auto}
-  .skin-page.one-col .sk-lyr{max-height:26vh}
-}
-
-/* ── 歌词秀：全宽、歌词居中、滚动条贴右边 ── */
-.skin-page .sk-lyr-body,.skin-page .sk-col-r .sk-lyr-body{width:100%;max-width:none;box-sizing:border-box;scrollbar-gutter:stable}
-.skin-page .sk-lyr-body::-webkit-scrollbar{width:8px}
-.skin-page .sk-lyr-body::-webkit-scrollbar-track{background:rgba(255,255,255,.06);border-radius:4px}
-.skin-page .sk-lyr-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.32);border-radius:4px}
-.skin[data-skin="light"] .sk-lyr-body::-webkit-scrollbar-track{background:rgba(90,140,180,.14)}
-.skin[data-skin="light"] .sk-lyr-body::-webkit-scrollbar-thumb{background:#7fb4d4}
-.skin[data-skin="tt"] .sk-lyr-body::-webkit-scrollbar-thumb{background:#c1741d}
-
-/* ── 歌词秀最大化：左侧主区收起，歌词独占窗口 ── */
-.skin-page.lyr-max{grid-template-columns:minmax(0,1fr)!important}
-.skin-page.lyr-max .sk-split{display:none}
-.skin-page.lyr-max .sk-col{display:none!important}
-.skin-page.one-col.lyr-max .sk-col-r{display:contents!important}
-.skin-page:not(.one-col).lyr-max .sk-col-r{display:flex!important;flex-direction:column;height:100%}
-.skin-page.lyr-max .sk-lyr{flex:1 1 auto!important;height:100%!important;max-height:none!important;min-height:0!important}
-.skin-page.lyr-max .sk-lyr-body{flex:1 1 auto!important;min-height:0!important;max-height:none!important;
-  padding:26px 22px;font-size:inherit}
-.skin-page.lyr-max .sk-lyr-body .ln{font-size:16px;line-height:2.4}
-.skin-page.lyr-max .sk-lyr-body .ln.on{font-size:19px}
-.skin-page.lyr-max .sk-lyr-body .song{font-size:16px}
-.skin-page.lyr-max .sk-lyr-body .meta{font-size:12px}
-
-/* 关掉歌词秀：左区真正铺满整宽，不留右侧空白 */
-.skin-page.only-left{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,100%)!important}
-.skin-page.only-left .sk-col{max-width:none!important;width:100%;margin:0!important;height:100%;min-height:0;min-width:0}
-.skin-page.only-left .sk-col>section{min-width:0}
-.skin-page.only-left .sk-col>section{max-width:none}
-.skin-page.only-left .sk-split{display:none}
-
-/* 底部工具条按钮的激活态（电台/听书/插件现在是底部图标入口） */
-.sk-pbtn.on{border-color:var(--acc2);color:var(--acc2);
-  background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(0,0,0,.04));
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
 
 </style>
 </head>

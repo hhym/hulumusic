@@ -1,10 +1,11 @@
 # 葫芦音乐 · 独立版
 
-把「葫芦音乐皮肤界面」从 mygo-music 里剥离出来单独跑的程序。
+葫芦音乐 · 桌面版：只保留桌面界面（左侧竖排导航 + 右侧内容 + 底部播放条 + 迷你浮卡），
+不含千千静听四面板皮肤界面。
 
 不再依赖 mygo-music：没有它的原生主窗口、原生菜单、原生插件页和音乐库。
 只留两样东西 —— `github.com/egoist/mygo`（窗口与 WebView 框架）和 `qianqian`
-（自包含的皮肤播放器后端）。
+（自包含的播放器后端）。
 
 ## 结构
 
@@ -38,7 +39,8 @@ go build -o hulu-music .
 |---|---|---|
 | 依赖 | 只有 mygo 框架 | mygo-music 整个应用 |
 | 产物 | ~19.9 MB | ~43.4 MB |
-| 皮肤界面 / 迷你浮卡 | 有（单窗口缩放至 348×124） | 有（另开两个 WebView 窗口） |
+| 皮肤界面 | 无 | 有（另开一个 WebView 窗口） |
+| 迷你浮卡 | 有（同窗口缩放至 348×124） | 有 |
 | 原生主界面 / 原生菜单 | 无 | 有 |
 | 插件 | 自己的安装器（zip / 文件夹 / 拖放） | 原生插件页 + 自己的安装器 |
 | 插件接口 | MyGo 规范子集（search / stream / lyrics） | MyGo 完整接口 |
@@ -51,7 +53,7 @@ go build -o hulu-music .
 ~/.hulu-music/                  # Windows: C:\Users\<你>\.hulu-music
 ├── plugins/                    # 已装插件（一个插件一个子目录）
 ├── plugin-data/                # 插件自己的数据
-├── settings.json               # 皮肤、音量、音源等
+├── settings.json               # 主题、音量、音源等
 ├── plugins.json                # 插件启用状态
 ├── library.json                # 本地乐库
 └── qqjt-boot.log               # 启动日志，出问题先看这个
