@@ -136,15 +136,7 @@ func handleAudioProxy(w http.ResponseWriter, r *http.Request) {
 		req.Header.Set("Range", rng)
 	}
 
-	// 点播用超时 client；直播流是无限长连接，必须用无整体超时的 client，
-	// 否则 30 秒一到就被掐断（听起来像「播一会儿就停」）
-	isLive := r.URL.Query().Get("r") == "1"
-	var client *http.Client
-	if isLive {
-		client = &http.Client{Transport: &http.Transport{ResponseHeaderTimeout: 15 * time.Second}}
-	} else {
-		client = &http.Client{Timeout: 30 * time.Second}
-	}
+	client := &http.Client{Timeout: 30 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
 		http.Error(w, "upstream error", 502)
@@ -159,12 +151,7 @@ func handleAudioProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	liveMP3 := r.URL.Query().Get("r") == "1" && strings.Contains(ct, "mpeg")
-
 	for _, h := range []string{"Content-Type", "Content-Length", "Content-Range", "Accept-Ranges", "Content-Disposition"} {
-		if liveMP3 && (h == "Content-Length" || h == "Content-Range") {
-			continue // 直播是无限流，带长度会让浏览器一直等
-		}
 		if v := res.Header.Get(h); v != "" {
 			w.Header().Set(h, v)
 		}
@@ -173,12 +160,6 @@ func handleAudioProxy(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "audio/mpeg")
 	}
 	w.WriteHeader(res.StatusCode)
-
-	// 电台直播流：剥掉 junk 头与 ICY 元数据，输出干净 MP3
-	if liveMP3 {
-		copyMP3Clean(w, res.Body, w.(flusher))
-		return
-	}
 	io.Copy(w, res.Body)
 }
 

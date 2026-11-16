@@ -7671,15 +7671,6 @@ function SettingsPage({
   const [err, setErr] = react.exports.useState("");
   const [loading, setLoading] = react.exports.useState(true);
   const [activePlugins, setActivePlugins] = react.exports.useState([]);
-  async function openHome(url) {
-    try {
-      const r2 = await callM$1("OpenExternal", url);
-      if (r2)
-        setErr(r2);
-    } catch {
-      window.open(url, "_blank", "noopener");
-    }
-  }
   async function reload() {
     setLoading(true);
     try {
@@ -7814,59 +7805,6 @@ function SettingsPage({
     }), /* @__PURE__ */ jsxs("section", {
       className: "set-card",
       children: [/* @__PURE__ */ jsx("h3", {
-        children: "\u5185\u5BB9\u5E73\u53F0\u4E3B\u9875"
-      }), /* @__PURE__ */ jsx("p", {
-        className: "set-hint",
-        children: "\u70B9\u300C\u6253\u5F00\u4E3B\u9875\u300D\u4F1A\u7528\u7CFB\u7EDF\u9ED8\u8BA4\u6D4F\u89C8\u5668\u6253\u5F00\u5BF9\u5E94\u5E73\u53F0\u5B98\u7F51\uFF0C\u767B\u5F55\u3001\u6536\u85CF\u3001\u542C\u4E66\u90FD\u5728\u7F51\u9875\u91CC\u64CD\u4F5C\u3002"
-      }), /* @__PURE__ */ jsxs("div", {
-        className: "set-row",
-        children: [/* @__PURE__ */ jsx("label", {
-          children: "\u559C\u9A6C\u62C9\u96C5"
-        }), /* @__PURE__ */ jsxs("div", {
-          className: "home-row",
-          children: [/* @__PURE__ */ jsx("span", {
-            className: "home-url",
-            children: "www.ximalaya.com"
-          }), /* @__PURE__ */ jsx("button", {
-            className: "ghost-btn",
-            onClick: () => openHome("https://www.ximalaya.com"),
-            children: "\u6253\u5F00\u4E3B\u9875"
-          })]
-        })]
-      }), /* @__PURE__ */ jsxs("div", {
-        className: "set-row",
-        children: [/* @__PURE__ */ jsx("label", {
-          children: "QQ \u97F3\u4E50\u542C\u4E66"
-        }), /* @__PURE__ */ jsxs("div", {
-          className: "home-row",
-          children: [/* @__PURE__ */ jsx("span", {
-            className: "home-url",
-            children: "y.qq.com/musicroom/voice"
-          }), /* @__PURE__ */ jsx("button", {
-            className: "ghost-btn",
-            onClick: () => openHome("https://y.qq.com/wk_v17/#/musicroom/voice"),
-            children: "\u6253\u5F00\u4E3B\u9875"
-          })]
-        })]
-      }), /* @__PURE__ */ jsxs("div", {
-        className: "set-row",
-        children: [/* @__PURE__ */ jsx("label", {
-          children: "\u3000"
-        }), /* @__PURE__ */ jsxs("div", {
-          className: "home-row",
-          children: [/* @__PURE__ */ jsx("span", {
-            className: "home-url",
-            children: "\u542C\u4E66\u9891\u9053\u5206\u7C7B"
-          }), /* @__PURE__ */ jsx("button", {
-            className: "ghost-btn",
-            onClick: () => openHome("https://c.y.qq.com/node/pc/wk_v15/audio.html"),
-            children: "\u6709\u58F0\u8282\u76EE\u9875"
-          })]
-        })]
-      })]
-    }), /* @__PURE__ */ jsxs("section", {
-      className: "set-card",
-      children: [/* @__PURE__ */ jsx("h3", {
         children: "\u5916\u89C2"
       }), /* @__PURE__ */ jsxs("div", {
         className: "set-row",
@@ -7901,19 +7839,13 @@ function SettingsPage({
         children: [/* @__PURE__ */ jsx("label", {
           children: "\u542F\u52A8\u9875"
         }), /* @__PURE__ */ jsxs("select", {
-          value: ["search", "radio", "podcast", "library", "local"].includes(s.defaultTab) ? s.defaultTab : "search",
+          value: ["search", "library", "local"].includes(s.defaultTab) ? s.defaultTab : "search",
           onChange: (e) => patch({
             defaultTab: e.target.value
           }),
           children: [/* @__PURE__ */ jsx("option", {
             value: "search",
             children: "\u641C\u7D22\u7ED3\u679C"
-          }), /* @__PURE__ */ jsx("option", {
-            value: "radio",
-            children: "\u7535\u53F0"
-          }), /* @__PURE__ */ jsx("option", {
-            value: "podcast",
-            children: "\u542C\u4E66"
           }), /* @__PURE__ */ jsx("option", {
             value: "library",
             children: "\u6211\u7684\u6536\u85CF"
@@ -10121,7 +10053,7 @@ function NowPlaying(p2) {
           className: "np-lyric-box",
           children: lines.length === 0 ? /* @__PURE__ */ jsx("div", {
             className: "np-lyric-empty",
-            children: p2.isLive ? "\u7535\u53F0\u76F4\u64AD\u6CA1\u6709\u6B4C\u8BCD" : "\u8FD9\u9996\u6B4C\u6682\u65F6\u6CA1\u6709\u6B4C\u8BCD"
+            children: "\u8FD9\u9996\u6B4C\u6682\u65F6\u6CA1\u6709\u6B4C\u8BCD"
           }) : /* @__PURE__ */ jsx("div", {
             className: "np-lyric-lines",
             style: {
@@ -10176,32 +10108,25 @@ function NowPlaying(p2) {
       })]
     }), /* @__PURE__ */ jsxs("div", {
       className: "np-bottom",
-      children: [p2.isLive ? /* @__PURE__ */ jsxs("div", {
-        className: "np-live",
+      children: [/* @__PURE__ */ jsxs("div", {
+        className: "np-prog",
         children: [/* @__PURE__ */ jsx("span", {
-          className: "live-dot"
-        }), "\u76F4\u64AD\u4E2D \xB7 \u5185\u5BB9\u968F\u7535\u53F0\u5B9E\u65F6\u53D8\u5316"]
-      }) : /* @__PURE__ */ jsx(Fragment, {
-        children: /* @__PURE__ */ jsxs("div", {
-          className: "np-prog",
-          children: [/* @__PURE__ */ jsx("span", {
-            className: "np-time",
-            children: fmt$2(p2.pos)
-          }), /* @__PURE__ */ jsx("input", {
-            type: "range",
-            min: 0,
-            max: p2.dur || 1,
-            value: Math.min(p2.pos, p2.dur || 1),
-            onChange: (e) => p2.onSeek(Number(e.target.value)),
-            className: "np-range",
-            style: {
-              background: `linear-gradient(to right, var(--np-acc) ${pct}%, var(--np-track) ${pct}%)`
-            }
-          }), /* @__PURE__ */ jsx("span", {
-            className: "np-time",
-            children: fmt$2(p2.dur)
-          })]
-        })
+          className: "np-time",
+          children: fmt$2(p2.pos)
+        }), /* @__PURE__ */ jsx("input", {
+          type: "range",
+          min: 0,
+          max: p2.dur || 1,
+          value: Math.min(p2.pos, p2.dur || 1),
+          onChange: (e) => p2.onSeek(Number(e.target.value)),
+          className: "np-range",
+          style: {
+            background: `linear-gradient(to right, var(--np-acc) ${pct}%, var(--np-track) ${pct}%)`
+          }
+        }), /* @__PURE__ */ jsx("span", {
+          className: "np-time",
+          children: fmt$2(p2.dur)
+        })]
       }), /* @__PURE__ */ jsxs("div", {
         className: "np-controls",
         children: [/* @__PURE__ */ jsx("button", {
@@ -12997,7 +12922,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
+const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
   const [theme, setTheme] = react.exports.useState(() => {
@@ -13085,11 +13010,6 @@ function App() {
     setTab("home");
   }
   const [lib, setLib] = react.exports.useState([]);
-  const [stations, setStations] = react.exports.useState([]);
-  const [podQ, setPodQ] = react.exports.useState("\u6709\u58F0\u4E66");
-  const [shows, setShows] = react.exports.useState([]);
-  const [curShow, setCurShow] = react.exports.useState(null);
-  const [podLoading, setPodLoading] = react.exports.useState(false);
   const [cur, setCur] = react.exports.useState(null);
   const [playing, setPlaying] = react.exports.useState(false);
   const [pos, setPos] = react.exports.useState(0);
@@ -13241,13 +13161,11 @@ function App() {
     });
     call("Library").then((l2) => setLib(toArr(l2))).catch(() => {
     });
-    call("Stations").then((s) => setStations(toArr(s))).catch(() => {
-    });
     call("GetSettings").then((st) => {
       if (!st || typeof st !== "object")
         return;
       setSettings(st);
-      if (st.defaultTab && ["search", "library", "radio", "podcast", "local", "plugins", "settings"].includes(st.defaultTab)) {
+      if (st.defaultTab && ["search", "library", "local", "plugins", "settings"].includes(st.defaultTab)) {
         setTab(st.defaultTab);
       }
       if (typeof st.volume === "number") {
@@ -13366,49 +13284,6 @@ function App() {
         setErr(errs.join(" / "));
       if (!flat.length && !errs.length)
         setMeta("\u63D2\u4EF6\u6CA1\u641C\u5230\u7ED3\u679C");
-    } catch (e) {
-      setErr(String((e == null ? void 0 : e.message) || e));
-    } finally {
-      setLoading(false);
-    }
-  }
-  async function doPodSearch() {
-    if (!podQ.trim() || podLoading)
-      return;
-    setPodLoading(true);
-    setErr("");
-    setCurShow(null);
-    setList([]);
-    try {
-      const {
-        data: res,
-        err: e
-      } = await callResult("PodcastSearch", podQ);
-      setShows(toArr(res));
-      setMeta(`${toArr(res).length} \u4E2A\u8282\u76EE`);
-      if (e)
-        setErr(e);
-    } catch (e) {
-      setErr(String((e == null ? void 0 : e.message) || e));
-    } finally {
-      setPodLoading(false);
-    }
-  }
-  async function openShow(s) {
-    setCurShow(s);
-    setList([]);
-    setMeta(`${s.name} \xB7 \u52A0\u8F7D\u4E2D`);
-    setErr("");
-    setLoading(true);
-    try {
-      const {
-        data: eps,
-        err: e
-      } = await callResult("PodcastEpisodes", s.feedUrl);
-      setList(toArr(eps));
-      setMeta(`${s.name} \xB7 ${toArr(eps).length} \u96C6`);
-      if (e)
-        setErr(e);
     } catch (e) {
       setErr(String((e == null ? void 0 : e.message) || e));
     } finally {
@@ -13823,7 +13698,6 @@ function App() {
     if (playing && eqRef.current)
       eqRef.current.resume();
   }, [playing]);
-  const isLive = (cur == null ? void 0 : cur.source) === "radio";
   const curPl = pls.find((p2) => p2.id === plSel);
   const plTracks = curPl ? curPl.tracks : [];
   const libView = plSel ? plTracks : libAlbum ? lib.filter((t2) => (t2.album || "\u672A\u5206\u7C7B") === libAlbum) : lib;
@@ -14048,9 +13922,9 @@ function App() {
       children: [/* @__PURE__ */ jsxs("div", {
         children: [/* @__PURE__ */ jsx("h1", {
           className: "page-h1 ph-" + tab,
-          children: tab === "home" ? "\u9996\u9875" : tab === "library" ? "\u6211\u7684\u6536\u85CF" : tab === "radio" ? "\u7535\u53F0" : tab === "podcast" ? "\u542C\u4E66" : tab === "local" ? "\u6B4C\u66F2" : tab === "queue" ? "\u5F85\u64AD\u6E05\u5355" : tab === "plugins" ? "\u63D2\u4EF6" : tab === "settings" ? "\u8BBE\u7F6E" : tab === "lyric" ? "\u6B4C\u8BCD" : "\u641C\u7D22\u7ED3\u679C"
+          children: tab === "home" ? "\u9996\u9875" : tab === "library" ? "\u6211\u7684\u6536\u85CF" : tab === "local" ? "\u6B4C\u66F2" : tab === "queue" ? "\u5F85\u64AD\u6E05\u5355" : tab === "plugins" ? "\u63D2\u4EF6" : tab === "settings" ? "\u8BBE\u7F6E" : tab === "lyric" ? "\u6B4C\u8BCD" : "\u641C\u7D22\u7ED3\u679C"
         }), /* @__PURE__ */ jsx("p", {
-          children: meta || (tab === "home" ? "\u5F53\u524D\u63D2\u4EF6\u7684\u9996\u9875\uFF0C\u70B9\u5361\u7247\u76F4\u63A5\u64AD" : tab === "radio" ? "\u7F51\u7EDC\u76F4\u64AD\uFF0C\u70B9\u53F0\u5373\u542C" : tab === "podcast" ? "\u641C\u6709\u58F0\u4E66\u3001\u64AD\u5BA2\u8282\u76EE" : tab === "local" ? localInfo || "\u9009\u4E00\u4E2A\u97F3\u4E50\u6587\u4EF6\u5939\uFF0C\u626B\u51FA\u6765\u7684\u6B4C\u76F4\u63A5\u64AD\uFF08\u540C\u540D .lrc \u4F1A\u5F53\u6B4C\u8BCD\uFF09" : tab === "queue" ? "\u6B63\u5728\u653E\u7684 + \u63A5\u4E0B\u6765\u8981\u653E\u7684\uFF0C\u70B9\u4E00\u4E0B\u5C31\u80FD\u8DF3\u8FC7\u53BB" : tab === "plugins" ? "\u5BFC\u5165 MyGo / MusicFree \u63D2\u4EF6\uFF0C\u6269\u5C55\u97F3\u6E90" : tab === "settings" ? "\u504F\u597D\u8BBE\u7F6E\uFF0C\u6539\u5B8C\u8BB0\u5F97\u70B9\u4FDD\u5B58" : tab === "lyric" ? "\u8DDF\u7740\u5531\uFF0C\u53EF\u5207\u5361\u62C9OK \u5927\u884C / \u6574\u6BB5\u6EDA\u52A8" : "\u8F93\u5165\u5173\u952E\u8BCD\u5F00\u59CB\u641C\u7D22")
+          children: meta || (tab === "home" ? "\u5F53\u524D\u63D2\u4EF6\u7684\u9996\u9875\uFF0C\u70B9\u5361\u7247\u76F4\u63A5\u64AD" : tab === "local" ? localInfo || "\u9009\u4E00\u4E2A\u97F3\u4E50\u6587\u4EF6\u5939\uFF0C\u626B\u51FA\u6765\u7684\u6B4C\u76F4\u63A5\u64AD\uFF08\u540C\u540D .lrc \u4F1A\u5F53\u6B4C\u8BCD\uFF09" : tab === "queue" ? "\u6B63\u5728\u653E\u7684 + \u63A5\u4E0B\u6765\u8981\u653E\u7684\uFF0C\u70B9\u4E00\u4E0B\u5C31\u80FD\u8DF3\u8FC7\u53BB" : tab === "plugins" ? "\u5BFC\u5165 MyGo / MusicFree \u63D2\u4EF6\uFF0C\u6269\u5C55\u97F3\u6E90" : tab === "settings" ? "\u504F\u597D\u8BBE\u7F6E\uFF0C\u6539\u5B8C\u8BB0\u5F97\u70B9\u4FDD\u5B58" : tab === "lyric" ? "\u8DDF\u7740\u5531\uFF0C\u53EF\u5207\u5361\u62C9OK \u5927\u884C / \u6574\u6BB5\u6EDA\u52A8" : "\u8F93\u5165\u5173\u952E\u8BCD\u5F00\u59CB\u641C\u7D22")
         })]
       }), err && /* @__PURE__ */ jsx("div", {
         className: "err",
@@ -14120,7 +13994,7 @@ function App() {
               })]
             }) : /* @__PURE__ */ jsx("span", {
               className: "kbase",
-              children: isLive ? "\u7535\u53F0\u6CA1\u6709\u6B4C\u8BCD" : "\u2026"
+              children: "\u2026"
             })
           }), /* @__PURE__ */ jsx("div", {
             className: "dlp-next",
@@ -14146,7 +14020,7 @@ function App() {
           children: l2.text
         }, k2)) : /* @__PURE__ */ jsx("div", {
           className: "dlp-none",
-          children: busy ? "\u53D6\u6D41\u4E2D\u2026" : isLive ? "\u7535\u53F0\u6CA1\u6709\u6B4C\u8BCD" : cur ? "\u8FD9\u9996\u6B4C\u8FD8\u6CA1\u6709\u6B4C\u8BCD\uFF08\u540C\u540D .lrc \u4F1A\u81EA\u52A8\u8BFB\u53D6\uFF09" : "\u9009\u4E00\u9996\u6B4C\u5F00\u59CB"
+          children: busy ? "\u53D6\u6D41\u4E2D\u2026" : cur ? "\u8FD9\u9996\u6B4C\u8FD8\u6CA1\u6709\u6B4C\u8BCD\uFF08\u540C\u540D .lrc \u4F1A\u81EA\u52A8\u8BFB\u53D6\uFF09" : "\u9009\u4E00\u9996\u6B4C\u5F00\u59CB"
         })
       })]
     }) : tab === "local" ? /* @__PURE__ */ jsxs("div", {
@@ -14310,130 +14184,6 @@ function App() {
       onRefreshAccounts: refreshAccounts
     }) : tab === "plugins" ? /* @__PURE__ */ jsx(PluginsPage, {
       onPlay: play
-    }) : tab === "radio" ? /* @__PURE__ */ jsxs("div", {
-      className: "grid",
-      children: [stations.map((s) => /* @__PURE__ */ jsxs("button", {
-        className: "station",
-        onClick: () => play({
-          id: s.id,
-          name: s.name,
-          artist: s.desc,
-          album: s.region,
-          cover: s.logo,
-          duration: 0,
-          source: "radio"
-        }),
-        children: [/* @__PURE__ */ jsx("div", {
-          className: "st-logo",
-          style: s.logo ? {
-            backgroundImage: `url(${s.logo})`
-          } : void 0
-        }), /* @__PURE__ */ jsxs("div", {
-          className: "st-info",
-          children: [/* @__PURE__ */ jsx("div", {
-            className: "st-name",
-            children: s.name
-          }), /* @__PURE__ */ jsx("div", {
-            className: "st-desc",
-            children: s.desc
-          })]
-        }), /* @__PURE__ */ jsx("span", {
-          className: "st-region",
-          children: s.region
-        })]
-      }, s.id)), stations.length === 0 && /* @__PURE__ */ jsx("div", {
-        className: "empty",
-        children: "\u7535\u53F0\u5217\u8868\u8FD8\u6CA1\u52A0\u8F7D\u51FA\u6765"
-      })]
-    }) : tab === "podcast" ? /* @__PURE__ */ jsxs("div", {
-      className: "pod-wrap",
-      children: [/* @__PURE__ */ jsxs("div", {
-        className: "pod-bar",
-        children: [curShow && /* @__PURE__ */ jsx("button", {
-          className: "back",
-          onClick: () => {
-            setCurShow(null);
-            setList([]);
-            setMeta("");
-          },
-          children: "\u2190"
-        }), /* @__PURE__ */ jsx("input", {
-          value: podQ,
-          placeholder: "\u641C\u6709\u58F0\u4E66 / \u64AD\u5BA2\u8282\u76EE",
-          onChange: (e) => setPodQ(e.target.value),
-          onKeyDown: (e) => e.key === "Enter" && doPodSearch()
-        }), /* @__PURE__ */ jsx("button", {
-          onClick: doPodSearch,
-          disabled: podLoading,
-          children: podLoading ? "\u2026" : "\u641C\u8282\u76EE"
-        })]
-      }), !curShow && /* @__PURE__ */ jsxs("div", {
-        className: "grid",
-        children: [shows.map((s) => /* @__PURE__ */ jsxs("button", {
-          className: "card show",
-          onClick: () => openShow(s),
-          children: [/* @__PURE__ */ jsx("div", {
-            className: "show-cover",
-            style: s.cover ? {
-              backgroundImage: `url(${s.cover})`
-            } : void 0
-          }), /* @__PURE__ */ jsxs("div", {
-            className: "show-body",
-            children: [/* @__PURE__ */ jsx("div", {
-              className: "show-name",
-              children: s.name
-            }), /* @__PURE__ */ jsxs("div", {
-              className: "show-sub",
-              children: [s.author, s.count ? ` \xB7 ${s.count} \u96C6` : ""]
-            })]
-          })]
-        }, s.id)), shows.length === 0 && /* @__PURE__ */ jsx("div", {
-          className: "empty",
-          children: "\u8F93\u5165\u5173\u952E\u8BCD\uFF0C\u641C\u6709\u58F0\u4E66\u6216\u6709\u58F0\u8282\u76EE"
-        })]
-      }), curShow && /* @__PURE__ */ jsxs("div", {
-        className: "list",
-        children: [loading && /* @__PURE__ */ jsx("div", {
-          className: "empty",
-          children: "\u6B63\u5728\u62C9\u5355\u96C6\u5217\u8868\u2026"
-        }), !loading && shown.length === 0 && /* @__PURE__ */ jsx("div", {
-          className: "empty",
-          children: "\u8FD9\u4E2A\u8282\u76EE\u6CA1\u6709\u53EF\u64AD\u7684\u5355\u96C6"
-        }), !loading && shown.map((t2, i) => /* @__PURE__ */ jsxs("div", {
-          className: "row" + ((cur == null ? void 0 : cur.id) === t2.id ? " on" : ""),
-          children: [/* @__PURE__ */ jsx("button", {
-            className: "idx",
-            onClick: () => play(t2),
-            children: playing && (cur == null ? void 0 : cur.id) === t2.id ? /* @__PURE__ */ jsx(Fi, {
-              n: "pause",
-              size: 12
-            }) : /* @__PURE__ */ jsx(Fi, {
-              n: "play",
-              size: 12
-            })
-          }), /* @__PURE__ */ jsx("div", {
-            className: "cover",
-            style: t2.cover ? {
-              backgroundImage: `url(${t2.cover})`
-            } : void 0
-          }), /* @__PURE__ */ jsxs("div", {
-            className: "info",
-            children: [/* @__PURE__ */ jsx("div", {
-              className: "name",
-              children: t2.name
-            }), /* @__PURE__ */ jsx("div", {
-              className: "ca",
-              children: t2.artist
-            }), /* @__PURE__ */ jsx("div", {
-              className: "cb",
-              children: t2.album || ""
-            })]
-          }), /* @__PURE__ */ jsx("span", {
-            className: "dur",
-            children: fmt(t2.duration)
-          })]
-        }, t2.id + i))]
-      })]
     }) : /* @__PURE__ */ jsxs("div", {
       className: "list",
       children: [/* @__PURE__ */ jsxs("div", {
@@ -14531,7 +14281,7 @@ function App() {
         }), /* @__PURE__ */ jsx("span", {
           className: "dur",
           children: fmt(t2.duration)
-        }), t2.source !== "radio" && /* @__PURE__ */ jsx("button", {
+        }), /* @__PURE__ */ jsx("button", {
           className: "add",
           onClick: () => enqueue(t2),
           title: "\u52A0\u5165\u5F85\u64AD",
@@ -14539,11 +14289,11 @@ function App() {
             n: "plus",
             size: 12
           })
-        }), t2.source !== "radio" && t2.source !== "pod" && /* @__PURE__ */ jsx("button", {
+        }), /* @__PURE__ */ jsx("button", {
           className: "heart" + (lib.some((x2) => x2.id === t2.id) ? " on" : ""),
           onClick: () => fav(t2),
           children: "\u2665"
-        }), t2.source !== "radio" && /* @__PURE__ */ jsx("button", {
+        }), /* @__PURE__ */ jsx("button", {
           className: "addpl",
           title: "\u52A0\u5165\u81EA\u5EFA\u6B4C\u5355",
           onClick: (e) => {
@@ -15226,7 +14976,7 @@ function App() {
                   setPos(v2);
                 }
               }), /* @__PURE__ */ jsx("span", {
-                children: isLive ? "LIVE" : fmt(dur)
+                children: fmt(dur)
               })]
             })]
           }), /* @__PURE__ */ jsxs("div", {
@@ -15328,7 +15078,6 @@ function App() {
       lyricText: cur && Array.isArray(lyric) && lyric.length ? curLine : "",
       playing,
       busy,
-      isLive,
       inLib: !!cur && lib.some((x2) => x2.id === cur.id),
       onToggle: toggle,
       onPrev: () => step(-1),
@@ -15363,7 +15112,7 @@ function App() {
       onPause: () => setPlaying(false),
       onEnded,
       onError: () => {
-        setErr("\u8FD9\u6761\u97F3\u9891\u64AD\u4E0D\u4E86\uFF08\u53EF\u80FD\u662F VIP \u66F2\u3001\u65E0\u7248\u6743\uFF0C\u6216\u7535\u53F0\u6682\u65F6\u8FDE\u4E0D\u4E0A\uFF09");
+        setErr("\u8FD9\u6761\u97F3\u9891\u64AD\u4E0D\u4E86\uFF08\u53EF\u80FD\u662F VIP \u66F2\u3001\u65E0\u7248\u6743\uFF09");
         setPlaying(false);
       }
     }), npOpen && /* @__PURE__ */ jsx(NowPlaying, {
@@ -15374,7 +15123,6 @@ function App() {
       lyric,
       curIndex,
       busy,
-      isLive,
       volume,
       inLib: !!cur && lib.some((x2) => x2.id === cur.id),
       shuffle,
@@ -15559,7 +15307,6 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 .tb-progress input::-webkit-slider-thumb,.tb-vol input::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--acc);border:0;cursor:pointer}
 .tb-vol{display:flex;align-items:center;gap:6px;flex:0 0 auto;width:120px}
 .tb-vol input{width:84px}
-.live-tag{font-size:11px;color:var(--acc);border:1px solid var(--line);border-radius:999px;padding:2px 9px;flex:0 0 auto}
 
 
 .nowband{display:flex;align-items:center;gap:14px;padding:10px 14px;background:#111318;color:#fff;
@@ -15735,33 +15482,6 @@ nav button.on{background:var(--sel);color:var(--txt)}
 .lyric{font-size:12.5px;color:var(--dim);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 
-.station{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;color:var(--txt);text-align:left;box-shadow:var(--shadow)}
-.station:hover{border-color:var(--acc);transform:translateY(-1px)}
-.st-logo{width:44px;height:44px;flex:0 0 44px;border-radius:10px;background-color:var(--cover);background-position:center;background-size:cover;background-repeat:no-repeat}
-.st-info{flex:1;min-width:0}
-.st-name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.st-desc{font-size:11.5px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.st-region{font-size:11px;color:var(--acc);border:1px solid var(--tag-line);border-radius:5px;padding:1px 6px}
-
-
-.pod-wrap{display:flex;flex-direction:column;gap:14px}
-.pod-bar{display:flex;gap:8px;align-items:center;max-width:560px}
-.pod-bar input{flex:1;background:var(--input);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:8px 10px;font-size:13px;outline:none}
-.pod-bar input:focus{border-color:var(--acc2)}
-.pod-bar input::placeholder{color:var(--dim)}
-.pod-bar button{background:var(--acc2);border:0;color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px}
-.pod-bar button:disabled{opacity:.5}
-.pod-bar .back{background:var(--hover);color:var(--txt);padding:8px 12px}
-.card.show{align-items:flex-start;gap:10px}
-.show-cover{width:52px;height:52px;flex:0 0 52px;border-radius:9px;background-color:var(--cover);background-position:center;background-size:cover;background-repeat:no-repeat}
-.show-body{flex:1;min-width:0}
-.show-name{font-size:13.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.show-sub{font-size:11.5px;color:var(--dim);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.prog.live{display:flex;align-items:center;gap:8px;color:var(--acc);font-size:12px}
-.live-dot{width:7px;height:7px;border-radius:50%;background:var(--acc);display:inline-block;animation:pulse 1.6s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-
-
 :root[data-theme="amber"] ::-webkit-scrollbar,:root[data-theme="light"] ::-webkit-scrollbar{width:10px;height:10px}
 :root[data-theme="amber"] ::-webkit-scrollbar-thumb,:root[data-theme="light"] ::-webkit-scrollbar-thumb{background:#cfd5e2;border-radius:6px}
 :root[data-theme="amber"] ::-webkit-scrollbar-track,:root[data-theme="light"] ::-webkit-scrollbar-track{background:transparent}
@@ -15916,7 +15636,6 @@ select{background:var(--input);border:1px solid var(--line);border-radius:8px;co
 .np-bottom{position:relative;z-index:2;flex:0 0 auto;padding:10px 56px 26px;display:flex;flex-direction:column;gap:14px;width:100%;max-width:1280px}
 .np-prog{display:flex;align-items:center;gap:14px}
 .np-time{font-size:11.5px;color:var(--np-dim);width:42px;text-align:center;font-variant-numeric:tabular-nums}
-.np-live{display:flex;align-items:center;gap:8px;color:var(--np-acc);font-size:12px;justify-content:center}
 .np-range{-webkit-appearance:none;appearance:none;flex:1;height:4px;border-radius:2px;outline:none;cursor:pointer}
 .np-range::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;
   background:#fff;border:0;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.35)}

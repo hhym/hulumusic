@@ -22,8 +22,6 @@ import Visualizer from './Visualizer'
 
 type Track = {id: string; name: string; artist: string; album: string; cover: string; duration: number; source: string; plug?: string}
 type Chart = {id: string; name: string; cover: string; source: string}
-type Station = {id: string; name: string; desc: string; logo: string; url: string; region: string}
-type Show = {id: string; name: string; author: string; cover: string; feedUrl: string; count: number; desc: string}
 type SearchResult = {tracks: Track[]; source: string; error: string; ms: number}
 type LyricLine = {time: number; text: string}
 // at：每首歌加入这个歌单的时间戳（毫秒），「按时间排序」要用；老数据没有就退回库里的顺序
@@ -164,10 +162,10 @@ const fmt = (ms: number) => {
 }
 const BUILD_TAG = '3.0.30'
 const srcName = (s: string) =>
-  s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
+  s === 'qq' ? 'QQ' : s === 'ne' ? '网易云'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
 
-type Tab = 'home' | 'search' | 'library' | 'radio' | 'podcast' | 'local' | 'queue' | 'lyric' | 'plugins' | 'settings'
+type Tab = 'home' | 'search' | 'library' | 'local' | 'queue' | 'lyric' | 'plugins' | 'settings'
 
 export default function App() {
   // 主题：记住用户选择；没存过就用浅色（默认），四档循环是 浅 → 橘黄 → 深青 → 深色。
@@ -255,15 +253,6 @@ export default function App() {
   }
   const [lib, setLib] = useState<Track[]>([])
 
-  // 电台
-  const [stations, setStations] = useState<Station[]>([])
-
-  // 听书
-  const [podQ, setPodQ] = useState('有声书')
-  const [shows, setShows] = useState<Show[]>([])
-  const [curShow, setCurShow] = useState<Show | null>(null)
-  const [podLoading, setPodLoading] = useState(false)
-
   // 播放器
   const [cur, setCur] = useState<Track | null>(null)
   const [playing, setPlaying] = useState(false)
@@ -329,7 +318,7 @@ export default function App() {
     if (!eq.ready) {
       const ok = await eq.attach(el)
       if (!ok) {
-        setErr('均衡器接不上当前音源：这路音频没有开放跨源读取（CORS），浏览器不允许做音效处理。换一首或换电台再试。')
+        setErr('均衡器接不上当前音源：这路音频没有开放跨源读取（CORS），浏览器不允许做音效处理。换一首再试。')
         return
       }
     }
@@ -460,13 +449,12 @@ export default function App() {
   useEffect(() => {
     call<any>('Plugins').then((p: any) => setPlugins(Array.isArray(p) ? p.filter((x: any) => x.enabled) : [])).catch(() => {})
     call<Track[]>('Library').then((l) => setLib(toArr<Track>(l))).catch(() => {})
-    call<Station[]>('Stations').then((s) => setStations(toArr<Station>(s))).catch(() => {})
     // 设置页保存的偏好：启动页、音量、主题
     call<any>('GetSettings')
       .then((st: any) => {
         if (!st || typeof st !== 'object') return
         setSettings(st)
-        if (st.defaultTab && ['search', 'library', 'radio', 'podcast', 'local', 'plugins', 'settings'].includes(st.defaultTab)) {
+        if (st.defaultTab && ['search', 'library', 'local', 'plugins', 'settings'].includes(st.defaultTab)) {
           setTab(st.defaultTab as Tab)
         }
         if (typeof st.volume === 'number') {
@@ -566,33 +554,6 @@ export default function App() {
       setNeedLogin(logins)
       if (errs.length) setErr(errs.join(' / '))
       if (!flat.length && !errs.length) setMeta('插件没搜到结果')
-    } catch (e: any) {
-      setErr(String(e?.message || e))
-    } finally { setLoading(false) }
-  }
-
-
-
-  async function doPodSearch() {
-    if (!podQ.trim() || podLoading) return
-    setPodLoading(true); setErr(''); setCurShow(null); setList([])
-    try {
-      const {data: res, err: e} = await callResult<Show[]>('PodcastSearch', podQ)
-      setShows(toArr<Show>(res))
-      setMeta(`${toArr<Show>(res).length} 个节目`)
-      if (e) setErr(e)
-    } catch (e: any) {
-      setErr(String(e?.message || e))
-    } finally { setPodLoading(false) }
-  }
-
-  async function openShow(s: Show) {
-    setCurShow(s); setList([]); setMeta(`${s.name} · 加载中`); setErr(''); setLoading(true)
-    try {
-      const {data: eps, err: e} = await callResult<Track[]>('PodcastEpisodes', s.feedUrl)
-      setList(toArr<Track>(eps))
-      setMeta(`${s.name} · ${toArr<Track>(eps).length} 集`)
-      if (e) setErr(e)
     } catch (e: any) {
       setErr(String(e?.message || e))
     } finally { setLoading(false) }
@@ -902,7 +863,6 @@ export default function App() {
     if (playing && eqRef.current) eqRef.current.resume()
   }, [playing])
 
-  const isLive = cur?.source === 'radio'
   const curPl = pls.find((p) => p.id === plSel)
   const plTracks = curPl ? curPl.tracks : []
   const libView = plSel ? plTracks : (libAlbum ? lib.filter((t) => (t.album || '未分类') === libAlbum) : lib)
@@ -1081,8 +1041,8 @@ export default function App() {
     <main className="main">
       <header className={"head hd-" + tab}>
         <div>
-          <h1 className={'page-h1 ph-' + tab}>{tab === 'home' ? '首页' : tab === 'library' ? '我的收藏' : tab === 'radio' ? '电台' : tab === 'podcast' ? '听书' : tab === 'local' ? '歌曲' : tab === 'queue' ? '待播清单' : tab === 'plugins' ? '插件' : tab === 'settings' ? '设置' : tab === 'lyric' ? '歌词' : '搜索结果'}</h1>
-          <p>{meta || (tab === 'home' ? '当前插件的首页，点卡片直接播' : tab === 'radio' ? '网络直播，点台即听' : tab === 'podcast' ? '搜有声书、播客节目' : tab === 'local' ? (localInfo || '选一个音乐文件夹，扫出来的歌直接播（同名 .lrc 会当歌词）') : tab === 'queue' ? '正在放的 + 接下来要放的，点一下就能跳过去' : tab === 'plugins' ? '导入 MyGo / MusicFree 插件，扩展音源' : tab === 'settings' ? '偏好设置，改完记得点保存' : tab === 'lyric' ? '跟着唱，可切卡拉OK 大行 / 整段滚动' : '输入关键词开始搜索')}</p>
+          <h1 className={'page-h1 ph-' + tab}>{tab === 'home' ? '首页' : tab === 'library' ? '我的收藏' : tab === 'local' ? '歌曲' : tab === 'queue' ? '待播清单' : tab === 'plugins' ? '插件' : tab === 'settings' ? '设置' : tab === 'lyric' ? '歌词' : '搜索结果'}</h1>
+          <p>{meta || (tab === 'home' ? '当前插件的首页，点卡片直接播' : tab === 'local' ? (localInfo || '选一个音乐文件夹，扫出来的歌直接播（同名 .lrc 会当歌词）') : tab === 'queue' ? '正在放的 + 接下来要放的，点一下就能跳过去' : tab === 'plugins' ? '导入 MyGo / MusicFree 插件，扩展音源' : tab === 'settings' ? '偏好设置，改完记得点保存' : tab === 'lyric' ? '跟着唱，可切卡拉OK 大行 / 整段滚动' : '输入关键词开始搜索')}</p>
         </div>
         {err && <div className="err">{err}</div>}
         {needLogin.length > 0 && (
@@ -1127,7 +1087,7 @@ export default function App() {
                         <span className="kfill" style={{ width: (kProgress * 100) + '%' }}>{lyric[curIndex].text}</span>
                       </span>
                     ) : (
-                      <span className="kbase">{isLive ? '电台没有歌词' : '…'}</span>
+                      <span className="kbase">…</span>
                     )}
                   </div>
                   <div className="dlp-next">{curIndex >= 0 && lyric[curIndex + 1] ? lyric[curIndex + 1].text : ' '}</div>
@@ -1147,7 +1107,7 @@ export default function App() {
                 )
               )
             ) : (
-              <div className="dlp-none">{busy ? '取流中…' : (isLive ? '电台没有歌词' : cur ? '这首歌还没有歌词（同名 .lrc 会自动读取）' : '选一首歌开始')}</div>
+              <div className="dlp-none">{busy ? '取流中…' : cur ? '这首歌还没有歌词（同名 .lrc 会自动读取）' : '选一首歌开始'}</div>
             )}
           </div>
         </div>
@@ -1272,64 +1232,6 @@ export default function App() {
         />
       ) : tab === 'plugins' ? (
         <PluginsPage onPlay={play} />
-      ) : tab === 'radio' ? (
-        <div className="grid">
-          {stations.map((s) => (
-            <button key={s.id} className="station"
-                    onClick={() => play({id: s.id, name: s.name, artist: s.desc, album: s.region, cover: s.logo, duration: 0, source: 'radio'})}>
-              <div className="st-logo" style={s.logo ? {backgroundImage: `url(${s.logo})`} : undefined} />
-              <div className="st-info">
-                <div className="st-name">{s.name}</div>
-                <div className="st-desc">{s.desc}</div>
-              </div>
-              <span className="st-region">{s.region}</span>
-            </button>
-          ))}
-          {stations.length === 0 && <div className="empty">电台列表还没加载出来</div>}
-        </div>
-      ) : tab === 'podcast' ? (
-        <div className="pod-wrap">
-          <div className="pod-bar">
-            {curShow && <button className="back" onClick={() => { setCurShow(null); setList([]); setMeta('') }}>←</button>}
-            <input value={podQ} placeholder="搜有声书 / 播客节目" onChange={(e) => setPodQ(e.target.value)}
-                   onKeyDown={(e) => e.key === 'Enter' && doPodSearch()} />
-            <button onClick={doPodSearch} disabled={podLoading}>{podLoading ? '…' : '搜节目'}</button>
-          </div>
-
-          {!curShow && (
-            <div className="grid">
-              {shows.map((s) => (
-                <button key={s.id} className="card show" onClick={() => openShow(s)}>
-                  <div className="show-cover" style={s.cover ? {backgroundImage: `url(${s.cover})`} : undefined} />
-                  <div className="show-body">
-                    <div className="show-name">{s.name}</div>
-                    <div className="show-sub">{s.author}{s.count ? ` · ${s.count} 集` : ''}</div>
-                  </div>
-                </button>
-              ))}
-              {shows.length === 0 && <div className="empty">输入关键词，搜有声书或有声节目</div>}
-            </div>
-          )}
-
-          {curShow && (
-            <div className="list">
-              {loading && <div className="empty">正在拉单集列表…</div>}
-              {!loading && shown.length === 0 && <div className="empty">这个节目没有可播的单集</div>}
-              {!loading && shown.map((t, i) => (
-                <div key={t.id + i} className={'row' + (cur?.id === t.id ? ' on' : '')}>
-                  <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Fi n="pause" size={12} /> : <Fi n="play" size={12} />}</button>
-                  <div className="cover" style={t.cover ? {backgroundImage: `url(${t.cover})`} : undefined} />
-                  <div className="info">
-                    <div className="name">{t.name}</div>
-                    <div className="ca">{t.artist}</div>
-                    <div className="cb">{t.album || ''}</div>
-                  </div>
-                  <span className="dur">{fmt(t.duration)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       ) : (
         <div className="list">
           <div className="thead">
@@ -1375,22 +1277,16 @@ export default function App() {
               </div>
               <span className="tag">{t.source === 'plugin' && t.plug ? t.plug : srcName(t.source)}</span>
               <span className="dur">{fmt(t.duration)}</span>
-              {t.source !== 'radio' && (
-                <button className="add" onClick={() => enqueue(t)} title="加入待播"><Fi n="plus" size={12} /></button>
-              )}
-              {t.source !== 'radio' && t.source !== 'pod' && (
-                <button className={'heart' + (lib.some((x) => x.id === t.id) ? ' on' : '')} onClick={() => fav(t)}>♥</button>
-              )}
-              {t.source !== 'radio' && (
-                <button className="addpl" title="加入自建歌单"
-                        onClick={(e) => {
-                          const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                          const x = Math.max(8, Math.min(r.left - 196, window.innerWidth - 204))
-                          setPlMenu({t, x, y: r.bottom + 6})
-                        }}>
-                  <Fi n="folder" size={13} />
-                </button>
-              )}
+              <button className="add" onClick={() => enqueue(t)} title="加入待播"><Fi n="plus" size={12} /></button>
+              <button className={'heart' + (lib.some((x) => x.id === t.id) ? ' on' : '')} onClick={() => fav(t)}>♥</button>
+              <button className="addpl" title="加入自建歌单"
+                      onClick={(e) => {
+                        const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                        const x = Math.max(8, Math.min(r.left - 196, window.innerWidth - 204))
+                        setPlMenu({t, x, y: r.bottom + 6})
+                      }}>
+                <Fi n="folder" size={13} />
+              </button>
             </div>
           ))}
         </div>
@@ -1690,7 +1586,7 @@ export default function App() {
                            if (a) a.currentTime = v / 1000
                            setPos(v)
                          }} />
-                  <span>{isLive ? 'LIVE' : fmt(dur)}</span>
+                  <span>{fmt(dur)}</span>
                 </div>
               </div>
 
@@ -1751,7 +1647,6 @@ export default function App() {
           lyricText={cur && Array.isArray(lyric) && lyric.length ? curLine : ''}
           playing={playing}
           busy={busy}
-          isLive={isLive}
           inLib={!!cur && lib.some((x) => x.id === cur.id)}
           onToggle={toggle}
           onPrev={() => step(-1)}
@@ -1779,7 +1674,7 @@ export default function App() {
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={onEnded}
-        onError={() => { setErr('这条音频播不了（可能是 VIP 曲、无版权，或电台暂时连不上）'); setPlaying(false) }}
+        onError={() => { setErr('这条音频播不了（可能是 VIP 曲、无版权）'); setPlaying(false) }}
       />
 
       {npOpen && (
@@ -1791,7 +1686,6 @@ export default function App() {
           lyric={lyric}
           curIndex={curIndex}
           busy={busy}
-          isLive={isLive}
           volume={volume}
           inLib={!!cur && lib.some((x) => x.id === cur.id)}
           shuffle={shuffle}

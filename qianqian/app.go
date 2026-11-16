@@ -204,7 +204,6 @@ func (a *App) StreamURL(id string) (string, string) {
 	}
 	var target string
 	var err error
-	live := false
 
 	switch {
 	case strings.HasPrefix(id, "qq:"):
@@ -212,13 +211,6 @@ func (a *App) StreamURL(id string) (string, string) {
 	case strings.HasPrefix(id, "ne:"):
 		neID := strings.TrimPrefix(id, "ne:")
 		target = "https://music.163.com/song/media/outer/url?id=" + neID + ".mp3"
-	case strings.HasPrefix(id, "radio:"):
-		st := stationByID(id)
-		if st == nil {
-			return "", "没有这个电台"
-		}
-		target = st.URL
-		live = true
 	case strings.HasPrefix(id, "loc:"):
 		p, e := localTrackPath(id)
 		if e != nil {
@@ -228,19 +220,13 @@ func (a *App) StreamURL(id string) (string, string) {
 			return "", "这个文件不在已授权的音乐目录里，重选一次文件夹"
 		}
 		target = fileURL(p)
-	case strings.HasPrefix(id, "pode:"):
-		target, err = decodeTarget(strings.TrimPrefix(id, "pode:"))
 	default:
 		return "", "不认识的曲目 id"
 	}
 	if err != nil {
 		return "", err.Error()
 	}
-	suffix := ""
-	if live {
-		suffix = "&r=1" // 直播流要过 MP3 帧净化器，剥掉 junk 头和 ICY 元数据
-	}
-	return base + "?u=" + encodeTarget(target) + suffix, ""
+	return base + "?u=" + encodeTarget(target), ""
 }
 
 // ---------- 歌词 ----------

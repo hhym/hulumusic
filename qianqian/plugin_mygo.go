@@ -484,7 +484,6 @@ func detectActions(body string) []string {
 		{"stream", "stream"},
 		{"lyrics", "lyrics"},
 		{"home", "home"},
-		{"stations", "stations"},
 		{"browse", "browse"},
 	}
 	out := []string{}

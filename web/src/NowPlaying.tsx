@@ -19,7 +19,6 @@ type Props = {
   lyric: LyricLine[]
   curIndex: number
   busy: boolean
-  isLive: boolean
   volume: number
   inLib: boolean
   shuffle: boolean
@@ -99,7 +98,7 @@ export default function NowPlaying(p: Props) {
           <div className="np-lyric-box">
             {lines.length === 0 ? (
               <div className="np-lyric-empty">
-                {p.isLive ? '电台直播没有歌词' : '这首歌暂时没有歌词'}
+                这首歌暂时没有歌词
               </div>
             ) : (
               <div className="np-lyric-lines" style={{transform: `translateY(${shift}px)`}}>
@@ -140,22 +139,16 @@ export default function NowPlaying(p: Props) {
       </div>
 
       <div className="np-bottom">
-        {p.isLive ? (
-          <div className="np-live"><span className="live-dot" />直播中 · 内容随电台实时变化</div>
-        ) : (
-          <>
-            <div className="np-prog">
-              <span className="np-time">{fmt(p.pos)}</span>
-              <input
-                type="range" min={0} max={p.dur || 1} value={Math.min(p.pos, p.dur || 1)}
-                onChange={(e) => p.onSeek(Number(e.target.value))}
-                className="np-range"
-                style={{background: `linear-gradient(to right, var(--np-acc) ${pct}%, var(--np-track) ${pct}%)`}}
-              />
-              <span className="np-time">{fmt(p.dur)}</span>
-            </div>
-          </>
-        )}
+        <div className="np-prog">
+          <span className="np-time">{fmt(p.pos)}</span>
+          <input
+            type="range" min={0} max={p.dur || 1} value={Math.min(p.pos, p.dur || 1)}
+            onChange={(e) => p.onSeek(Number(e.target.value))}
+            className="np-range"
+            style={{background: `linear-gradient(to right, var(--np-acc) ${pct}%, var(--np-track) ${pct}%)`}}
+          />
+          <span className="np-time">{fmt(p.dur)}</span>
+        </div>
 
         <div className="np-controls">
           <button className={'np-ctrl' + (p.shuffle ? ' on' : '')} onClick={p.onShuffle} title="随机播放">

@@ -9,7 +9,6 @@ type Props = {
   lyricText?: string   // 当前这句歌词；没歌词时退回歌名
   playing: boolean
   busy: boolean
-  isLive: boolean
   inLib: boolean
   onToggle: () => void
   onPrev: () => void

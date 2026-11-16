@@ -249,20 +249,6 @@ func (x API) SavePluginSetting(id any, key any, value any) (map[string]string, e
 	return v, errOf(e)
 }
 
-func (x API) PodcastSearch(term any) ([]Show, error) {
-	v, e := x.App.PodcastSearch(asStr(term))
-	return v, errOf(e)
-}
-
-func (x API) PodcastEpisodes(feedURL any) ([]Track, error) {
-	v, e := x.App.PodcastEpisodes(asStr(feedURL))
-	return v, errOf(e)
-}
-
-func (x API) Stations() []Station {
-	return x.App.Stations()
-}
-
 func (x API) GetSettings() Settings {
 	return x.App.GetSettings()
 }
