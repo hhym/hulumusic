@@ -161,7 +161,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.18'
+const BUILD_TAG = '3.0.19'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -2008,6 +2008,34 @@ export default function App() {
           </div>
 
       {contentArea}
+
+          <div className="sk-pl-foot" title="播放列表快捷操作">
+            <button className="sk-pbtn sk-pbtn-M" title="乐库（本地歌曲）"
+                    onClick={() => { setTab('local'); G()?.LocalDirs?.().then((d: any) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {}) }}>M</button>
+            <button className="sk-pbtn" title="待播歌单"
+                    onClick={() => setTab('queue')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+                <path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11A1.5 1.5 0 0 0 19 19.5V9.5L14 3z" />
+                <path d="M14 3v6.5H19" />
+              </svg>
+            </button>
+            <button className="sk-pbtn" title="定位当前歌曲"
+                    onClick={() => {
+                      setTab('queue')
+                      window.setTimeout(() => {
+                        const main = document.querySelector('.sk-pl .main') as HTMLElement | null
+                        if (!main) return
+                        const g = main.querySelector('.q-group') as HTMLElement | null
+                        if (g) g.scrollIntoView({ block: 'start', behavior: 'smooth' })
+                        else main.scrollTop = 0
+                      }, 180)
+                    }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <circle cx="8" cy="8" r="4.2" />
+                <path d="M11 11l8.2 8.2M16.4 16.4l2-2M18.8 18.8l2-2" />
+              </svg>
+            </button>
+          </div>
         </section>
 
         </div>

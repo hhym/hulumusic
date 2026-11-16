@@ -2195,3 +2195,10 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin[data-skin="tt"] .set-page .home-url{color:#7a3a06}
 .skin[data-skin="tt"] .set-page .ghost-btn{color:#3a1a00;border-color:#8a4509}
 .skin[data-skin="tt"] .set-page .mini-btn{color:#3a1a00}
+/* 播放列表底部快捷图标条（千千静听风格） */
+.sk-pl-foot{display:flex;align-items:center;justify-content:flex-end;gap:5px;padding:4px 6px;border-top:1px solid rgba(0,0,0,.22);flex:0 0 auto}
+.sk-pbtn{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:19px;padding:0 4px;border:1px solid rgba(0,0,0,.28);border-radius:3px;background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(0,0,0,.06));color:inherit;cursor:pointer;font-size:11px;line-height:1;font-weight:700}
+.sk-pbtn svg{width:12px;height:12px}
+.sk-pbtn:hover{filter:brightness(1.08)}
+.sk-pbtn:active{filter:brightness(.94)}
+.skin[data-skin="tt"] .sk-pbtn{color:#3a1a00;border-color:#8a4509;background:linear-gradient(180deg,#ffcf9a,#f0a255)}

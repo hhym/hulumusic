@@ -13325,7 +13325,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.18";
+const BUILD_TAG = "3.0.19";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -16298,7 +16298,70 @@ function App() {
                 children: loading ? "\u2026" : "\u641C"
               })]
             })]
-          }), contentArea]
+          }), contentArea, /* @__PURE__ */ jsxs("div", {
+            className: "sk-pl-foot",
+            title: "\u64AD\u653E\u5217\u8868\u5FEB\u6377\u64CD\u4F5C",
+            children: [/* @__PURE__ */ jsx("button", {
+              className: "sk-pbtn sk-pbtn-M",
+              title: "\u4E50\u5E93\uFF08\u672C\u5730\u6B4C\u66F2\uFF09",
+              onClick: () => {
+                var _a2, _b2;
+                setTab("local");
+                (_b2 = (_a2 = G()) == null ? void 0 : _a2.LocalDirs) == null ? void 0 : _b2.call(_a2).then((d) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {
+                });
+              },
+              children: "M"
+            }), /* @__PURE__ */ jsx("button", {
+              className: "sk-pbtn",
+              title: "\u5F85\u64AD\u6B4C\u5355",
+              onClick: () => setTab("queue"),
+              children: /* @__PURE__ */ jsxs("svg", {
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                strokeWidth: "2",
+                strokeLinecap: "square",
+                children: [/* @__PURE__ */ jsx("path", {
+                  d: "M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11A1.5 1.5 0 0 0 19 19.5V9.5L14 3z"
+                }), /* @__PURE__ */ jsx("path", {
+                  d: "M14 3v6.5H19"
+                })]
+              })
+            }), /* @__PURE__ */ jsx("button", {
+              className: "sk-pbtn",
+              title: "\u5B9A\u4F4D\u5F53\u524D\u6B4C\u66F2",
+              onClick: () => {
+                setTab("queue");
+                window.setTimeout(() => {
+                  const main = document.querySelector(".sk-pl .main");
+                  if (!main)
+                    return;
+                  const g = main.querySelector(".q-group");
+                  if (g)
+                    g.scrollIntoView({
+                      block: "start",
+                      behavior: "smooth"
+                    });
+                  else
+                    main.scrollTop = 0;
+                }, 180);
+              },
+              children: /* @__PURE__ */ jsxs("svg", {
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                strokeWidth: "2",
+                strokeLinecap: "round",
+                children: [/* @__PURE__ */ jsx("circle", {
+                  cx: "8",
+                  cy: "8",
+                  r: "4.2"
+                }), /* @__PURE__ */ jsx("path", {
+                  d: "M11 11l8.2 8.2M16.4 16.4l2-2M18.8 18.8l2-2"
+                })]
+              })
+            })]
+          })]
         })]
       }), /* @__PURE__ */ jsx("div", {
         className: "sk-col sk-col-r",
@@ -18732,6 +18795,13 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin[data-skin="tt"] .set-page .home-url{color:#7a3a06}
 .skin[data-skin="tt"] .set-page .ghost-btn{color:#3a1a00;border-color:#8a4509}
 .skin[data-skin="tt"] .set-page .mini-btn{color:#3a1a00}
+/* 播放列表底部快捷图标条（千千静听风格） */
+.sk-pl-foot{display:flex;align-items:center;justify-content:flex-end;gap:5px;padding:4px 6px;border-top:1px solid rgba(0,0,0,.22);flex:0 0 auto}
+.sk-pbtn{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:19px;padding:0 4px;border:1px solid rgba(0,0,0,.28);border-radius:3px;background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(0,0,0,.06));color:inherit;cursor:pointer;font-size:11px;line-height:1;font-weight:700}
+.sk-pbtn svg{width:12px;height:12px}
+.sk-pbtn:hover{filter:brightness(1.08)}
+.sk-pbtn:active{filter:brightness(.94)}
+.skin[data-skin="tt"] .sk-pbtn{color:#3a1a00;border-color:#8a4509;background:linear-gradient(180deg,#ffcf9a,#f0a255)}
 
 </style>
 </head>
