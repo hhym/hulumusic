@@ -2274,3 +2274,31 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   .sk-tab-bar button, .pl-tabs button{font-size:8.5px;padding:0 3px}
   .skin-page.one-col .sk-pl{min-height:300px}
 }
+
+/* ── 播放列表滚动条：加宽加深，滑块有立体感（浅色皮肤原来太淡看不见） ── */
+.skin-page .sk-pl .main{scrollbar-width:thin;scrollbar-gutter:stable}
+.skin-page .sk-pl .main::-webkit-scrollbar{width:11px;height:11px}
+.skin-page .sk-pl .main::-webkit-scrollbar-track{
+  background:linear-gradient(90deg,rgba(0,0,0,.10),rgba(0,0,0,.24));border-radius:6px;box-shadow:inset 0 0 2px rgba(0,0,0,.4)}
+.skin-page .sk-pl .main::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,#b3bcf0,#5f68c2);border:1px solid #3a3f86;border-radius:6px;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.55),inset 0 -1px 1px rgba(0,0,0,.3)}
+.skin-page .sk-pl .main::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#ccd3ff,#7b84d6)}
+.skin[data-skin="light"] .sk-pl .main{scrollbar-color:#4fa0c8 rgba(120,160,190,.22)}
+.skin[data-skin="light"] .sk-pl .main::-webkit-scrollbar-track{
+  background:linear-gradient(90deg,rgba(120,160,190,.16),rgba(110,150,180,.30));box-shadow:inset 0 0 2px rgba(60,110,140,.35)}
+.skin[data-skin="light"] .sk-pl .main::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,#bfe3f4,#4fa0c8);border:1px solid #3d87ad}
+.skin[data-skin="tt"] .sk-pl .main{scrollbar-color:#e07a12 rgba(60,26,4,.45)}
+.skin[data-skin="tt"] .sk-pl .main::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,#ffe0a8,#de7508);border-color:#6b2c02}
+.skin[data-skin="green"] .sk-pl .main{scrollbar-color:#2f9c62 rgba(20,60,40,.35)}
+.skin[data-skin="green"] .sk-pl .main::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,#a8f3c6,#2f9c62);border-color:#1d6a42}
+.skin[data-skin="hifi"] .sk-pl .main,.skin[data-skin="steel"] .sk-pl .main{scrollbar-color:#42d98a rgba(0,30,16,.4)}
+
+/* 播放列表内容区：常驻轨道 + 窄屏下自己滚（不再整页滚） */
+.skin-page .sk-pl .main{overflow-y:scroll}
+.skin-page.one-col .sk-pl .main{max-height:calc(100vh - 300px)}
+@media (max-width:480px){ .skin-page .sk-pl .main{max-height:calc(100vh - 270px)} }
+@media (max-width:300px){ .skin-page .sk-pl .main{max-height:calc(100vh - 240px)} }
