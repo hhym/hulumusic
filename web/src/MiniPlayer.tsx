@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from 'react'
-import {THEME_ICO, THEME_LABEL, type Theme} from './theme'
-import {Ic} from './icons'
+import {THEME_ICON, THEME_LABEL, type Theme} from './theme'
+import {Fi, FN} from './feather'
 
 type Track = {id: string; name: string; artist: string; album: string; cover: string; duration: number; source: string; plug?: string}
 
@@ -119,39 +119,39 @@ export default function MiniPlayer(p: Props) {
         <div className="mini-ops">
           <button className={'mini-fav' + (p.inLib ? ' on' : '')} onClick={p.onFav}
                   disabled={!p.cur} title={p.inLib ? '取消收藏' : '收藏'}>
-            <Ic name="heart" variant="f" size={21} />
+            <Fi n="heart" fill size={21} />
           </button>
 
           <button onClick={p.onPrev} title="上一首">
-            <Ic name="play-skip-back" variant="f" size={19} />
+            <Fi n="skip-back" fill size={19} />
           </button>
 
           <button className="mini-play" onClick={p.onToggle} disabled={!p.cur}
                   title={p.busy ? '取流中' : p.playing ? '暂停' : '播放'}>
-            <Ic name={p.playing ? 'pause' : 'play'} variant="f" size={18} />
+            <Fi n={FN(p.playing ? 'pause' : 'play')} fill size={18} />
           </button>
 
           <button onClick={p.onNext} title="下一首">
-            <Ic name="play-skip-forward" variant="f" size={19} />
+            <Fi n="skip-forward" fill size={19} />
           </button>
 
           <button onClick={p.onQueue} title="待播清单">
-            <Ic name="list" variant="f" size={20} />
+            <Fi n="list" fill size={20} />
           </button>
         </div>
 
         <div className="mini-tools">
           <button className="mini-theme" onClick={p.onTheme} title={'主题：' + THEME_LABEL[p.theme] + '（点一下换下一档）'}>
-            <span className="mini-theme-ico"><Ic name={THEME_ICO[p.theme]} size={13} /></span>
+            <span className="mini-theme-ico">{THEME_ICON[p.theme]}</span>
           </button>
           <button className="mini-desk" onClick={p.onDesk} title="切到桌面界面">
-            <Ic name="desktop" size={13} />
+            <Fi n="layout" size={13} />
           </button>
           <button className="mini-skin" onClick={p.onSkin} title="切到皮肤界面">
-            <Ic name="grid" size={13} />
+            <Fi n="layers" size={13} />
           </button>
           <button className="mini-close" onClick={p.onClose} title="关闭播放器">
-            <Ic name="close" size={13} />
+            <Fi n="x" size={13} />
           </button>
         </div>
       </div>

@@ -5,8 +5,8 @@ import SettingsPage from './Settings'
 import PluginsPage from './Plugins'
 import NowPlaying from './NowPlaying'
 import MiniPlayer from './MiniPlayer'
-import {NEXT_THEME, THEME_ICO, THEME_ICON, THEME_LABEL, type Theme} from './theme'
-import {Ic} from './icons'
+import {NEXT_THEME, THEME_ICON, THEME_LABEL, type Theme} from './theme'
+import {Fi, FN} from './feather'
 import SignInModal, {type SignInRequest} from './SignInModal'
 import {
   decodePluginTrackId,
@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.24'
+const BUILD_TAG = '3.0.25'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -854,7 +854,7 @@ export default function App() {
     const on = i === queue.idx
     return (
       <div key={t.id + i} className={'row' + (on ? ' on' : '')}>
-        <button className="idx" onClick={() => playAt(i)}>{on && playing ? <Ic name="pause" size={12} /> : <Ic name="play" size={12} />}</button>
+        <button className="idx" onClick={() => playAt(i)}>{on && playing ? <Fi n="pause" size={12} /> : <Fi n="play" size={12} />}</button>
         <div className="cover" style={t.cover ? {backgroundImage: `url(${t.cover})`} : undefined} />
         <div className="info">
           <div className="name">{t.name}</div>
@@ -863,7 +863,7 @@ export default function App() {
         </div>
         <span className="tag">{t.source === 'plugin' && t.plug ? t.plug : srcName(t.source)}</span>
         <span className="dur">{fmt(t.duration)}</span>
-        {!isCurrent && <button className="rm" onClick={() => queueRemove(i)} title="从待播移除"><Ic name="close" size={11} /></button>}
+        {!isCurrent && <button className="rm" onClick={() => queueRemove(i)} title="从待播移除"><Fi n="x" size={11} /></button>}
       </div>
     )
   }
@@ -1271,7 +1271,7 @@ export default function App() {
               </div>
               {localTracks.map((t, i) => (
                 <div key={t.id + i} className={'row' + (cur?.id === t.id ? ' on' : '')}>
-                  <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Ic name="pause" size={12} /> : <Ic name="play" size={12} />}</button>
+                  <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Fi n="pause" size={12} /> : <Fi n="play" size={12} />}</button>
                   <div className="cover" />
                   <div className="info">
                     <div className="name">{t.name}</div>
@@ -1280,7 +1280,7 @@ export default function App() {
                   </div>
                   <span className="tag">本地</span>
                   <span className="dur">{fmt(t.duration)}</span>
-                  <button className="add" onClick={() => enqueue(t)} title="加入待播"><Ic name="add" size={12} /></button>
+                  <button className="add" onClick={() => enqueue(t)} title="加入待播"><Fi n="plus" size={12} /></button>
                   <button className={'heart' + (lib.some((x) => x.id === t.id) ? ' on' : '')} onClick={() => fav(t)}>♥</button>
                   {layout === 'desk' && (
                     <button className="addpl" title="加入自建歌单"
@@ -1288,10 +1288,7 @@ export default function App() {
                               const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
                               setPlMenu({t, x: Math.max(8, Math.min(r.left - 196, window.innerWidth - 204)), y: r.bottom + 6})
                             }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                           strokeWidth="1.9" strokeLinecap="round">
-                        <path d="M4 7h9M4 12h6M4 17h8" /><path d="M17.5 10.5v7M14 14h7" />
-                      </svg>
+                      <Fi n="folder" size={13} />
                     </button>
                   )}
                 </div>
@@ -1415,7 +1412,7 @@ export default function App() {
               {!loading && shown.length === 0 && <div className="empty">这个节目没有可播的单集</div>}
               {!loading && shown.map((t, i) => (
                 <div key={t.id + i} className={'row' + (cur?.id === t.id ? ' on' : '')}>
-                  <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Ic name="pause" size={12} /> : <Ic name="play" size={12} />}</button>
+                  <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Fi n="pause" size={12} /> : <Fi n="play" size={12} />}</button>
                   <div className="cover" style={t.cover ? {backgroundImage: `url(${t.cover})`} : undefined} />
                   <div className="info">
                     <div className="name">{t.name}</div>
@@ -1464,7 +1461,7 @@ export default function App() {
                 </span>
               )}
               {canReorder && !selMode && <span className="dgrip" aria-hidden="true">⠿</span>}
-              <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Ic name="pause" size={12} /> : <Ic name="play" size={12} />}</button>
+              <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Fi n="pause" size={12} /> : <Fi n="play" size={12} />}</button>
               <div className="cover" style={t.cover ? {backgroundImage: `url(${t.cover})`} : undefined} />
               <div className="info">
                 <div className="name">{t.name}</div>
@@ -1474,7 +1471,7 @@ export default function App() {
               <span className="tag">{t.source === 'plugin' && t.plug ? t.plug : srcName(t.source)}</span>
               <span className="dur">{fmt(t.duration)}</span>
               {t.source !== 'radio' && (
-                <button className="add" onClick={() => enqueue(t)} title="加入待播"><Ic name="add" size={12} /></button>
+                <button className="add" onClick={() => enqueue(t)} title="加入待播"><Fi n="plus" size={12} /></button>
               )}
               {t.source !== 'radio' && t.source !== 'pod' && (
                 <button className={'heart' + (lib.some((x) => x.id === t.id) ? ' on' : '')} onClick={() => fav(t)}>♥</button>
@@ -1486,10 +1483,7 @@ export default function App() {
                           const x = Math.max(8, Math.min(r.left - 196, window.innerWidth - 204))
                           setPlMenu({t, x, y: r.bottom + 6})
                         }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                       strokeWidth="1.9" strokeLinecap="round">
-                    <path d="M4 7h9M4 12h6M4 17h8" /><path d="M17.5 10.5v7M14 14h7" />
-                  </svg>
+                  <Fi n="folder" size={13} />
                 </button>
               )}
             </div>
@@ -1514,13 +1508,13 @@ export default function App() {
           <div className="mygo-dragbar"><span className="mygo-bar-title">千千静听</span></div>
           <div className="mygo-winctl">
             <button className="mygo-win-btn" title="最小化" style={{'--app-region': 'no-drag'} as any}
-                    onClick={minimizeApp}><Ic name="remove" size={12} /></button>
+                    onClick={minimizeApp}><Fi n="minus" size={12} /></button>
             <button className="mygo-win-btn max" title={maxedApp ? '还原窗口' : '最大化'}
                     style={{'--app-region': 'no-drag'} as any} onClick={toggleMaxApp}>
-              <Ic name={maxedApp ? 'contract' : 'expand'} size={12} />
+              <Fi n={FN(maxedApp ? 'contract' : 'expand')} size={12} />
             </button>
             <button className="mygo-win-btn close" title="关闭" style={{'--app-region': 'no-drag'} as any}
-                    onClick={closeApp}><Ic name="close" size={12} /></button>
+                    onClick={closeApp}><Fi n="x" size={12} /></button>
           </div>
         </>
       )}
@@ -1545,7 +1539,7 @@ export default function App() {
                     <div className="dnp-id"><b>千千静听</b><span className="dnp-sub">未装音源</span></div>
                   </>
                 )}
-                <Ic name="chevron-down" size={12} />
+                <Fi n="chevron-down" size={12} />
               </button>
 
               {plMenuOpen && (
@@ -1576,28 +1570,28 @@ export default function App() {
                 {!cur?.cover && <span>♪</span>}
               </div>
               <button className="dn-card add" onClick={() => setTab('search')} title="去搜索加歌">
-                <Ic name="add" size={17} />
+                <Fi n="plus" size={17} />
               </button>
             </div>
 
             <nav className="dn-quick">
               <button className={tab === 'home' ? 'on' : ''} onClick={() => setTab('home')}>
-                <span className="dn-ico"><Ic name="home" size={14} /></span><span className="dn-lab">首页</span>
+                <span className="dn-ico"><Fi n="home" size={14} /></span><span className="dn-lab">首页</span>
               </button>
               <button className={tab === 'search' ? 'on' : ''} onClick={() => setTab('search')}>
-                <span className="dn-ico"><Ic name="search" size={14} /></span><span className="dn-lab">搜索</span>
+                <span className="dn-ico"><Fi n="search" size={14} /></span><span className="dn-lab">搜索</span>
               </button>
               <button className={(tab === 'library' && !plSel && !libAlbum) ? 'on' : ''} onClick={() => openLib('')}>
-                <span className="dn-ico"><Ic name="heart" size={14} /></span><span className="dn-lab">喜欢</span><em>{lib.length}</em>
+                <span className="dn-ico"><Fi n="heart" size={14} /></span><span className="dn-lab">喜欢</span><em>{lib.length}</em>
               </button>
               <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}>
-                <span className="dn-ico"><Ic name="time" size={14} /></span><span className="dn-lab">待播清单</span><em>{queue.list.length}</em>
+                <span className="dn-ico"><Fi n="list" size={14} /></span><span className="dn-lab">待播清单</span><em>{queue.list.length}</em>
               </button>
               <button className={tab === 'local' ? 'on' : ''} onClick={openLocal}>
-                <span className="dn-ico"><Ic name="musical-notes" size={14} /></span><span className="dn-lab">歌曲</span><em>{localTracks.length}</em>
+                <span className="dn-ico"><Fi n="folder" size={14} /></span><span className="dn-lab">歌曲</span><em>{localTracks.length}</em>
               </button>
               <button className={tab === 'lyric' ? 'on' : ''} onClick={() => setTab('lyric')}>
-                <span className="dn-ico"><Ic name="document-text" size={14} /></span><span className="dn-lab">歌词</span>
+                <span className="dn-ico"><Fi n="type" size={14} /></span><span className="dn-lab">歌词</span>
               </button>
             </nav>
 
@@ -1635,10 +1629,10 @@ export default function App() {
                         onDoubleClick={(e) => { e.stopPropagation(); setPlRename({id: p.id, name: p.name}) }}>{p.name}</span>
                   <em>{p.tracks.length}</em>
                   <span className="dn-pl-ren" title="重命名这个歌单"
-                        onClick={(e) => { e.stopPropagation(); setPlRename({id: p.id, name: p.name}) }}>改</span>
+                        onClick={(e) => { e.stopPropagation(); setPlRename({id: p.id, name: p.name}) }}><Fi n="edit-2" size={11} /></span>
                   <span className={'dn-pl-del' + (plDel === p.id ? ' confirm' : '')}
                         onClick={(e) => { e.stopPropagation(); if (plDel === p.id) delPlaylist(p.id); else setPlDel(p.id) }}>
-                    {plDel === p.id ? '删?' : '×'}
+                    {plDel === p.id ? '删?' : <Fi n="trash-2" size={11} />}
                   </span>
                 </button>
               ))}
@@ -1661,26 +1655,22 @@ export default function App() {
             </div>
 
             <div className="dn-foot">
-              <button title="电台" onClick={() => setTab('radio')}><Ic name="radio" size={14} /></button>
-              <button title="听书" onClick={() => setTab('podcast')}><Ic name="headset" size={14} /></button>
-              <button title="插件" onClick={() => setTab('plugins')}><Ic name="extension-puzzle" size={14} /></button>
-              <button title="设置" onClick={() => setTab('settings')}><Ic name="settings" size={14} /></button>
-              <button className="dn-theme" onClick={() => pickTheme(NEXT_THEME[theme])} title={'主题：' + THEME_LABEL[theme]}><Ic name={THEME_ICO[theme]} size={14} /></button>
-              <button className="dn-skin" onClick={() => switchLayout('skin')} title="切到皮肤界面"><Ic name="shirt" size={14} /></button>
+              <button title="电台" onClick={() => setTab('radio')}><Fi n="radio" size={14} /></button>
+              <button title="听书" onClick={() => setTab('podcast')}><Fi n="book-open" size={14} /></button>
+              <button title="插件" onClick={() => setTab('plugins')}><Fi n="package" size={14} /></button>
+              <button title="设置" onClick={() => setTab('settings')}><Fi n="settings" size={14} /></button>
+              <button className="dn-theme" onClick={() => pickTheme(NEXT_THEME[theme])} title={'主题：' + THEME_LABEL[theme]}>{THEME_ICON[theme]}</button>
+              <button className="dn-skin" onClick={() => switchLayout('skin')} title="切到皮肤界面"><Fi n="layers" size={14} /></button>
             </div>
           </aside>
 
           <section className="desk-main">
             <div className="desk-top">
               <button className="dt-round" onClick={() => setTab('lyric')} title="歌词">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 18V6.5l9-2V16" /><circle cx="6.6" cy="18" r="2.4" /><circle cx="15.6" cy="16" r="2.4" />
-                </svg>
+                <Fi n="music" size={16} />
               </button>
               <button className="dt-round" onClick={() => setTab('plugins')} title="插件">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="8.2" /><path d="M9 13.5l2 2 4-4.5" />
-                </svg>
+                <Fi n="package" size={16} />
               </button>
               <div className="desk-search">
                 <input value={q} placeholder="搜索音乐、歌手、专辑" onChange={(e) => setQ(e.target.value)}
@@ -1689,17 +1679,13 @@ export default function App() {
               </div>
               <div className="desk-top-right">
                 <button className="ghost-btn icon-only" onClick={() => pickTheme(NEXT_THEME[theme])} title={'主题：' + THEME_LABEL[theme]}>
-                  <span className="dt-theme"><Ic name={THEME_ICO[theme]} size={13} /></span>
+                  <span className="dt-theme">{THEME_ICON[theme]}</span>
                 </button>
                 <button className="ghost-btn icon-only" onClick={() => toggleMini(true)} title="小窗口模式">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="square">
-                    <path d="M9 3v6H3M15 3v6h6M3 15h6v6M21 15h-6v6" />
-                  </svg>
+                  <Fi n="minimize-2" size={14} />
                 </button>
                 <button className="ghost-btn icon-only" onClick={() => switchLayout('skin')} title="切回皮肤界面">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M8 4c1.6 2.1 6.4 2.1 8 0M8 4 4 7l1.5 3.5 2.5-1.2V20h8V9.3l2.5 1.2L21 7 16 4" />
-                  </svg>
+                  <Fi n="layers" size={15} />
                 </button>
               </div>
             </div>
@@ -1776,24 +1762,24 @@ export default function App() {
                      onClick={() => { if (cur) setNpOpen(true) }}
                      title={cur ? '打开正在播放 (点击封面)' : ''}
                      style={cur?.cover ? {backgroundImage: `url("${cur.cover}")`} : undefined}>
-                  {cur?.cover ? '' : <Ic name="musical-note" size={18} />}
+                  {cur?.cover ? '' : <Fi n="music" size={18} />}
                 </div>
                 <div className="dnp-meta">
                   <b>{cur ? cur.name : '未在播放'}</b>
                   <em>{cur ? ([cur.artist, cur.album].filter(Boolean).join(' · ') || '—') : '选一首开始'}</em>
                 </div>
                 <button className={'dnp-heart' + (cur && lib.some((x) => x.id === cur.id) ? ' on' : '')}
-                        onClick={() => { if (cur) fav(cur) }} title="收藏"><Ic name="heart" size={15} variant={cur && lib.some((x) => x.id === cur.id) ? 'f' : 'o'} /></button>
+                        onClick={() => { if (cur) fav(cur) }} title="收藏"><Fi n="heart" size={15} fill={!!(cur && lib.some((x) => x.id === cur.id))} /></button>
               </div>
 
               <div className="dnp-center">
                 <div className="dnp-btns">
-                  <button className={'dnp-ico' + (repeatOne ? ' on' : '')} onClick={() => setRepeatOne(!repeatOne)} title="单曲循环"><Ic name="repeat" size={15} /></button>
-                  <button className="dnp-ico" onClick={() => step(-1)} title="上一首"><Ic name="play-skip-back" size={15} /></button>
-                  <button className="dnp-play" onClick={toggle} title={playing ? '暂停' : '播放'}><Ic name={playing ? 'pause' : 'play'} size={18} /></button>
-                  <button className="dnp-ico" onClick={() => step(1)} title="下一首"><Ic name="play-skip-forward" size={15} /></button>
+                  <button className={'dnp-ico' + (repeatOne ? ' on' : '')} onClick={() => setRepeatOne(!repeatOne)} title="单曲循环"><Fi n="repeat" size={15} /></button>
+                  <button className="dnp-ico" onClick={() => step(-1)} title="上一首"><Fi n="skip-back" size={15} /></button>
+                  <button className="dnp-play" onClick={toggle} title={playing ? '暂停' : '播放'}><Fi n={FN(playing ? 'pause' : 'play')} size={18} /></button>
+                  <button className="dnp-ico" onClick={() => step(1)} title="下一首"><Fi n="skip-forward" size={15} /></button>
                   <div className="dnp-vol">
-                    <Ic name={volume > 0 ? 'volume-high' : 'volume-mute'} size={15} />
+                    <Fi n={FN(volume > 0 ? 'volume-high' : 'volume-mute')} size={15} />
                     <input type="range" min={0} max={1} step={0.01} value={volume} onChange={(e) => setVolumeState(Number(e.target.value))} />
                   </div>
                 </div>
@@ -1811,8 +1797,8 @@ export default function App() {
               </div>
 
               <div className="dnp-right">
-                <button onClick={() => setTab('lyric')} title="歌词界面"><Ic name="document-text" size={15} /></button>
-                <button onClick={() => setTab('queue')} title="待播清单"><Ic name="list" size={15} /></button>
+                <button onClick={() => setTab('lyric')} title="歌词界面"><Fi n="type" size={15} /></button>
+                <button onClick={() => setTab('queue')} title="待播清单"><Fi n="list" size={15} /></button>
               </div>
             </footer>
 
@@ -1872,14 +1858,14 @@ export default function App() {
             <span className="t">千千静听</span>
             <span className="sk-time" style={{ marginLeft: 'auto' }}>{isLive ? 'LIVE' : fmt(pos)}</span>
             <button className="sk-wb" title="切换到桌面界面（左侧竖排导航 + 底部播放条）"
-                    onClick={() => switchLayout('desk')}><Ic name="desktop" size={11} /></button>
+                    onClick={() => switchLayout('desk')}><Fi n="layout" size={11} /></button>
             <button className="sk-wb sk-win-mini" title="小窗口模式（缩成迷你条并置顶，按 Esc 或条上按钮还原）"
                     onClick={() => toggleMini(true)}>
-              <Ic name="contract" size={11} />
+              <Fi n="minimize-2" size={11} />
             </button>
 
             <button className="sk-wb sk-skin-sw" title={'切换皮肤（当前：' + skinName + '）'}
-                    onClick={switchSkin}><Ic name="shirt" size={13} /></button>
+                    onClick={switchSkin}><Fi n="layers" size={13} /></button>
           </div>
 
           <div className="sk-body">
@@ -1892,9 +1878,9 @@ export default function App() {
                 <span>状态: {playing ? '播放' : '暂停'} {isLive ? '直播' : '立体声'}</span>
               </div>
               <div className="sk-mini-btns">
-                <button className="on" title="播放列表" onClick={() => setTab('search')}><Ic name="albums" size={13} /></button>
-                <button className={showEq ? 'on' : ''} title="均衡器" onClick={() => setShowEq(!showEq)}><Ic name="options" size={13} /></button>
-                <button className={showLrc ? 'on' : ''} title="歌词秀" onClick={toggleLrc}><Ic name="document-text" size={13} /></button>
+                <button className="on" title="播放列表" onClick={() => setTab('search')}><Fi n="search" size={13} /></button>
+                <button className={showEq ? 'on' : ''} title="均衡器" onClick={() => setShowEq(!showEq)}><Fi n="sliders" size={13} /></button>
+                <button className={showLrc ? 'on' : ''} title="歌词秀" onClick={toggleLrc}><Fi n="type" size={13} /></button>
               </div>
             </div>
           </div>
@@ -1912,17 +1898,17 @@ export default function App() {
 
           <div className="sk-controls">
             <button className="sk-ctl" title="停止" disabled={!cur}
-                    onClick={() => { const a = audio.current; if (a) { a.pause(); a.currentTime = 0 } setPlaying(false); setPos(0) }}><Ic name="stop" size={13} /></button>
-            <button className="sk-ctl" title="上一首" disabled={!cur || busy} onClick={() => step(-1)}><Ic name="play-skip-back" size={13} /></button>
-            <button className="sk-ctl big play" title={playing ? '暂停' : '播放'} disabled={!cur} onClick={toggle}><Ic name={playing ? 'pause' : 'play'} size={17} /></button>
-            <button className="sk-ctl big" title="下一首" disabled={!cur || busy} onClick={() => step(1)}><Ic name="play-skip-forward" size={13} /></button>
+                    onClick={() => { const a = audio.current; if (a) { a.pause(); a.currentTime = 0 } setPlaying(false); setPos(0) }}><Fi n="square" size={13} /></button>
+            <button className="sk-ctl" title="上一首" disabled={!cur || busy} onClick={() => step(-1)}><Fi n="skip-back" size={13} /></button>
+            <button className="sk-ctl big play" title={playing ? '暂停' : '播放'} disabled={!cur} onClick={toggle}><Fi n={FN(playing ? 'pause' : 'play')} size={17} /></button>
+            <button className="sk-ctl big" title="下一首" disabled={!cur || busy} onClick={() => step(1)}><Fi n="skip-forward" size={13} /></button>
             <div className="sk-vol">
               <button className="sk-ctl" style={{ width: 22, height: 22, fontSize: 10 }} title={volume > 0 ? '静音' : '恢复音量'}
-                      onClick={() => setVolumeState(volume > 0 ? 0 : 0.5)}><Ic name={volume > 0 ? 'volume-high' : 'volume-mute'} size={13} /></button>
+                      onClick={() => setVolumeState(volume > 0 ? 0 : 0.5)}><Fi n={FN(volume > 0 ? 'volume-high' : 'volume-mute')} size={13} /></button>
               <input type="range" min={0} max={1} step={0.01} value={volume}
                      onChange={(e) => setVolumeState(Number(e.target.value))} />
             </div>
-            <button className="sk-pl-btn" title="音乐窗" onClick={() => cur && setNpOpen(true)}><Ic name="browsers" size={13} /></button>
+            <button className="sk-pl-btn" title="音乐窗" onClick={() => cur && setNpOpen(true)}><Fi n="disc" size={12} /><span>音乐窗</span></button>
           </div>
         </section>
 
@@ -1938,7 +1924,7 @@ export default function App() {
                 <button title={eqPreset >= 0 ? '当前预设：' + EQ_PRESETS[eqPreset].name : '预设'} onClick={nextPreset}>PRESETS</button>
               </div>
               <div className="sk-win-btns">
-                <button className="sk-wb" title="收起均衡器" onClick={() => setShowEq(false)}><Ic name="close" size={13} /></button>
+                <button className="sk-wb" title="收起均衡器" onClick={() => setShowEq(false)}><Fi n="x" size={13} /></button>
               </div>
             </div>
             <div className="sk-eq-body">
@@ -1985,22 +1971,21 @@ export default function App() {
             </span>
             <div className="sk-win-btns">
               <button className="sk-wb sk-win-mini" title="小窗口模式" onClick={() => toggleMini(true)}>
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square">
-                  <path d="M9 3v6H3M15 3v6h6M3 15h6v6M21 15h-6v6" />
-                </svg>
+                <Fi n="minimize-2" size={10} />
               </button>
             </div>
           </div>
 
           <div className="sk-tools">
-            <button className={tab === 'search' ? 'on' : ''} onClick={() => setTab('search')}>搜索</button>
+            <button className={tab === 'search' ? 'on' : ''} onClick={() => setTab('search')}><Fi n="search" size={12} /><span>搜索</span></button>
             <button className={tab === 'local' ? 'on' : ''}
-                    onClick={() => { setTab('local'); G()?.LocalDirs?.().then((d: any) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {}) }}>乐库</button>
-            <button className={tab === 'radio' ? 'on' : ''} onClick={() => setTab('radio')}>电台</button>
-            <button className={tab === 'podcast' ? 'on' : ''} onClick={() => setTab('podcast')}>听书</button>
-            <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}>待播</button>
-            <button className={tab === 'plugins' ? 'on' : ''} onClick={() => setTab('plugins')}>插件</button>
+                    onClick={() => { setTab('local'); G()?.LocalDirs?.().then((d: any) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {}) }}><Fi n="folder" size={12} /><span>乐库</span></button>
+            <button className={tab === 'radio' ? 'on' : ''} onClick={() => setTab('radio')}><Fi n="radio" size={12} /><span>电台</span></button>
+            <button className={tab === 'podcast' ? 'on' : ''} onClick={() => setTab('podcast')}><Fi n="book-open" size={12} /><span>听书</span></button>
+            <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}><Fi n="list" size={12} /><span>待播</span></button>
+            <button className={tab === 'plugins' ? 'on' : ''} onClick={() => setTab('plugins')}><Fi n="package" size={12} /><span>插件</span></button>
             <div className="sk-search">
+              <Fi n="search" size={12} />
               <input value={q} placeholder="搜歌、歌手" onChange={(e) => setQ(e.target.value)}
                      onKeyDown={(e) => e.key === 'Enter' && doSearch()} />
               <button onClick={doSearch} disabled={loading}>{loading ? '…' : '搜'}</button>
@@ -2011,10 +1996,10 @@ export default function App() {
 
           <div className="sk-pl-foot" title="播放列表快捷操作">
             <button className="sk-pbtn sk-pbtn-M" title="乐库（本地歌曲）"
-                    onClick={() => { setTab('local'); G()?.LocalDirs?.().then((d: any) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {}) }}><Ic name="library" size={13} /></button>
+                    onClick={() => { setTab('local'); G()?.LocalDirs?.().then((d: any) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {}) }}><Fi n="folder" size={13} /></button>
             <button className="sk-pbtn" title="待播歌单"
                     onClick={() => setTab('queue')}>
-              <Ic name="document" size={13} />
+              <Fi n="clipboard" size={13} />
             </button>
             <button className="sk-pbtn" title="定位当前歌曲"
                     onClick={() => {
@@ -2027,15 +2012,15 @@ export default function App() {
                         else main.scrollTop = 0
                       }, 180)
                     }}>
-              <Ic name="locate" size={13} />
+              <Fi n="crosshair" size={13} />
             </button>
             <button className="sk-pbtn sk-pbtn-ico" title="插件（我的音源插件）"
                     onClick={() => setTab('plugins')}>
-              <Ic name="extension-puzzle" size={13} />
+              <Fi n="package" size={13} />
             </button>
             <button className="sk-pbtn sk-pbtn-ico" title="设置"
                     onClick={() => setTab('settings')}>
-              <Ic name="settings" size={13} />
+              <Fi n="settings" size={13} />
             </button>
           </div>
         </section>

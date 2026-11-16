@@ -2115,7 +2115,7 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 /* ── 按真实可用宽度切列（skinWide 判断）────────────────────────
    和下面 840px 断点是一套规则，只是改由 JS 按 window.innerWidth 判定，
    避免系统缩放时「看着窗口挺宽、实际 CSS 宽度不够」而一直单列。 */
-.skin-page.one-col{display:flex;flex-direction:column;gap:6px;padding:6px;height:auto;min-height:100vh;overflow-x:hidden}
+.skin-page.one-col{display:flex;flex-direction:column;gap:6px;padding:6px;height:auto;min-height:0;overflow-x:hidden}
 .skin-page.one-col .sk-col{flex:1 1 auto;height:auto;min-height:0;gap:6px}
 .skin-page.one-col .sk-col-r{flex:0 0 auto;height:auto;min-height:0;overflow:visible}
 .skin-page.one-col .sk-pl{flex:1 1 auto;min-height:340px;overflow:hidden}
@@ -2307,8 +2307,8 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-page .sk-pl .main{overflow-y:scroll}
 .skin-page.one-col .sk-pl{max-height:calc(100vh - 44px)}
 .skin-page.one-col .sk-pl .main{flex:1 1 auto;min-height:0;max-height:none}
-@media (max-width:480px){ .skin-page .sk-pl{max-height:calc(100vh - 30px)} }
-@media (max-width:300px){ .skin-page .sk-pl{max-height:calc(100vh - 20px)} }
+@media (max-width:480px){ .skin-page .sk-pl{max-height:calc(100vh - 56px)} }
+@media (max-width:300px){ .skin-page .sk-pl{max-height:calc(100vh - 44px)} }
 /* 底部工具条图标字符（插件 ◈ / 设置 ⚙） */
 .sk-pbtn-ico .sk-ico-glyph{font-size:11px;line-height:1;display:block;font-weight:600}
 .skin[data-skin="tt"] .sk-pbtn-ico .sk-ico-glyph{color:#3a1a00}
@@ -2360,3 +2360,32 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-page .sk-eq-faders{overflow-x:auto;overflow-y:hidden}
 .skin-page .sk-eq-faders::-webkit-scrollbar{height:5px}
 .skin-page .sk-eq-faders::-webkit-scrollbar-thumb{background:rgba(0,0,0,.3);border-radius:3px}
+
+/* ── Feather 图标层：按钮内图文排版 ── */
+.skin-page .sk-tools button{display:inline-flex;align-items:center;justify-content:center;gap:3px}
+.skin-page .sk-tools .sk-search{display:flex;align-items:center;gap:4px}
+.skin-page .sk-tools .sk-search svg{flex:0 0 auto;opacity:.7;margin-left:4px}
+.skin-page .sk-pl-btn{display:inline-flex;align-items:center;gap:3px}
+.skin-page .sk-wb{display:inline-flex;align-items:center;justify-content:center}
+.skin-page .sk-ctl{display:inline-flex;align-items:center;justify-content:center}
+.skin-page .sk-pbtn{display:inline-flex;align-items:center;justify-content:center}
+.skin-page .sk-mini-btns button{display:inline-flex;align-items:center;justify-content:center}
+.desk .dn-ico{display:inline-flex;align-items:center;justify-content:center}
+.desk .dn-foot button{display:inline-flex;align-items:center;justify-content:center}
+.desk .dnp-ico,.desk .dnp-play,.desk .dnp-heart,.desk .dnp-right button{display:inline-flex;align-items:center;justify-content:center}
+.mygo-winctl .mygo-win-btn{display:inline-flex;align-items:center;justify-content:center}
+.mini-ops button,.mini-tools button{display:inline-flex;align-items:center;justify-content:center}
+
+/* 播放列表：底部快捷行常驻，内容区让出空间 */
+.skin-page .sk-pl{display:flex;flex-direction:column;min-height:0}
+.skin-page .sk-pl .main{flex:1 1 auto;min-height:0}
+.skin-page .sk-pl-foot{flex:0 0 auto}
+.skin-page.one-col .sk-pl{flex:1 1 auto;min-height:0}
+
+/* 单列窄屏：整页不滚，播放列表吃掉剩余高度，底部快捷行常驻 */
+@media (max-width:480px){
+  .skin-page.one-col{height:calc(100vh - 76px);overflow:hidden}
+  .skin-page.one-col .sk-pl{flex:1 1 0;min-height:0}
+  .skin-page.one-col .sk-win,.skin-page.one-col .sk-eq,.skin-page.one-col .sk-lyr{flex:0 0 auto}
+  .skin-page.one-col .sk-lyr{max-height:26vh}
+}

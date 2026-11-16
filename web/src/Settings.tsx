@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import {THEME_ICO, type Theme} from './theme'
-import {Ic} from './icons'
+import {type Theme} from './theme'
 
 type Settings = {
   theme: string
@@ -205,11 +204,11 @@ export default function SettingsPage({ theme, onTheme, accounts, onSignOut, onRe
         <div className="set-row">
           <label>主题</label>
           <div className="seg">
-            <button className={theme === 'dark' ? 'on' : ''} onClick={() => onTheme('dark')}><Ic name={THEME_ICO.dark} size={13} />深色</button>
-            <button className={theme === 'light' ? 'on' : ''} onClick={() => onTheme('light')}><Ic name={THEME_ICO.light} size={13} />浅色</button>
-            <button className={theme === 'amber' ? 'on' : ''} onClick={() => onTheme('amber')}><Ic name={THEME_ICO.amber} size={13} />橘黄</button>
-            <button className={theme === 'teal' ? 'on' : ''} onClick={() => onTheme('teal')}><Ic name={THEME_ICO.teal} size={13} />深青</button>
-            <button className={theme === 'green' ? 'on' : ''} onClick={() => onTheme('green')}><Ic name={THEME_ICO.green} size={13} />护眼绿</button>
+            <button className={theme === 'dark' ? 'on' : ''} onClick={() => onTheme('dark')}>☾深色</button>
+            <button className={theme === 'light' ? 'on' : ''} onClick={() => onTheme('light')}>☀浅色</button>
+            <button className={theme === 'amber' ? 'on' : ''} onClick={() => onTheme('amber')}>◐橘黄</button>
+            <button className={theme === 'teal' ? 'on' : ''} onClick={() => onTheme('teal')}>❋深青</button>
+            <button className={theme === 'green' ? 'on' : ''} onClick={() => onTheme('green')}>✿护眼绿</button>
           </div>
         </div>
         <div className="set-row">
