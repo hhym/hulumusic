@@ -13345,7 +13345,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.25";
+const BUILD_TAG = "3.0.26";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -13588,6 +13588,7 @@ function App() {
     window.addEventListener("resize", upd);
     return () => window.removeEventListener("resize", upd);
   }, []);
+  const [lyrMax, setLyrMax] = react.exports.useState(false);
   const [showLrc, setShowLrc] = react.exports.useState(() => {
     try {
       return localStorage.getItem("qqjt-showlrc") !== "0";
@@ -15867,7 +15868,7 @@ function App() {
         })]
       })]
     }) : /* @__PURE__ */ jsxs("div", {
-      className: "skin-page" + (skinWide ? "" : " one-col") + (showLrc ? "" : " only-left") + (skinWide && mainW < 520 ? " compact-main" : ""),
+      className: "skin-page" + (skinWide ? "" : " one-col") + (showLrc ? "" : " only-left") + (lyrMax ? " lyr-max" : "") + (skinWide && mainW < 520 ? " compact-main" : ""),
       style: {
         ["--sk-main-w"]: mainW + "px"
       },
@@ -16390,8 +16391,19 @@ function App() {
                 children: lyricMode === "karaoke" ? "K" : "\u2261"
               }), /* @__PURE__ */ jsx("button", {
                 className: "sk-wb",
+                title: lyrMax ? "\u8FD8\u539F\u6B4C\u8BCD\u79C0" : "\u6700\u5927\u5316\u6B4C\u8BCD\u79C0\uFF08\u5DE6\u4FA7\u4E3B\u533A\u6536\u8D77\uFF09",
+                onClick: () => setLyrMax((v2) => !v2),
+                children: /* @__PURE__ */ jsx(Fi, {
+                  n: lyrMax ? "minimize-2" : "maximize-2",
+                  size: 11
+                })
+              }), /* @__PURE__ */ jsx("button", {
+                className: "sk-wb",
                 title: "\u6536\u8D77\u6B4C\u8BCD",
-                onClick: () => setShowLrc(false),
+                onClick: () => {
+                  setShowLrc(false);
+                  setLyrMax(false);
+                },
                 children: "\xD7"
               })]
             })]
@@ -18992,6 +19004,29 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   .skin-page.one-col .sk-win,.skin-page.one-col .sk-eq,.skin-page.one-col .sk-lyr{flex:0 0 auto}
   .skin-page.one-col .sk-lyr{max-height:26vh}
 }
+
+/* ── 歌词秀：全宽、歌词居中、滚动条贴右边 ── */
+.skin-page .sk-lyr-body{width:100%;max-width:none;box-sizing:border-box;scrollbar-gutter:stable}
+.skin-page .sk-lyr-body::-webkit-scrollbar{width:8px}
+.skin-page .sk-lyr-body::-webkit-scrollbar-track{background:rgba(255,255,255,.06);border-radius:4px}
+.skin-page .sk-lyr-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.32);border-radius:4px}
+.skin[data-skin="light"] .sk-lyr-body::-webkit-scrollbar-track{background:rgba(90,140,180,.14)}
+.skin[data-skin="light"] .sk-lyr-body::-webkit-scrollbar-thumb{background:#7fb4d4}
+.skin[data-skin="tt"] .sk-lyr-body::-webkit-scrollbar-thumb{background:#c1741d}
+
+/* ── 歌词秀最大化：左侧主区收起，歌词独占窗口 ── */
+.skin-page.lyr-max{grid-template-columns:minmax(0,1fr)!important}
+.skin-page.lyr-max .sk-split{display:none}
+.skin-page.lyr-max .sk-col{display:none!important}
+.skin-page.one-col.lyr-max .sk-col-r{display:contents!important}
+.skin-page:not(.one-col).lyr-max .sk-col-r{display:flex!important;flex-direction:column;height:100%}
+.skin-page.lyr-max .sk-lyr{flex:1 1 auto!important;height:100%!important;max-height:none!important;min-height:0!important}
+.skin-page.lyr-max .sk-lyr-body{flex:1 1 auto!important;min-height:0!important;max-height:none!important;
+  padding:26px 22px;font-size:inherit}
+.skin-page.lyr-max .sk-lyr-body .ln{font-size:16px;line-height:2.4}
+.skin-page.lyr-max .sk-lyr-body .ln.on{font-size:19px}
+.skin-page.lyr-max .sk-lyr-body .song{font-size:16px}
+.skin-page.lyr-max .sk-lyr-body .meta{font-size:12px}
 
 </style>
 </head>

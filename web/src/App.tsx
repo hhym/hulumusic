@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.25'
+const BUILD_TAG = '3.0.26'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -399,6 +399,7 @@ export default function App() {
     return () => window.removeEventListener('resize', upd)
   }, [])
 
+  const [lyrMax, setLyrMax] = useState(false)
   const [showLrc, setShowLrc] = useState(() => {
     try { return localStorage.getItem('qqjt-showlrc') !== '0' } catch { return true }
   })
@@ -1847,7 +1848,7 @@ export default function App() {
           </section>
         </div>
       ) : (
-      <div className={'skin-page' + (skinWide ? '' : ' one-col') + (showLrc ? '' : ' only-left')
+      <div className={'skin-page' + (skinWide ? '' : ' one-col') + (showLrc ? '' : ' only-left') + (lyrMax ? ' lyr-max' : '')
                       + (skinWide && mainW < 520 ? ' compact-main' : '')}
            style={{ ['--sk-main-w' as any]: mainW + 'px' }}>
         <div className="sk-col">
@@ -2041,7 +2042,9 @@ export default function App() {
                 <button className="sk-wb sk-lrc-mode"
                         title={lyricMode === 'karaoke' ? '当前：卡拉OK 两行（点击切整段滚动）' : '当前：整段滚动（点击切卡拉OK 两行）'}
                         onClick={switchLyricMode}>{lyricMode === 'karaoke' ? 'K' : '≡'}</button>
-                <button className="sk-wb" title="收起歌词" onClick={() => setShowLrc(false)}>×</button>
+                <button className="sk-wb" title={lyrMax ? '还原歌词秀' : '最大化歌词秀（左侧主区收起）'}
+                        onClick={() => setLyrMax(v => !v)}><Fi n={lyrMax ? 'minimize-2' : 'maximize-2'} size={11} /></button>
+                <button className="sk-wb" title="收起歌词" onClick={() => { setShowLrc(false); setLyrMax(false) }}>×</button>
               </div>
             </div>
             <div className="sk-lyr-body">

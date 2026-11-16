@@ -2389,3 +2389,26 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   .skin-page.one-col .sk-win,.skin-page.one-col .sk-eq,.skin-page.one-col .sk-lyr{flex:0 0 auto}
   .skin-page.one-col .sk-lyr{max-height:26vh}
 }
+
+/* ── 歌词秀：全宽、歌词居中、滚动条贴右边 ── */
+.skin-page .sk-lyr-body{width:100%;max-width:none;box-sizing:border-box;scrollbar-gutter:stable}
+.skin-page .sk-lyr-body::-webkit-scrollbar{width:8px}
+.skin-page .sk-lyr-body::-webkit-scrollbar-track{background:rgba(255,255,255,.06);border-radius:4px}
+.skin-page .sk-lyr-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.32);border-radius:4px}
+.skin[data-skin="light"] .sk-lyr-body::-webkit-scrollbar-track{background:rgba(90,140,180,.14)}
+.skin[data-skin="light"] .sk-lyr-body::-webkit-scrollbar-thumb{background:#7fb4d4}
+.skin[data-skin="tt"] .sk-lyr-body::-webkit-scrollbar-thumb{background:#c1741d}
+
+/* ── 歌词秀最大化：左侧主区收起，歌词独占窗口 ── */
+.skin-page.lyr-max{grid-template-columns:minmax(0,1fr)!important}
+.skin-page.lyr-max .sk-split{display:none}
+.skin-page.lyr-max .sk-col{display:none!important}
+.skin-page.one-col.lyr-max .sk-col-r{display:contents!important}
+.skin-page:not(.one-col).lyr-max .sk-col-r{display:flex!important;flex-direction:column;height:100%}
+.skin-page.lyr-max .sk-lyr{flex:1 1 auto!important;height:100%!important;max-height:none!important;min-height:0!important}
+.skin-page.lyr-max .sk-lyr-body{flex:1 1 auto!important;min-height:0!important;max-height:none!important;
+  padding:26px 22px;font-size:inherit}
+.skin-page.lyr-max .sk-lyr-body .ln{font-size:16px;line-height:2.4}
+.skin-page.lyr-max .sk-lyr-body .ln.on{font-size:19px}
+.skin-page.lyr-max .sk-lyr-body .song{font-size:16px}
+.skin-page.lyr-max .sk-lyr-body .meta{font-size:12px}
