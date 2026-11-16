@@ -13325,7 +13325,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.21";
+const BUILD_TAG = "3.0.22";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -16360,6 +16360,22 @@ function App() {
                   d: "M11 11l8.2 8.2M16.4 16.4l2-2M18.8 18.8l2-2"
                 })]
               })
+            }), /* @__PURE__ */ jsx("button", {
+              className: "sk-pbtn sk-pbtn-ico",
+              title: "\u63D2\u4EF6\uFF08\u6211\u7684\u97F3\u6E90\u63D2\u4EF6\uFF09",
+              onClick: () => setTab("plugins"),
+              children: /* @__PURE__ */ jsx("span", {
+                className: "sk-ico-glyph",
+                children: "\u25C8"
+              })
+            }), /* @__PURE__ */ jsx("button", {
+              className: "sk-pbtn sk-pbtn-ico",
+              title: "\u8BBE\u7F6E",
+              onClick: () => setTab("settings"),
+              children: /* @__PURE__ */ jsx("span", {
+                className: "sk-ico-glyph",
+                children: "\u2699"
+              })
             })]
           })]
         })]
@@ -18897,11 +18913,18 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   background:linear-gradient(180deg,#a8f3c6,#2f9c62);border-color:#1d6a42}
 .skin[data-skin="hifi"] .sk-pl .main,.skin[data-skin="steel"] .sk-pl .main{scrollbar-color:#42d98a rgba(0,30,16,.4)}
 
-/* 播放列表内容区：常驻轨道 + 窄屏下自己滚（不再整页滚） */
+/* 播放列表内容区：常驻轨道 + 窄屏下自己滚，底部图标条常驻可见 */
 .skin-page .sk-pl .main{overflow-y:scroll}
-.skin-page.one-col .sk-pl .main{max-height:calc(100vh - 300px)}
-@media (max-width:480px){ .skin-page .sk-pl .main{max-height:calc(100vh - 270px)} }
-@media (max-width:300px){ .skin-page .sk-pl .main{max-height:calc(100vh - 240px)} }
+.skin-page.one-col .sk-pl{max-height:calc(100vh - 44px)}
+.skin-page.one-col .sk-pl .main{flex:1 1 auto;min-height:0;max-height:none}
+@media (max-width:480px){ .skin-page .sk-pl{max-height:calc(100vh - 30px)} }
+@media (max-width:300px){ .skin-page .sk-pl{max-height:calc(100vh - 20px)} }
+/* 底部工具条图标字符（插件 ◈ / 设置 ⚙） */
+.sk-pbtn-ico .sk-ico-glyph{font-size:11px;line-height:1;display:block;font-weight:600}
+.skin[data-skin="tt"] .sk-pbtn-ico .sk-ico-glyph{color:#3a1a00}
+@media (max-width:300px){
+  .sk-pbtn-ico .sk-ico-glyph{font-size:9.5px}
+}
 
 </style>
 </head>

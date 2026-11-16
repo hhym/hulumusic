@@ -161,7 +161,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.21'
+const BUILD_TAG = '3.0.22'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -2034,6 +2034,14 @@ export default function App() {
                 <circle cx="8" cy="8" r="4.2" />
                 <path d="M11 11l8.2 8.2M16.4 16.4l2-2M18.8 18.8l2-2" />
               </svg>
+            </button>
+            <button className="sk-pbtn sk-pbtn-ico" title="插件（我的音源插件）"
+                    onClick={() => setTab('plugins')}>
+              <span className="sk-ico-glyph">◈</span>
+            </button>
+            <button className="sk-pbtn sk-pbtn-ico" title="设置"
+                    onClick={() => setTab('settings')}>
+              <span className="sk-ico-glyph">⚙</span>
             </button>
           </div>
         </section>

@@ -2297,8 +2297,15 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   background:linear-gradient(180deg,#a8f3c6,#2f9c62);border-color:#1d6a42}
 .skin[data-skin="hifi"] .sk-pl .main,.skin[data-skin="steel"] .sk-pl .main{scrollbar-color:#42d98a rgba(0,30,16,.4)}
 
-/* 播放列表内容区：常驻轨道 + 窄屏下自己滚（不再整页滚） */
+/* 播放列表内容区：常驻轨道 + 窄屏下自己滚，底部图标条常驻可见 */
 .skin-page .sk-pl .main{overflow-y:scroll}
-.skin-page.one-col .sk-pl .main{max-height:calc(100vh - 300px)}
-@media (max-width:480px){ .skin-page .sk-pl .main{max-height:calc(100vh - 270px)} }
-@media (max-width:300px){ .skin-page .sk-pl .main{max-height:calc(100vh - 240px)} }
+.skin-page.one-col .sk-pl{max-height:calc(100vh - 44px)}
+.skin-page.one-col .sk-pl .main{flex:1 1 auto;min-height:0;max-height:none}
+@media (max-width:480px){ .skin-page .sk-pl{max-height:calc(100vh - 30px)} }
+@media (max-width:300px){ .skin-page .sk-pl{max-height:calc(100vh - 20px)} }
+/* 底部工具条图标字符（插件 ◈ / 设置 ⚙） */
+.sk-pbtn-ico .sk-ico-glyph{font-size:11px;line-height:1;display:block;font-weight:600}
+.skin[data-skin="tt"] .sk-pbtn-ico .sk-ico-glyph{color:#3a1a00}
+@media (max-width:300px){
+  .sk-pbtn-ico .sk-ico-glyph{font-size:9.5px}
+}
