@@ -161,7 +161,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.17'
+const BUILD_TAG = '3.0.18'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -2000,7 +2000,6 @@ export default function App() {
             <button className={tab === 'podcast' ? 'on' : ''} onClick={() => setTab('podcast')}>听书</button>
             <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}>待播</button>
             <button className={tab === 'plugins' ? 'on' : ''} onClick={() => setTab('plugins')}>插件</button>
-            <button className={tab === 'settings' ? 'on' : ''} onClick={() => setTab('settings')}>设置</button>
             <div className="sk-search">
               <input value={q} placeholder="搜歌、歌手" onChange={(e) => setQ(e.target.value)}
                      onKeyDown={(e) => e.key === 'Enter' && doSearch()} />

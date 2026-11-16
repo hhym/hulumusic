@@ -13325,7 +13325,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.17";
+const BUILD_TAG = "3.0.18";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -16285,10 +16285,6 @@ function App() {
               className: tab === "plugins" ? "on" : "",
               onClick: () => setTab("plugins"),
               children: "\u63D2\u4EF6"
-            }), /* @__PURE__ */ jsx("button", {
-              className: tab === "settings" ? "on" : "",
-              onClick: () => setTab("settings"),
-              children: "\u8BBE\u7F6E"
             }), /* @__PURE__ */ jsxs("div", {
               className: "sk-search",
               children: [/* @__PURE__ */ jsx("input", {
@@ -18731,6 +18727,11 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   .app.desk-mode .dpl-hero{flex-direction:column;gap:10px;padding:12px}
   .app.desk-mode .dpl-cover{width:96px;height:96px}
 }
+.skin[data-skin="tt"] .set-page .acct-empty{color:#7a3a06}
+.skin[data-skin="tt"] .set-page .acct-main{color:#331700}
+.skin[data-skin="tt"] .set-page .home-url{color:#7a3a06}
+.skin[data-skin="tt"] .set-page .ghost-btn{color:#3a1a00;border-color:#8a4509}
+.skin[data-skin="tt"] .set-page .mini-btn{color:#3a1a00}
 
 </style>
 </head>

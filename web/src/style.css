@@ -2190,3 +2190,8 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   .app.desk-mode .dpl-hero{flex-direction:column;gap:10px;padding:12px}
   .app.desk-mode .dpl-cover{width:96px;height:96px}
 }
+.skin[data-skin="tt"] .set-page .acct-empty{color:#7a3a06}
+.skin[data-skin="tt"] .set-page .acct-main{color:#331700}
+.skin[data-skin="tt"] .set-page .home-url{color:#7a3a06}
+.skin[data-skin="tt"] .set-page .ghost-btn{color:#3a1a00;border-color:#8a4509}
+.skin[data-skin="tt"] .set-page .mini-btn{color:#3a1a00}
