@@ -139,6 +139,9 @@ export default function MiniPlayer(p: Props) {
         </div>
 
         <div className="mini-tools">
+          <button className="mini-desktop" onClick={p.onExpand} title="切换回桌面">
+            <Fi n="shirt" size={13} />
+          </button>
           <button className="mini-theme" onClick={p.onTheme} title={'主题：' + THEME_LABEL[p.theme] + '（点一下换下一档）'}>
             <span className="mini-theme-ico">{THEME_ICON[p.theme]}</span>
           </button>

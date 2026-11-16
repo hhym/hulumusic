@@ -10612,6 +10612,14 @@ function MiniPlayer(p2) {
       }), /* @__PURE__ */ jsxs("div", {
         className: "mini-tools",
         children: [/* @__PURE__ */ jsx("button", {
+          className: "mini-desktop",
+          onClick: p2.onExpand,
+          title: "\u5207\u6362\u56DE\u684C\u9762",
+          children: /* @__PURE__ */ jsx(Fi, {
+            n: "shirt",
+            size: 13
+          })
+        }), /* @__PURE__ */ jsx("button", {
           className: "mini-theme",
           onClick: p2.onTheme,
           title: "\u4E3B\u9898\uFF1A" + THEME_LABEL[p2.theme] + "\uFF08\u70B9\u4E00\u4E0B\u6362\u4E0B\u4E00\u6863\uFF09",
@@ -14925,20 +14933,6 @@ function App() {
         }), /* @__PURE__ */ jsxs("div", {
           className: "dn-foot",
           children: [/* @__PURE__ */ jsx("button", {
-            title: "\u7535\u53F0",
-            onClick: () => setTab("radio"),
-            children: /* @__PURE__ */ jsx(Fi, {
-              n: "radio",
-              size: 14
-            })
-          }), /* @__PURE__ */ jsx("button", {
-            title: "\u542C\u4E66",
-            onClick: () => setTab("podcast"),
-            children: /* @__PURE__ */ jsx(Fi, {
-              n: "book-open",
-              size: 14
-            })
-          }), /* @__PURE__ */ jsx("button", {
             title: "\u63D2\u4EF6",
             onClick: () => setTab("plugins"),
             children: /* @__PURE__ */ jsx(Fi, {

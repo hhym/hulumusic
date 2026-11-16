@@ -1559,8 +1559,6 @@ export default function App() {
             </div>
 
             <div className="dn-foot">
-              <button title="电台" onClick={() => setTab('radio')}><Fi n="radio" size={14} /></button>
-              <button title="听书" onClick={() => setTab('podcast')}><Fi n="book-open" size={14} /></button>
               <button title="插件" onClick={() => setTab('plugins')}><Fi n="package" size={14} /></button>
               <button title="设置" onClick={() => setTab('settings')}><Fi n="settings" size={14} /></button>
               <button className="dn-theme" onClick={() => pickTheme(NEXT_THEME[theme])} title={'主题：' + THEME_LABEL[theme]}>{THEME_ICON[theme]}</button>
