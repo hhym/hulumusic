@@ -1,7 +1,7 @@
 # 葫芦音乐 · 独立版
 
 葫芦音乐 · 桌面版：只保留桌面界面（左侧竖排导航 + 右侧内容 + 底部播放条 + 迷你浮卡），
-不含千千静听四面板皮肤界面。
+不含皮肤窗口 / 换肤界面，也不内置网络电台与播客听书。
 
 不再依赖 mygo-music：没有它的原生主窗口、原生菜单、原生插件页和音乐库。
 只留两样东西 —— `github.com/egoist/mygo`（窗口与 WebView 框架）和 `qianqian`
@@ -11,7 +11,7 @@
 
 ```
 main.go              窗口 + 单实例锁 + 拖放装插件 + 启动日志
-qianqian/            后端：本地 http 服务、page.html、插件安装、本地音乐、电台、播客
+qianqian/            后端：本地 http 服务、page.html、插件安装、本地音乐
 web/                 界面源码（React + Vite），构建产物压成 qianqian/page.html
 scripts/build-page.py  把 web 构建产物拼回 page.html 的脚本
 rsrc_windows_amd64.syso   Windows 图标与版本资源
