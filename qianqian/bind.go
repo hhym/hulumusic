@@ -177,8 +177,12 @@ func (x API) Plugins() ([]Plugin, error) {
 	return v, errOf(e)
 }
 
-// PluginMarket 内置市场清单；注意 Wails 会把 (切片, 字符串) 两个返回值原样传给前端。
-func (x API) PluginMarket() ([]MarketItem, string) { return x.App.PluginMarket() }
+// PluginMarket 内置市场清单。第二返回值必须是 error（mygo 会校验签名，给 string 会直接报
+// the second result must be an error 并弹启动异常），所以按 Plugins 的老写法用 errOf 包一层。
+func (x API) PluginMarket() ([]MarketItem, error) {
+	v, e := x.App.PluginMarket()
+	return v, errOf(e)
+}
 
 // InstallMarketPlugin 一键安装内置插件。
 func (x API) InstallMarketPlugin(id any) PickResult { return x.App.InstallMarketPlugin(asStr(id)) }

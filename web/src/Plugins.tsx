@@ -38,8 +38,11 @@ async function callM<T>(fn: string, ...args: any[]): Promise<T> {
 async function callList(fn: string, ...args: any[]): Promise<{ list: Plugin[]; err: string }> {
   const raw: any = await callM<any>(fn, ...args)
   if (Array.isArray(raw)) {
-    if (raw.length === 2 && Array.isArray(raw[0]) && typeof raw[1] === 'string') {
-      return { list: raw[0] as Plugin[], err: raw[1] }
+    // 后端 (值, error) 绑定：失败时第二项是错误串，成功时可能是 null，两种都要认，
+    // 否则会把 [列表, null] 整包当列表，渲染出空条目。
+    if (raw.length === 2 && Array.isArray(raw[0])) {
+      const e = raw[1]
+      return { list: raw[0] as Plugin[], err: typeof e === 'string' ? e : e ? String(e) : '' }
     }
     return { list: raw as Plugin[], err: '' }
   }
@@ -71,8 +74,9 @@ async function callMarket(): Promise<{ list: MarketItem[]; err: string }> {
   if (!app || typeof app.PluginMarket !== 'function') return { list: [], err: '后端未就绪' }
   const raw: any = await app.PluginMarket()
   if (Array.isArray(raw)) {
-    if (raw.length === 2 && Array.isArray(raw[0]) && typeof raw[1] === 'string') {
-      return { list: raw[0] as MarketItem[], err: raw[1] }
+    if (raw.length === 2 && Array.isArray(raw[0])) {
+      const e = raw[1]
+      return { list: raw[0] as MarketItem[], err: typeof e === 'string' ? e : e ? String(e) : '' }
     }
     return { list: raw as MarketItem[], err: '' }
   }
@@ -391,7 +395,7 @@ export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) 
         </p>
         {marketErr && <div className="err-msg">{marketErr}</div>}
         {market.length === 0 && !marketLoading && (
-          <div className="empty small">清单没读出来，点右边「刷新」重试。</div>
+          <div className="empty small">安装包内暂无内置插件条目，可用下方「选 zip / 选文件夹」导入本地插件；点右边「刷新」可重读。</div>
         )}
         <div className="mk-grid">
           {marketShown.map((it) => (

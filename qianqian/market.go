@@ -60,9 +60,6 @@ func (a *App) PluginMarket() ([]MarketItem, string) {
 		}
 		items = append(items, it)
 	}
-	if len(items) == 0 {
-		return items, "本安装包暂未内置插件市场条目，可往下用「选 zip / 选文件夹」导入本地插件"
-	}
 	return items, ""
 }
 

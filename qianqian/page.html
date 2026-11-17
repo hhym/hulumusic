@@ -9473,10 +9473,11 @@ async function callM(fn, ...args) {
 async function callList(fn, ...args) {
   const raw = await callM(fn, ...args);
   if (Array.isArray(raw)) {
-    if (raw.length === 2 && Array.isArray(raw[0]) && typeof raw[1] === "string") {
+    if (raw.length === 2 && Array.isArray(raw[0])) {
+      const e = raw[1];
       return {
         list: raw[0],
-        err: raw[1]
+        err: typeof e === "string" ? e : e ? String(e) : ""
       };
     }
     return {
@@ -9511,10 +9512,11 @@ async function callMarket() {
     };
   const raw = await app.PluginMarket();
   if (Array.isArray(raw)) {
-    if (raw.length === 2 && Array.isArray(raw[0]) && typeof raw[1] === "string") {
+    if (raw.length === 2 && Array.isArray(raw[0])) {
+      const e = raw[1];
       return {
         list: raw[0],
-        err: raw[1]
+        err: typeof e === "string" ? e : e ? String(e) : ""
       };
     }
     return {
@@ -9874,7 +9876,7 @@ function PluginsPage({
         children: marketErr
       }), market.length === 0 && !marketLoading && /* @__PURE__ */ jsx("div", {
         className: "empty small",
-        children: "\u6E05\u5355\u6CA1\u8BFB\u51FA\u6765\uFF0C\u70B9\u53F3\u8FB9\u300C\u5237\u65B0\u300D\u91CD\u8BD5\u3002"
+        children: "\u5B89\u88C5\u5305\u5185\u6682\u65E0\u5185\u7F6E\u63D2\u4EF6\u6761\u76EE\uFF0C\u53EF\u7528\u4E0B\u65B9\u300C\u9009 zip / \u9009\u6587\u4EF6\u5939\u300D\u5BFC\u5165\u672C\u5730\u63D2\u4EF6\uFF1B\u70B9\u53F3\u8FB9\u300C\u5237\u65B0\u300D\u53EF\u91CD\u8BFB\u3002"
       }), /* @__PURE__ */ jsx("div", {
         className: "mk-grid",
         children: marketShown.map((it) => /* @__PURE__ */ jsxs("div", {
@@ -13495,7 +13497,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.34";
+const BUILD_TAG = "3.0.35";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
