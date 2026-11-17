@@ -1,4 +1,4 @@
-import {useEffect, useRef} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {Fi, FN} from './feather'
 
 type Track = {id: string; name: string; artist: string; album: string; cover: string; duration: number; source: string; plug?: string}
@@ -32,10 +32,36 @@ const fmt = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
+// 可选皮肤配色：id 对应 style.css 里的 .skin-view[data-skin=...] 变量组。
+const SKINS = [
+  {id: 'purple', label: '深紫', color: '#b79bff'},
+  {id: 'blue', label: '经典蓝', color: '#7fd4ff'},
+  {id: 'pink', label: '粉红', color: '#ff9ec4'},
+  {id: 'orange', label: '烧歌橙', color: '#ffb066'},
+  {id: 'neon', label: '霓虹紫', color: '#d26bff'},
+  {id: 'cyan', label: '青碧', color: '#66e0d0'},
+  {id: 'grey', label: '青灰', color: '#7fd0c0'},
+  {id: 'light', label: '浅蓝', color: '#3a86c9'},
+]
+const SKIN_KEY = 'hulu-skin'
+function loadSkin(): string {
+  try {
+    const v = localStorage.getItem(SKIN_KEY)
+    if (SKINS.some((s) => s.id === v)) return v!
+  } catch { /* 忽略 */ }
+  return 'purple'
+}
+
 /* 竖向皮肤界面：窗口固定 480×1024，按经典千千静听四面板纵向堆叠——
    主播放面板（LCD + 走带 + 音量）、均衡器面板、歌词秀面板、播放列表面板。
    配色是皮肤自己的一套深紫变量，不跟主界面主题走；后续多套皮肤在这里换皮。 */
 export default function SkinView(p: Props) {
+  const [skinName, setSkinName] = useState(loadSkin)
+  const selectSkin = (id: string) => {
+    setSkinName(id)
+    try { localStorage.setItem(SKIN_KEY, id) } catch { /* 忽略 */ }
+  }
+
   // Esc 还原桌面窗口；空格播放暂停。
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -84,7 +110,7 @@ export default function SkinView(p: Props) {
   const nextLine = p.curIndex >= 0 && p.lyric[p.curIndex + 1] ? p.lyric[p.curIndex + 1].text : ''
 
   return (
-    <div className="skin-view">
+    <div className="skin-view" data-skin={skinName}>
       {/* 标题栏 */}
       <div className="skin-title" onMouseDown={onMouseDown}>
         <span className="skin-title-ico">♪</span>
@@ -98,6 +124,14 @@ export default function SkinView(p: Props) {
             <Fi n="heart" fill size={12} />
           </button>
         </span>
+      </div>
+
+      <div className="skin-swatches">
+        {SKINS.map((s) => (
+          <button key={s.id} className={'skin-swatch' + (s.id === skinName ? ' on' : '')}
+                  style={{background: s.color}} title={s.label} onClick={() => selectSkin(s.id)} />
+        ))}
+        <span className="skin-swatch-lab">{SKINS.find((s) => s.id === skinName)?.label}</span>
       </div>
 
       {/* 主播放面板 */}
