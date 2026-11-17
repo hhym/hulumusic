@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.35'
+const BUILD_TAG = '3.0.36'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -568,7 +568,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    call<any>('Plugins').then((p: any) => setPlugins(Array.isArray(p) ? p.filter((x: any) => x.enabled) : [])).catch(() => {})
+    refreshPlugins()
     call<Track[]>('Library').then((l) => setLib(toArr<Track>(l))).catch(() => {})
     call<Station[]>('Stations').then((s) => setStations(toArr<Station>(s))).catch(() => {})
     // 设置页保存的偏好：启动页、音量、主题
@@ -616,12 +616,30 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [npOpen, cur])
 
+  // 后端 Plugins 是 (列表, 错误) 两个返回值，Wails 打包成 [列表, 错误串|null] 传过来；
+  // 直接 Array.isArray(raw) 就把外层数组当列表了，过滤 enabled 之后永远只剩空 ——
+  // 左侧音源下拉会一直显示「未装音源」。这里统一拆一层。
+  function asPluginList(raw: any): any[] {
+    if (!Array.isArray(raw)) return []
+    if (raw.length === 2 && Array.isArray(raw[0])) return raw[0]
+    return raw
+  }
+
+  // 左侧音源下拉 / 「共 N 个音源」都读这份列表，必须跟插件页的开关保持一致：
+  // 插件页里装、删、开关插件后都会回调它，别再只在启动时读一次。
+  const refreshPlugins = useCallback(async () => {
+    try {
+      const raw: any = await call<any>('Plugins')
+      const list = asPluginList(raw)
+      setPlugins(list.filter((p: any) => p.enabled))
+    } catch { /* 插件系统没起来时保持原样 */ }
+  }, [])
+
   // 音源全部来自插件：并发打所有启用插件，合并结果
   async function activePlugins(): Promise<any[]> {
     try {
       const raw: any = await call<any>('Plugins')
-      const list = Array.isArray(raw) ? raw : []
-      const on = list.filter((p: any) => p.enabled)
+      const on = asPluginList(raw).filter((p: any) => p.enabled)
       setPlugins(on)
       return on
     } catch {
@@ -1383,7 +1401,7 @@ export default function App() {
           onRefreshAccounts={refreshAccounts}
         />
       ) : tab === 'plugins' ? (
-        <PluginsPage onPlay={play} />
+        <PluginsPage onPlay={play} onChanged={refreshPlugins} />
       ) : tab === 'radio' ? (
         <div className="grid">
           {stations.map((s) => (

@@ -9535,7 +9535,8 @@ async function callMarket() {
   };
 }
 function PluginsPage({
-  onPlay
+  onPlay,
+  onChanged
 }) {
   var _a, _b;
   const [list, setList] = react.exports.useState([]);
@@ -9566,6 +9567,7 @@ function PluginsPage({
     try {
       const r2 = await callList("Plugins");
       setList(r2.list);
+      onChanged == null ? void 0 : onChanged();
       if (r2.err)
         setErr(r2.err);
     } catch (e) {
@@ -9605,8 +9607,10 @@ function PluginsPage({
         plugins: raw[0],
         err: raw[1]
       } : raw || {};
-      if (Array.isArray(r2.plugins))
+      if (Array.isArray(r2.plugins)) {
         setList(r2.plugins);
+        onChanged == null ? void 0 : onChanged();
+      }
       if (r2.err) {
         setMarketErr(String(r2.err));
         flash("");
@@ -9635,8 +9639,10 @@ function PluginsPage({
         plugins: raw[0],
         err: raw[1]
       } : raw || {};
-      if (Array.isArray(r2.plugins))
+      if (Array.isArray(r2.plugins)) {
         setList(r2.plugins);
+        onChanged == null ? void 0 : onChanged();
+      }
       if (r2.err)
         setErr(String(r2.err));
       else {
@@ -9658,8 +9664,10 @@ function PluginsPage({
       const r2 = await callM(kind === "zip" ? "PickPluginZip" : "PickPluginDir");
       if (r2 == null ? void 0 : r2.canceled)
         return;
-      if (Array.isArray(r2 == null ? void 0 : r2.plugins))
+      if (Array.isArray(r2 == null ? void 0 : r2.plugins)) {
         setList(r2.plugins);
+        onChanged == null ? void 0 : onChanged();
+      }
       if (r2 == null ? void 0 : r2.err) {
         setErr(String(r2.err));
         return;
@@ -9677,6 +9685,7 @@ function PluginsPage({
     try {
       const r2 = await callList("SetPluginEnabled", p2.id, !p2.enabled);
       setList(r2.list);
+      onChanged == null ? void 0 : onChanged();
       if (r2.err)
         setErr(r2.err);
     } catch (e) {
@@ -9689,6 +9698,7 @@ function PluginsPage({
     try {
       const r2 = await callList("RemovePlugin", p2.id);
       setList(r2.list);
+      onChanged == null ? void 0 : onChanged();
       clearPluginCache(p2.id);
       if (r2.err)
         setErr(r2.err);
@@ -13497,7 +13507,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.35";
+const BUILD_TAG = "3.0.36";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -13929,8 +13939,7 @@ function App() {
     return () => window.removeEventListener("mygo-signin-prompt", onPrompt);
   }, []);
   react.exports.useEffect(() => {
-    call("Plugins").then((p2) => setPlugins(Array.isArray(p2) ? p2.filter((x2) => x2.enabled) : [])).catch(() => {
-    });
+    refreshPlugins();
     call("Library").then((l2) => setLib(toArr(l2))).catch(() => {
     });
     call("Stations").then((s) => setStations(toArr(s))).catch(() => {
@@ -13981,11 +13990,25 @@ function App() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [npOpen, cur]);
+  function asPluginList(raw) {
+    if (!Array.isArray(raw))
+      return [];
+    if (raw.length === 2 && Array.isArray(raw[0]))
+      return raw[0];
+    return raw;
+  }
+  const refreshPlugins = react.exports.useCallback(async () => {
+    try {
+      const raw = await call("Plugins");
+      const list2 = asPluginList(raw);
+      setPlugins(list2.filter((p2) => p2.enabled));
+    } catch {
+    }
+  }, []);
   async function activePlugins() {
     try {
       const raw = await call("Plugins");
-      const list2 = Array.isArray(raw) ? raw : [];
-      const on = list2.filter((p2) => p2.enabled);
+      const on = asPluginList(raw).filter((p2) => p2.enabled);
       setPlugins(on);
       return on;
     } catch {
@@ -15001,7 +15024,8 @@ function App() {
       onSignOut: signOutOne,
       onRefreshAccounts: refreshAccounts
     }) : tab === "plugins" ? /* @__PURE__ */ jsx(PluginsPage, {
-      onPlay: play
+      onPlay: play,
+      onChanged: refreshPlugins
     }) : tab === "radio" ? /* @__PURE__ */ jsxs("div", {
       className: "grid",
       children: [stations.map((s) => /* @__PURE__ */ jsxs("button", {

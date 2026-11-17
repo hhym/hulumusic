@@ -84,7 +84,7 @@ async function callMarket(): Promise<{ list: MarketItem[]; err: string }> {
   return { list: [], err: '' }
 }
 
-export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) {
+export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) => void; onChanged?: () => void }) {
   const [list, setList] = useState<Plugin[]>([])
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
@@ -117,6 +117,7 @@ export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) 
     try {
       const r = await callList('Plugins')
       setList(r.list)
+      onChanged?.()   // 进页面就同步一次，左侧音源下拉不必等用户点开关
       if (r.err) setErr(r.err)
     } catch (e: any) {
       setErr(String(e?.message || e))
@@ -153,7 +154,7 @@ export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) 
     try {
       const raw: any = await callM<any>('InstallMarketPlugin', it.id)
       const r = Array.isArray(raw) ? {plugins: raw[0], err: raw[1]} : raw || {}
-      if (Array.isArray(r.plugins)) setList(r.plugins)
+      if (Array.isArray(r.plugins)) { setList(r.plugins); onChanged?.() }
       if (r.err) {
         setMarketErr(String(r.err))
         flash('')
@@ -179,7 +180,7 @@ export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) 
     try {
       const raw: any = await callM<any>('InstallPluginURL', url.trim())
       const r = Array.isArray(raw) ? {plugins: raw[0], err: raw[1]} : raw || {}
-      if (Array.isArray(r.plugins)) setList(r.plugins)
+      if (Array.isArray(r.plugins)) { setList(r.plugins); onChanged?.() }
       if (r.err) setErr(String(r.err))
       else { flash('插件已安装'); setUrl('') }
     } catch (e: any) {
@@ -199,7 +200,7 @@ export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) 
     try {
       const r: any = await callM<any>(kind === 'zip' ? 'PickPluginZip' : 'PickPluginDir')
       if (r?.canceled) return
-      if (Array.isArray(r?.plugins)) setList(r.plugins)
+      if (Array.isArray(r?.plugins)) { setList(r.plugins); onChanged?.() }
       if (r?.err) { setErr(String(r.err)); return }
       if (r?.installedId) setSel(r.installedId)
       flash('插件已安装')
@@ -214,6 +215,7 @@ export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) 
     try {
       const r = await callList('SetPluginEnabled', p.id, !p.enabled)
       setList(r.list)
+      onChanged?.()
       if (r.err) setErr(r.err)
     } catch (e: any) {
       setErr(String(e?.message || e))
@@ -225,6 +227,7 @@ export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) 
     try {
       const r = await callList('RemovePlugin', p.id)
       setList(r.list)
+      onChanged?.()
       clearPluginCache(p.id)
       if (r.err) setErr(r.err)
       else flash('已删除')
