@@ -177,6 +177,12 @@ func (x API) Plugins() ([]Plugin, error) {
 	return v, errOf(e)
 }
 
+// PluginMarket 内置市场清单；注意 Wails 会把 (切片, 字符串) 两个返回值原样传给前端。
+func (x API) PluginMarket() ([]MarketItem, string) { return x.App.PluginMarket() }
+
+// InstallMarketPlugin 一键安装内置插件。
+func (x API) InstallMarketPlugin(id any) PickResult { return x.App.InstallMarketPlugin(asStr(id)) }
+
 func (x API) InstallPluginText(code any) PickResult {
 	return x.App.InstallPluginText(asStr(code))
 }

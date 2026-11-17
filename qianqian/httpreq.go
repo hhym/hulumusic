@@ -74,7 +74,9 @@ func (a *App) HttpRequest(rawURL, method string, headers map[string]string, body
 	// 文本类响应给原文；图片/音频这类二进制响应额外给 base64，
 	// 否则插件里 `(await fetch(...)).arrayBuffer()` 拿到的字节是错的
 	ct := res.Header.Get("Content-Type")
-	resp := HttpResult{Status: res.StatusCode, Body: string(b), Headers: collectHeaders(res.Header)}
+	// 有些站点的响应是 GBK / 混合编码字节，直接塞进 JSON 里会让 Wails 的编码器报
+	// jsontext: invalid UTF-8。这里统一清洗成合法 UTF-8，原文另走 bodyB64。
+	resp := HttpResult{Status: res.StatusCode, Body: strings.ToValidUTF8(string(b), "\uFFFD"), Headers: collectHeaders(res.Header)}
 	// 判断「文本还是二进制」很容易翻车：QQ 的二维码接口连 Content-Type 都不给，
 	// 只看头会把它当文本，字节就全坏了。所以小响应一律额外带上 base64 原文，
 	// 插件要 arrayBuffer 时直接用它，不必猜。
