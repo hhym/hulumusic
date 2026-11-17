@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.30'
+const BUILD_TAG = '3.0.33'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -170,12 +170,12 @@ const srcName = (s: string) =>
 type Tab = 'home' | 'search' | 'library' | 'radio' | 'podcast' | 'local' | 'queue' | 'lyric' | 'plugins' | 'settings'
 
 export default function App() {
-  // 主题：记住用户选择；没存过就用浅色（默认），四档循环是 浅 → 橘黄 → 深青 → 深色。
+  // 主题：记住用户选择；没存过就用浅色（默认），循环是 浅 → 护眼绿 → 橘黄 → 深青 → 深色 → 霓虹紫。
   // localStorage 在某些 WebView2 环境里会抛异常，全部包起来，绝不能因此白屏。
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       const saved = localStorage.getItem('hulu-theme')
-      if (saved === 'dark' || saved === 'light' || saved === 'amber' || saved === 'teal' || saved === 'green') return saved
+      if (saved === 'dark' || saved === 'light' || saved === 'amber' || saved === 'teal' || saved === 'green' || saved === 'neon') return saved
     } catch { /* 忽略 */ }
     return 'light'
   })
@@ -410,10 +410,10 @@ export default function App() {
       if (on) {
         let pw = 1190
         try { pw = Number(localStorage.getItem('qqjt-prev-w') || 1190) || 1190 } catch { /* 忽略 */ }
-        app?.FitWindowWidth?.(Math.max(460, pw))
+        app?.FitWindowWidth?.(Math.max(460, pw))?.catch?.(() => { /* 老宿主没这个方法，别弹红字 */ })
       } else {
         try { localStorage.setItem('qqjt-prev-w', String(Math.round(window.innerWidth))) } catch { /* 忽略 */ }
-        app?.FitWindowWidth?.(320)
+        app?.FitWindowWidth?.(320)?.catch?.(() => { /* 老宿主没这个方法，别弹红字 */ })
       }
     } catch { /* 沙箱里没有宿主，忽略 */ }
   }
@@ -434,8 +434,8 @@ export default function App() {
     setLyricMode(next)
     localStorage.setItem('qqjt-lrcmode', next)
   }
-  type Skin = 'winamp' | 'tt' | 'light' | 'glass' | 'hifi' | 'steel' | 'green'
-  const SKIN_ORDER: Skin[] = ['winamp', 'tt', 'light', 'glass', 'hifi', 'steel', 'green']
+  type Skin = 'winamp' | 'tt' | 'light' | 'glass' | 'hifi' | 'steel' | 'green' | 'neon'
+  const SKIN_ORDER: Skin[] = ['winamp', 'tt', 'light', 'glass', 'hifi', 'steel', 'green', 'neon']
   const [skinTheme, setSkinTheme] = useState<Skin>(() => {
     const v = localStorage.getItem('qqjt-skin')
     return SKIN_ORDER.includes(v as Skin) ? (v as Skin) : 'glass'
@@ -443,8 +443,8 @@ export default function App() {
   // 皮肤只给「皮肤界面」定外观，主题给「桌面 + 迷你」定配色。两套本来是平行维度，
   // 各切各的就会出现「桌面橘黄 + 皮肤深紫」这种不搭的组合，所以做成联动：
   // 切皮肤把主题拉到最搭的那档，切主题把皮肤换成对应款式，三个界面始终是一套。
-  const SKIN_THEME: Record<Skin, Theme> = {winamp: 'dark', tt: 'amber', light: 'light', glass: 'light', hifi: 'dark', steel: 'light', green: 'green'}
-  const THEME_SKIN: Record<Theme, Skin> = {dark: 'winamp', amber: 'tt', light: 'light', teal: 'hifi', green: 'green'}
+  const SKIN_THEME: Record<Skin, Theme> = {winamp: 'dark', tt: 'amber', light: 'light', glass: 'light', hifi: 'dark', steel: 'light', green: 'green', neon: 'neon'}
+  const THEME_SKIN: Record<Theme, Skin> = {dark: 'winamp', amber: 'tt', light: 'light', teal: 'hifi', green: 'green', neon: 'neon'}
   const applySkin = (s: Skin) => {
     setSkinTheme(s)
     try { localStorage.setItem('qqjt-skin', s) } catch { /* 忽略 */ }
@@ -466,8 +466,9 @@ export default function App() {
     hifi: 'HiFi 银灰深绿',
     steel: 'Steel 银白绿',
     green: '护眼绿',
+    neon: '霓虹紫',
   }
-  const SKIN_MARK: Record<Skin, string> = {winamp: '◆', tt: '●', light: '○', glass: '◉', hifi: '◈', steel: '▣', green: '✿'}
+  const SKIN_MARK: Record<Skin, string> = {winamp: '◆', tt: '●', light: '○', glass: '◉', hifi: '◈', steel: '▣', green: '✿', neon: '✦'}
   const skinName = SKIN_NAME[skinTheme]
   const [repeatOne, setRepeatOne] = useState(false)
   // 播放队列（上一首 / 下一首）
@@ -586,7 +587,7 @@ export default function App() {
         // 如果这里无条件把 st.theme 应用回去，用户换过主题后每次启动就会被旧值覆盖，所以只在没存过时兜底。
         let savedTheme = ''
         try { savedTheme = localStorage.getItem('hulu-theme') || '' } catch { /* 忽略 */ }
-        if (!savedTheme && (st.theme === 'dark' || st.theme === 'light' || st.theme === 'amber' || st.theme === 'teal' || st.theme === 'green')) setTheme(st.theme as Theme)
+        if (!savedTheme && (st.theme === 'dark' || st.theme === 'light' || st.theme === 'amber' || st.theme === 'teal' || st.theme === 'green' || st.theme === 'neon')) setTheme(st.theme as Theme)
       })
       .catch(() => {})
   }, [])
@@ -1933,7 +1934,7 @@ export default function App() {
           <section className="sk-panel sk-eq">
             <div className="sk-title">
               <span className="sk-ver">v{BUILD_TAG}</span>
-            <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' ? 'EQUALIZER 均衡器' : '均衡器'}</span>
+            <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' || skinTheme === 'neon' ? 'EQUALIZER 均衡器' : '均衡器'}</span>
               <div className="sk-eq-on">
                 <button className={eqOn ? 'on' : 'off'} title="开关均衡器（真实作用于音频）" onClick={toggleEq}>ON</button>
                 <button onClick={resetEq}>RESET</button>
@@ -1981,7 +1982,7 @@ export default function App() {
         {/* ── 播放列表 ── */}
         <section className="sk-panel sk-pl">
           <div className="sk-title">
-            <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' ? 'PLAYLIST 播放列表' : '播放列表'}</span>
+            <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' || skinTheme === 'neon' ? 'PLAYLIST 播放列表' : '播放列表'}</span>
             <span style={{ fontSize: 10.5, color: '#b7bff0' }}>
               {tab === 'local' ? localTracks.length : tab === 'library' ? lib.length : tab === 'queue' ? queue.list.length : shown.length} 首
             </span>
@@ -2056,7 +2057,7 @@ export default function App() {
         {showLrc && (
           <section className="sk-panel sk-lyr">
             <div className="sk-title">
-              <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' ? 'LYRIC 歌词秀' : '歌词秀'}</span>
+              <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' || skinTheme === 'neon' ? 'LYRIC 歌词秀' : '歌词秀'}</span>
               <span style={{ fontSize: 10.5, color: '#b7bff0' }}>{isLive ? '电台无歌词' : ''}</span>
               <div className="sk-win-btns">
                 <button className="sk-wb sk-lrc-mode"

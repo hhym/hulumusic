@@ -53,12 +53,46 @@ async function callList(fn: string, ...args: any[]): Promise<{ list: Plugin[]; e
 
 const fmtSize = (n: number) => (n > 1024 * 1024 ? (n / 1024 / 1024).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB')
 
+// 市场条目：后端 PluginMarket 返回的字段
+type MarketItem = {
+  id: string
+  name: string
+  version: string
+  author: string
+  description: string
+  tags?: string[]
+  size: number
+  installed: boolean
+}
+
+// 市场清单同样是 (数组, 错误串) 两个返回值，包一层拆出来
+async function callMarket(): Promise<{ list: MarketItem[]; err: string }> {
+  const app = bridge()
+  if (!app || typeof app.PluginMarket !== 'function') return { list: [], err: '后端未就绪' }
+  const raw: any = await app.PluginMarket()
+  if (Array.isArray(raw)) {
+    if (raw.length === 2 && Array.isArray(raw[0]) && typeof raw[1] === 'string') {
+      return { list: raw[0] as MarketItem[], err: raw[1] }
+    }
+    return { list: raw as MarketItem[], err: '' }
+  }
+  if (typeof raw === 'string' && raw.trim()) return { list: [], err: raw }
+  return { list: [], err: '' }
+}
+
 export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) {
   const [list, setList] = useState<Plugin[]>([])
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
   const [url, setUrl] = useState('')
   const [busy, setBusy] = useState(false)
+
+  // 插件市场（清单内嵌在 exe 里，点「安装」直接落盘）
+  const [market, setMarket] = useState<MarketItem[]>([])
+  const [marketErr, setMarketErr] = useState('')
+  const [marketKw, setMarketKw] = useState('')
+  const [installing, setInstalling] = useState('')
+  const [marketLoading, setMarketLoading] = useState(false)
 
   // 插件试搜
   const [sel, setSel] = useState('')
@@ -87,12 +121,48 @@ export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) 
 
   useEffect(() => {
     reload()
+    loadMarket()
     // 把 .zip / 插件文件夹直接拖进窗口，后端会当场装好，装完发这个事件
     // 让列表重新拉一遍（不依赖系统文件对话框）。
-    const h = () => reload()
+    const h = () => { reload(); loadMarket() }
     window.addEventListener('hulu-plugin-installed', h)
     return () => window.removeEventListener('hulu-plugin-installed', h)
   }, [])
+
+  async function loadMarket() {
+    setMarketLoading(true)
+    try {
+      const r = await callMarket()
+      setMarket(r.list)
+      setMarketErr(r.err)
+    } catch (e: any) {
+      setMarketErr(String(e?.message || e))
+    } finally {
+      setMarketLoading(false)
+    }
+  }
+
+  // 市场里点「安装」：后端从内嵌的插件包里解出来装好，再把列表刷新
+  async function installMarket(it: MarketItem) {
+    if (installing) return
+    setInstalling(it.id); setMarketErr('')
+    try {
+      const raw: any = await callM<any>('InstallMarketPlugin', it.id)
+      const r = Array.isArray(raw) ? {plugins: raw[0], err: raw[1]} : raw || {}
+      if (Array.isArray(r.plugins)) setList(r.plugins)
+      if (r.err) {
+        setMarketErr(String(r.err))
+        flash('')
+      } else {
+        flash('已安装「' + it.name + '」')
+        await loadMarket()
+      }
+    } catch (e: any) {
+      setMarketErr(String(e?.message || e))
+    } finally {
+      setInstalling('')
+    }
+  }
 
   function flash(t: string) {
     setMsg(t)
@@ -287,8 +357,68 @@ export default function PluginsPage({ onPlay }: { onPlay: (t: Track) => void }) 
   // 再以模块实际导出为准（两者任一为真就给，点了没实现会报明确错误）
   const canSignIn = !!current && (!!current.actions?.includes('signIn') || caps.signIn)
 
+  const marketShown = marketKw.trim()
+    ? market.filter((it) => {
+        const k = marketKw.trim().toLowerCase()
+        return (
+          it.name.toLowerCase().includes(k) ||
+          it.id.toLowerCase().includes(k) ||
+          (it.description || '').toLowerCase().includes(k) ||
+          (it.tags || []).some((t) => t.toLowerCase().includes(k))
+        )
+      })
+    : market
+
   return (
     <div className="plug-page">
+      <section className="set-card">
+        <div className="mk-head">
+          <h3>插件市场 <span className="cnt">{market.length}</span></h3>
+          <div className="mk-tools">
+            <input
+              value={marketKw}
+              placeholder="搜插件名 / 标签，如 电台、QQ"
+              onChange={(e) => setMarketKw(e.target.value)}
+            />
+            <button className="ghost-btn" onClick={loadMarket} disabled={marketLoading}>
+              {marketLoading ? '…' : '刷新'}
+            </button>
+          </div>
+        </div>
+        <p className="hint">
+          这里列的是已经打包进安装包的插件，<b>点「安装」就装好</b>，不用填地址、不用选文件，离线也能装。
+          装好之后在下面「已安装」里开关和试搜。
+        </p>
+        {marketErr && <div className="err-msg">{marketErr}</div>}
+        {market.length === 0 && !marketLoading && (
+          <div className="empty small">清单没读出来，点右边「刷新」重试。</div>
+        )}
+        <div className="mk-grid">
+          {marketShown.map((it) => (
+            <div className={'mk-card' + (it.installed ? ' on' : '')} key={it.id}>
+              <div className="mk-top">
+                <b>{it.name}</b>
+                {it.version ? <span className="mk-ver">v{it.version}</span> : null}
+              </div>
+              <div className="mk-desc">{it.description || '—'}</div>
+              <div className="mk-tags">
+                {(it.tags || []).map((t) => (
+                  <span className="tag" key={t}>{t}</span>
+                ))}
+                <span className="mk-size">{fmtSize(it.size)}</span>
+              </div>
+              <button
+                className={'mk-btn' + (it.installed ? ' done' : '')}
+                disabled={!!installing || it.installed}
+                onClick={() => installMarket(it)}
+              >
+                {installing === it.id ? '安装中…' : it.installed ? '已安装' : '安装'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="set-card">
         <h3>安装插件</h3>
         <p className="hint">

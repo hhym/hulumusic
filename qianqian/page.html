@@ -34,7 +34,7 @@
     }
   });
 })();
-</script>
+</script>>
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
@@ -7894,6 +7894,10 @@ function SettingsPage({
             className: theme === "green" ? "on" : "",
             onClick: () => onTheme("green"),
             children: "\u273F\u62A4\u773C\u7EFF"
+          }), /* @__PURE__ */ jsx("button", {
+            className: theme === "neon" ? "on" : "",
+            onClick: () => onTheme("neon"),
+            children: "\u2726\u9713\u8679\u7D2B"
           })]
         })]
       }), /* @__PURE__ */ jsxs("div", {
@@ -9498,6 +9502,36 @@ async function callList(fn, ...args) {
   };
 }
 const fmtSize = (n2) => n2 > 1024 * 1024 ? (n2 / 1024 / 1024).toFixed(1) + " MB" : Math.round(n2 / 1024) + " KB";
+async function callMarket() {
+  const app = bridge();
+  if (!app || typeof app.PluginMarket !== "function")
+    return {
+      list: [],
+      err: "\u540E\u7AEF\u672A\u5C31\u7EEA"
+    };
+  const raw = await app.PluginMarket();
+  if (Array.isArray(raw)) {
+    if (raw.length === 2 && Array.isArray(raw[0]) && typeof raw[1] === "string") {
+      return {
+        list: raw[0],
+        err: raw[1]
+      };
+    }
+    return {
+      list: raw,
+      err: ""
+    };
+  }
+  if (typeof raw === "string" && raw.trim())
+    return {
+      list: [],
+      err: raw
+    };
+  return {
+    list: [],
+    err: ""
+  };
+}
 function PluginsPage({
   onPlay
 }) {
@@ -9507,6 +9541,11 @@ function PluginsPage({
   const [msg, setMsg] = react.exports.useState("");
   const [url, setUrl] = react.exports.useState("");
   const [busy, setBusy] = react.exports.useState(false);
+  const [market, setMarket] = react.exports.useState([]);
+  const [marketErr, setMarketErr] = react.exports.useState("");
+  const [marketKw, setMarketKw] = react.exports.useState("");
+  const [installing, setInstalling] = react.exports.useState("");
+  const [marketLoading, setMarketLoading] = react.exports.useState(false);
   const [sel, setSel] = react.exports.useState("");
   const [kw, setKw] = react.exports.useState("");
   const [hits, setHits] = react.exports.useState([]);
@@ -9533,10 +9572,52 @@ function PluginsPage({
   }
   react.exports.useEffect(() => {
     reload();
-    const h = () => reload();
+    loadMarket();
+    const h = () => {
+      reload();
+      loadMarket();
+    };
     window.addEventListener("hulu-plugin-installed", h);
     return () => window.removeEventListener("hulu-plugin-installed", h);
   }, []);
+  async function loadMarket() {
+    setMarketLoading(true);
+    try {
+      const r2 = await callMarket();
+      setMarket(r2.list);
+      setMarketErr(r2.err);
+    } catch (e) {
+      setMarketErr(String((e == null ? void 0 : e.message) || e));
+    } finally {
+      setMarketLoading(false);
+    }
+  }
+  async function installMarket(it) {
+    if (installing)
+      return;
+    setInstalling(it.id);
+    setMarketErr("");
+    try {
+      const raw = await callM("InstallMarketPlugin", it.id);
+      const r2 = Array.isArray(raw) ? {
+        plugins: raw[0],
+        err: raw[1]
+      } : raw || {};
+      if (Array.isArray(r2.plugins))
+        setList(r2.plugins);
+      if (r2.err) {
+        setMarketErr(String(r2.err));
+        flash("");
+      } else {
+        flash("\u5DF2\u5B89\u88C5\u300C" + it.name + "\u300D");
+        await loadMarket();
+      }
+    } catch (e) {
+      setMarketErr(String((e == null ? void 0 : e.message) || e));
+    } finally {
+      setInstalling("");
+    }
+  }
   function flash(t2) {
     setMsg(t2);
     setTimeout(() => setMsg(""), 2500);
@@ -9755,9 +9836,78 @@ function PluginsPage({
   }
   const current = list.find((p2) => p2.id === sel);
   const canSignIn = !!current && (!!((_a = current.actions) == null ? void 0 : _a.includes("signIn")) || caps.signIn);
+  const marketShown = marketKw.trim() ? market.filter((it) => {
+    const k2 = marketKw.trim().toLowerCase();
+    return it.name.toLowerCase().includes(k2) || it.id.toLowerCase().includes(k2) || (it.description || "").toLowerCase().includes(k2) || (it.tags || []).some((t2) => t2.toLowerCase().includes(k2));
+  }) : market;
   return /* @__PURE__ */ jsxs("div", {
     className: "plug-page",
     children: [/* @__PURE__ */ jsxs("section", {
+      className: "set-card",
+      children: [/* @__PURE__ */ jsxs("div", {
+        className: "mk-head",
+        children: [/* @__PURE__ */ jsxs("h3", {
+          children: ["\u63D2\u4EF6\u5E02\u573A ", /* @__PURE__ */ jsx("span", {
+            className: "cnt",
+            children: market.length
+          })]
+        }), /* @__PURE__ */ jsxs("div", {
+          className: "mk-tools",
+          children: [/* @__PURE__ */ jsx("input", {
+            value: marketKw,
+            placeholder: "\u641C\u63D2\u4EF6\u540D / \u6807\u7B7E\uFF0C\u5982 \u7535\u53F0\u3001QQ",
+            onChange: (e) => setMarketKw(e.target.value)
+          }), /* @__PURE__ */ jsx("button", {
+            className: "ghost-btn",
+            onClick: loadMarket,
+            disabled: marketLoading,
+            children: marketLoading ? "\u2026" : "\u5237\u65B0"
+          })]
+        })]
+      }), /* @__PURE__ */ jsxs("p", {
+        className: "hint",
+        children: ["\u8FD9\u91CC\u5217\u7684\u662F\u5DF2\u7ECF\u6253\u5305\u8FDB\u5B89\u88C5\u5305\u7684\u63D2\u4EF6\uFF0C", /* @__PURE__ */ jsx("b", {
+          children: "\u70B9\u300C\u5B89\u88C5\u300D\u5C31\u88C5\u597D"
+        }), "\uFF0C\u4E0D\u7528\u586B\u5730\u5740\u3001\u4E0D\u7528\u9009\u6587\u4EF6\uFF0C\u79BB\u7EBF\u4E5F\u80FD\u88C5\u3002 \u88C5\u597D\u4E4B\u540E\u5728\u4E0B\u9762\u300C\u5DF2\u5B89\u88C5\u300D\u91CC\u5F00\u5173\u548C\u8BD5\u641C\u3002"]
+      }), marketErr && /* @__PURE__ */ jsx("div", {
+        className: "err-msg",
+        children: marketErr
+      }), market.length === 0 && !marketLoading && /* @__PURE__ */ jsx("div", {
+        className: "empty small",
+        children: "\u6E05\u5355\u6CA1\u8BFB\u51FA\u6765\uFF0C\u70B9\u53F3\u8FB9\u300C\u5237\u65B0\u300D\u91CD\u8BD5\u3002"
+      }), /* @__PURE__ */ jsx("div", {
+        className: "mk-grid",
+        children: marketShown.map((it) => /* @__PURE__ */ jsxs("div", {
+          className: "mk-card" + (it.installed ? " on" : ""),
+          children: [/* @__PURE__ */ jsxs("div", {
+            className: "mk-top",
+            children: [/* @__PURE__ */ jsx("b", {
+              children: it.name
+            }), it.version ? /* @__PURE__ */ jsxs("span", {
+              className: "mk-ver",
+              children: ["v", it.version]
+            }) : null]
+          }), /* @__PURE__ */ jsx("div", {
+            className: "mk-desc",
+            children: it.description || "\u2014"
+          }), /* @__PURE__ */ jsxs("div", {
+            className: "mk-tags",
+            children: [(it.tags || []).map((t2) => /* @__PURE__ */ jsx("span", {
+              className: "tag",
+              children: t2
+            }, t2)), /* @__PURE__ */ jsx("span", {
+              className: "mk-size",
+              children: fmtSize(it.size)
+            })]
+          }), /* @__PURE__ */ jsx("button", {
+            className: "mk-btn" + (it.installed ? " done" : ""),
+            disabled: !!installing || it.installed,
+            onClick: () => installMarket(it),
+            children: installing === it.id ? "\u5B89\u88C5\u4E2D\u2026" : it.installed ? "\u5DF2\u5B89\u88C5" : "\u5B89\u88C5"
+          })]
+        }, it.id))
+      })]
+    }), /* @__PURE__ */ jsxs("section", {
       className: "set-card",
       children: [/* @__PURE__ */ jsx("h3", {
         children: "\u5B89\u88C5\u63D2\u4EF6"
@@ -10350,9 +10500,9 @@ function NowPlaying(p2) {
     })]
   });
 }
-const THEME_LABEL = { dark: "\u6DF1\u8272", light: "\u6D45\u8272", amber: "\u6A58\u9EC4", teal: "\u6DF1\u9752", green: "\u62A4\u773C\u7EFF" };
-const THEME_ICON = { dark: "\u263E", light: "\u2600", amber: "\u25D0", teal: "\u274B", green: "\u273F" };
-const NEXT_THEME = { light: "green", green: "amber", amber: "teal", teal: "dark", dark: "light" };
+const THEME_LABEL = { dark: "\u6DF1\u8272", light: "\u6D45\u8272", amber: "\u6A58\u9EC4", teal: "\u6DF1\u9752", green: "\u62A4\u773C\u7EFF", neon: "\u9713\u8679\u7D2B" };
+const THEME_ICON = { dark: "\u263E", light: "\u2600", amber: "\u25D0", teal: "\u274B", green: "\u273F", neon: "\u2726" };
+const NEXT_THEME = { light: "green", green: "amber", amber: "teal", teal: "dark", dark: "neon", neon: "light" };
 const FI = {
   "layout": '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>',
   "minimize-2": '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>',
@@ -13345,14 +13495,14 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.30";
+const BUILD_TAG = "3.0.33";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
   const [theme, setTheme] = react.exports.useState(() => {
     try {
       const saved = localStorage.getItem("hulu-theme");
-      if (saved === "dark" || saved === "light" || saved === "amber" || saved === "teal" || saved === "green")
+      if (saved === "dark" || saved === "light" || saved === "amber" || saved === "teal" || saved === "green" || saved === "neon")
         return saved;
     } catch {
     }
@@ -13597,7 +13747,7 @@ function App() {
     }
   });
   const fitLrcWidth = (on) => {
-    var _a2, _b2, _c, _d;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h;
     try {
       const app = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
       if (on) {
@@ -13606,13 +13756,15 @@ function App() {
           pw = Number(localStorage.getItem("qqjt-prev-w") || 1190) || 1190;
         } catch {
         }
-        (_c = app == null ? void 0 : app.FitWindowWidth) == null ? void 0 : _c.call(app, Math.max(460, pw));
+        (_e = (_d = (_c = app == null ? void 0 : app.FitWindowWidth) == null ? void 0 : _c.call(app, Math.max(460, pw))) == null ? void 0 : _d.catch) == null ? void 0 : _e.call(_d, () => {
+        });
       } else {
         try {
           localStorage.setItem("qqjt-prev-w", String(Math.round(window.innerWidth)));
         } catch {
         }
-        (_d = app == null ? void 0 : app.FitWindowWidth) == null ? void 0 : _d.call(app, 320);
+        (_h = (_g = (_f = app == null ? void 0 : app.FitWindowWidth) == null ? void 0 : _f.call(app, 320)) == null ? void 0 : _g.catch) == null ? void 0 : _h.call(_g, () => {
+        });
       }
     } catch {
     }
@@ -13636,7 +13788,7 @@ function App() {
     setLyricMode(next);
     localStorage.setItem("qqjt-lrcmode", next);
   };
-  const SKIN_ORDER = ["winamp", "tt", "light", "glass", "hifi", "steel", "green"];
+  const SKIN_ORDER = ["winamp", "tt", "light", "glass", "hifi", "steel", "green", "neon"];
   const [skinTheme, setSkinTheme] = react.exports.useState(() => {
     const v2 = localStorage.getItem("qqjt-skin");
     return SKIN_ORDER.includes(v2) ? v2 : "glass";
@@ -13648,14 +13800,16 @@ function App() {
     glass: "light",
     hifi: "dark",
     steel: "light",
-    green: "green"
+    green: "green",
+    neon: "neon"
   };
   const THEME_SKIN = {
     dark: "winamp",
     amber: "tt",
     light: "light",
     teal: "hifi",
-    green: "green"
+    green: "green",
+    neon: "neon"
   };
   const applySkin = (s) => {
     setSkinTheme(s);
@@ -13680,7 +13834,8 @@ function App() {
     glass: "\u5929\u84DD\u73BB\u7483",
     hifi: "HiFi \u94F6\u7070\u6DF1\u7EFF",
     steel: "Steel \u94F6\u767D\u7EFF",
-    green: "\u62A4\u773C\u7EFF"
+    green: "\u62A4\u773C\u7EFF",
+    neon: "\u9713\u8679\u7D2B"
   };
   const skinName = SKIN_NAME[skinTheme];
   const [repeatOne, setRepeatOne] = react.exports.useState(false);
@@ -13795,7 +13950,7 @@ function App() {
         savedTheme = localStorage.getItem("hulu-theme") || "";
       } catch {
       }
-      if (!savedTheme && (st.theme === "dark" || st.theme === "light" || st.theme === "amber" || st.theme === "teal" || st.theme === "green"))
+      if (!savedTheme && (st.theme === "dark" || st.theme === "light" || st.theme === "amber" || st.theme === "teal" || st.theme === "green" || st.theme === "neon"))
         setTheme(st.theme);
     }).catch(() => {
     });
@@ -16113,7 +16268,7 @@ function App() {
               children: ["v", BUILD_TAG]
             }), /* @__PURE__ */ jsx("span", {
               className: "t",
-              children: skinTheme === "tt" || skinTheme === "hifi" || skinTheme === "steel" ? "EQUALIZER \u5747\u8861\u5668" : "\u5747\u8861\u5668"
+              children: skinTheme === "tt" || skinTheme === "hifi" || skinTheme === "steel" || skinTheme === "neon" ? "EQUALIZER \u5747\u8861\u5668" : "\u5747\u8861\u5668"
             }), /* @__PURE__ */ jsxs("div", {
               className: "sk-eq-on",
               children: [/* @__PURE__ */ jsx("button", {
@@ -16216,7 +16371,7 @@ function App() {
             className: "sk-title",
             children: [/* @__PURE__ */ jsx("span", {
               className: "t",
-              children: skinTheme === "tt" || skinTheme === "hifi" || skinTheme === "steel" ? "PLAYLIST \u64AD\u653E\u5217\u8868" : "\u64AD\u653E\u5217\u8868"
+              children: skinTheme === "tt" || skinTheme === "hifi" || skinTheme === "steel" || skinTheme === "neon" ? "PLAYLIST \u64AD\u653E\u5217\u8868" : "\u64AD\u653E\u5217\u8868"
             }), /* @__PURE__ */ jsxs("span", {
               style: {
                 fontSize: 10.5,
@@ -16386,7 +16541,7 @@ function App() {
             className: "sk-title",
             children: [/* @__PURE__ */ jsx("span", {
               className: "t",
-              children: skinTheme === "tt" || skinTheme === "hifi" || skinTheme === "steel" ? "LYRIC \u6B4C\u8BCD\u79C0" : "\u6B4C\u8BCD\u79C0"
+              children: skinTheme === "tt" || skinTheme === "hifi" || skinTheme === "steel" || skinTheme === "neon" ? "LYRIC \u6B4C\u8BCD\u79C0" : "\u6B4C\u8BCD\u79C0"
             }), /* @__PURE__ */ jsx("span", {
               style: {
                 fontSize: 10.5,
@@ -16985,6 +17140,26 @@ select{background:var(--input);border:1px solid var(--line);border-radius:8px;co
 .plug-install input:focus,.plug-test input:focus{border-color:var(--acc2)}
 .plug-install textarea{background:var(--input);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:10px;font:12px/1.5 ui-monospace,Consolas,monospace;outline:none;resize:vertical}
 .plug-list{display:flex;flex-direction:column;gap:8px}
+
+/* ---------- 插件市场 ---------- */
+.mk-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.mk-tools{display:flex;align-items:center;gap:8px}
+.mk-tools input{background:var(--input);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:7px 10px;font-size:12.5px;outline:none;width:200px}
+.mk-tools input:focus{border-color:var(--acc2)}
+.mk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:12px}
+.mk-card{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--input);min-width:0}
+.mk-card.on{border-color:var(--acc);opacity:.92}
+.mk-top{display:flex;align-items:baseline;gap:8px}
+.mk-top b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mk-ver{font-size:11px;color:var(--dim);flex:0 0 auto}
+.mk-desc{font-size:12px;color:var(--dim);line-height:1.55;min-height:34px}
+.mk-tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mk-size{font-size:11px;color:var(--dim);margin-left:auto}
+.mk-btn{margin-top:2px;align-self:flex-start;border:0;border-radius:8px;padding:6px 16px;font-size:12.5px;cursor:pointer;background:var(--acc);color:#fff}
+.mk-btn:hover{filter:brightness(1.06)}
+.mk-btn.done{background:transparent;color:var(--dim);border:1px solid var(--line);cursor:default}
+@media (max-width:620px){.mk-grid{grid-template-columns:1fr}.mk-tools input{width:100%}.mk-tools{width:100%}}
+
 .plug-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--input)}
 .plug-item.sel{border-color:var(--acc)}
 .plug-main{flex:1;min-width:0}
@@ -19054,6 +19229,203 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(0,0,0,.04));
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
 
+/* ══════════════════════════════════════════════════════
+   霓虹紫主题（第六档 data-theme="neon"）— 桌面 / 迷你 / 设置页
+   黑紫底 + 洋红霓虹描边 + 青色点缀，参考 TTPLAYER 霓虹皮肤
+   ══════════════════════════════════════════════════════ */
+:root[data-theme="neon"]{
+  --bg:#0a0614;--panel:#150b28;--line:#3a1a5e;--txt:#ecd9ff;--dim:#a184c8;
+  --acc:#b026ff;--acc2:#ff2fd0;
+  --hover:rgba(176,38,255,.16);--sel:rgba(176,38,255,.26);--input:#0d0618;--cover:#22103e;
+  --now-bar:#1a0830;--on-acc-text:#ffffff;
+  --heart:#4a2a6a;--heart-on:#ff4bd8;
+  --ico-from:#2a1445;--tag-line:#4a1a6e;
+  --shadow:0 0 14px rgba(176,38,255,.35);
+}
+:root[data-theme="neon"] body{background:
+  radial-gradient(1200px 600px at 50% -10%,rgba(120,20,190,.30),transparent 70%),#0a0614}
+:root[data-theme="neon"] .panel,:root[data-theme="neon"] .card,
+:root[data-theme="neon"] .set-row,:root[data-theme="neon"] .q-group{
+  border-color:rgba(176,38,255,.34);box-shadow:0 0 12px rgba(110,20,190,.28) inset}
+:root[data-theme="neon"] .bar,:root[data-theme="neon"] .side{
+  background:linear-gradient(180deg,#150b28,#0b0517);border-color:rgba(176,38,255,.30)}
+:root[data-theme="neon"] .acc,:root[data-theme="neon"] .btn.on{box-shadow:0 0 12px rgba(176,38,255,.55)}
+:root[data-theme="neon"] .tag{color:#ff8ce8;border-color:#6a1aa8;background:rgba(176,38,255,.12)}
+
+/* 迷你卡：霓虹外框 */
+:root[data-theme="neon"] .mini-card{
+  background:linear-gradient(160deg,#1b0d33,#0d061a);
+  border-color:#7a24c0;
+  box-shadow:0 0 18px rgba(176,38,255,.55),inset 0 0 20px rgba(90,10,150,.45)}
+:root[data-theme="neon"] .mini-cover{border:1px solid rgba(255,47,208,.55);
+  box-shadow:0 0 16px rgba(255,47,208,.45),inset 0 0 14px rgba(120,20,190,.5)}
+:root[data-theme="neon"] .mini-lyric{color:#d9b8ff}
+:root[data-theme="neon"] .mini-ops button{color:#b184e0}
+:root[data-theme="neon"] .mini-ops button:hover{color:#ff8ce8}
+:root[data-theme="neon"] .mini-ops .mini-play{
+  background:linear-gradient(150deg,#ff2fd0,#a51dff);color:#fff;
+  box-shadow:0 0 18px rgba(200,40,255,.65),0 5px 16px rgba(120,0,180,.5)}
+:root[data-theme="neon"] .mini-tools button:hover{background:rgba(176,38,255,.22);color:#ff8ce8}
+
+/* ══════════════════════════════════════════════════════
+   霓虹紫皮肤（data-skin="neon"）— 皮肤四面板
+   ══════════════════════════════════════════════════════ */
+.skin[data-skin="neon"]{
+  --bg:#0a0614;--panel:#150b28;--line:#3a1a5e;--txt:#ecd9ff;--dim:#a184c8;
+  --acc:#b026ff;--acc2:#ff2fd0;--hover:rgba(176,38,255,.16);--sel:rgba(176,38,255,.26);
+  --input:#0d0618;--cover:#22103e;--on-acc-text:#fff;--heart:#4a2a6a;--heart-on:#ff4bd8;
+}
+.skin[data-skin="neon"] .skin-page{
+  background:
+    radial-gradient(900px 420px at 30% -8%,rgba(130,20,210,.35),transparent 68%),
+    radial-gradient(700px 400px at 95% 110%,rgba(255,47,208,.16),transparent 62%),
+    linear-gradient(180deg,#0e0719,#080410 70%,#0a0614);
+}
+.skin[data-skin="neon"] .sk-panel{
+  background:linear-gradient(180deg,#1d0d36 0%,#120725 45%,#0a0413 100%);
+  border:1px solid #7d2cc8;
+  color:#e8d5ff;
+  box-shadow:0 0 18px rgba(168,40,255,.5),
+             0 0 4px rgba(255,47,208,.45),
+             inset 0 0 26px rgba(95,0,160,.42),
+             inset 0 1px 0 rgba(225,150,255,.45);
+}
+.skin[data-skin="neon"] .sk-title{
+  background:linear-gradient(180deg,#41106e 0%,#2a0748 55%,#17042b 100%);
+  border-bottom:1px solid #7a24c0;
+  color:#ff8ce8;
+  text-shadow:0 0 8px rgba(255,47,208,.8);
+}
+.skin[data-skin="neon"] .sk-title .sk-time{color:#ff9df0;font-weight:600;text-shadow:0 0 8px rgba(255,47,208,.7)}
+.skin[data-skin="neon"] .sk-wb{
+  background:linear-gradient(180deg,#3d1068,#24074a 60%,#140330);
+  border-color:#7a24c0;color:#ffb4ee;
+  box-shadow:0 0 8px rgba(176,38,255,.45),inset 0 1px 0 rgba(220,140,255,.4)}
+.skin[data-skin="neon"] .sk-wb:active{background:linear-gradient(180deg,#5a1893,#3a0a6a)}
+
+/* 频谱：紫→粉 */
+.skin[data-skin="neon"] .sk-vis{--vis-lo:#3a0a6a;--vis-mid:#b026ff;--vis-hi:#ffd6ff;
+  filter:drop-shadow(0 0 6px rgba(176,38,255,.55))}
+.skin[data-skin="neon"] .sk-vis-tabs button{background:rgba(40,10,70,.85);border-color:#5a1a96;color:#c79bff}
+.skin[data-skin="neon"] .sk-vis-tabs button.on{background:linear-gradient(180deg,#ff2fd0,#a51dff);color:#fff;
+  border-color:#ff8ce8;box-shadow:0 0 10px rgba(255,47,208,.6)}
+.skin[data-skin="neon"] .sk-vis-idle{color:#a184c8}
+.skin[data-skin="neon"] .sk-spec{background:repeating-linear-gradient(180deg,#120722 0 7px,#1a0c30 7px 8px);
+  border-color:#7d2cc8;box-shadow:inset 0 0 20px rgba(110,10,190,.75),0 0 10px rgba(176,38,255,.35)}
+.skin[data-skin="neon"] .sk-spec i{background:linear-gradient(180deg,#ffe0ff 0%,#ff2fd0 35%,#7a12d6 100%);
+  box-shadow:0 0 8px rgba(190,60,255,.8)}
+
+/* 主窗口文字 */
+.skin[data-skin="neon"] .sk-line{color:#e8d5ff}
+.skin[data-skin="neon"] .sk-line .k{color:#b184e0}
+.skin[data-skin="neon"] .sk-line .v{color:#ffe9ff;text-shadow:0 0 6px rgba(176,38,255,.35)}
+.skin[data-skin="neon"] .sk-status{color:#c79bff}
+.skin[data-skin="neon"] .sk-led{background:#ff2fd0;box-shadow:0 0 9px #ff2fd0}
+.skin[data-skin="neon"] .sk-led.off{background:#3a1a5e;box-shadow:none}
+
+/* PL / EQ / LRC 小圆钮 */
+.skin[data-skin="neon"] .sk-mini-btns button{
+  background:radial-gradient(circle at 50% 25%,#ff9df0,#a51dff 62%,#5a0a9a);
+  border-color:#7a24c0;color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,220,255,.55),0 0 9px rgba(176,38,255,.55)}
+.skin[data-skin="neon"] .sk-mini-btns button.on{
+  background:radial-gradient(circle at 50% 25%,#ffe7ff,#ff2fd0 62%,#9a0a7a);
+  box-shadow:0 0 12px rgba(255,47,208,.7)}
+
+/* 进度条 */
+.skin[data-skin="neon"] .sk-seek .tt{color:#c79bff}
+.skin[data-skin="neon"] .sk-seek input{background:linear-gradient(180deg,#0d0618,#24103f);border-color:#3a1a5e}
+.skin[data-skin="neon"] .sk-seek input::-webkit-slider-thumb{
+  background:linear-gradient(180deg,#ffe0ff,#ff2fd0 55%,#8a0aa8);border-color:#ff8ce8;
+  box-shadow:0 0 10px rgba(255,47,208,.8)}
+
+/* 控制键 */
+.skin[data-skin="neon"] .sk-ctl{
+  background:radial-gradient(circle at 50% 22%,#ffb6f6,#c02bff 58%,#5c099a);
+  border-color:#a144e0;color:#ffe9ff;
+  box-shadow:inset 0 2px 0 rgba(255,225,255,.6),0 0 14px rgba(190,50,255,.6)}
+.skin[data-skin="neon"] .sk-ctl.play{background:radial-gradient(circle at 50% 22%,#ffdcff,#ff2fd0 55%,#a10a80);
+  color:#fff;box-shadow:0 0 20px rgba(255,47,208,.8),inset 0 1px 0 rgba(255,235,255,.7)}
+.skin[data-skin="neon"] .sk-pl-btn{
+  background:linear-gradient(180deg,#4a1078,#2a0748 55%,#150330);
+  border-color:#6a1aa8;color:#ffb4ee;
+  box-shadow:inset 0 1px 0 rgba(220,140,255,.45),0 0 10px rgba(176,38,255,.45)}
+.skin[data-skin="neon"] .sk-vol input{background:#0d0618;border-color:#3a1a5e}
+.skin[data-skin="neon"] .sk-vol input::-webkit-slider-thumb{
+  background:linear-gradient(180deg,#ffe0ff,#ff2fd0 55%,#8a0aa8);border-color:#ff8ce8}
+
+/* 均衡器：霓虹紫推子 + 青色刻点 */
+.skin[data-skin="neon"] .sk-eq-row .lab{color:#b184e0}
+.skin[data-skin="neon"] .sk-eq-row input{background:linear-gradient(180deg,#0d0618,#24103f);border-color:#3a1a5e}
+.skin[data-skin="neon"] .sk-eq-row input::-webkit-slider-thumb{
+  background:linear-gradient(180deg,#ffe0ff,#ff2fd0 55%,#8a0aa8);border-color:#ff8ce8}
+.skin[data-skin="neon"] .sk-eq-faders{
+  background:linear-gradient(180deg,#120722,#07030f);border-color:#3a1a5e;
+  box-shadow:inset 0 0 18px rgba(70,0,130,.55)}
+.skin[data-skin="neon"] .sk-eq-faders .scale{color:#8e6fbd}
+.skin[data-skin="neon"] .sk-fader .track{
+  background:linear-gradient(180deg,#ff2fd0 0%,#b026ff 45%,#22e6ff 100%);
+  box-shadow:0 0 10px rgba(176,38,255,.75),0 0 18px rgba(34,230,255,.25)}
+.skin[data-skin="neon"] .sk-fader .knob{
+  background:linear-gradient(180deg,#ffe9ff,#ff2fd0 55%,#9a0a7a);border-color:#ff8ce8;
+  box-shadow:0 0 10px rgba(255,47,208,.9)}
+
+/* 播放列表 / 工具条 */
+.skin[data-skin="neon"] .sk-tools{
+  background:linear-gradient(180deg,#2a0748,#160330);border-bottom-color:#5a1a96}
+.skin[data-skin="neon"] .sk-tools button{
+  background:linear-gradient(180deg,#43106e,#26064a 58%,#140330);
+  border-color:#6a1aa8;color:#e6c9ff;
+  box-shadow:inset 0 1px 0 rgba(220,140,255,.35)}
+.skin[data-skin="neon"] .sk-tools button.on{
+  background:linear-gradient(180deg,#ff2fd0,#a51dff 60%,#6a0a9a);color:#fff;border-color:#ff8ce8;
+  box-shadow:0 0 12px rgba(255,47,208,.65)}
+.skin[data-skin="neon"] .sk-tools .sk-search input{background:#0d0618;border-color:#5a1a96;color:#e8d5ff}
+.skin[data-skin="neon"] .sk-tools .sk-search input::placeholder{color:#8e6fbd}
+.skin[data-skin="neon"] .sk-pl-foot{background:linear-gradient(180deg,#1a0a2e,#0c0518);border-top:1px solid #4a1a7a}
+.skin[data-skin="neon"] .sk-pl-foot button{color:#c79bff}
+.skin[data-skin="neon"] .sk-pl-foot button:hover{color:#ff8ce8;background:rgba(176,38,255,.2)}
+
+/* 歌词秀：洋红霓虹外框 + 发光字 */
+.skin[data-skin="neon"] .sk-lyr .sk-panel{
+  border-color:#ff2fd0;
+  box-shadow:0 0 20px rgba(255,47,208,.55),0 0 34px rgba(176,38,255,.35),
+             inset 0 0 22px rgba(255,47,208,.22);
+}
+.skin[data-skin="neon"] .sk-lyr-body{
+  background:radial-gradient(600px 320px at 50% 30%,rgba(120,20,190,.32),transparent 72%),
+             linear-gradient(180deg,#1a0a30 0%,#120622 55%,#0a0413 100%);
+  color:#e8d5ff;
+  box-shadow:inset 0 0 34px rgba(150,30,235,.45),inset 0 0 2px rgba(255,47,208,.55)}
+.skin[data-skin="neon"] .sk-lyr-body .song{color:#ffe9ff;text-shadow:0 0 10px rgba(255,47,208,.55)}
+.skin[data-skin="neon"] .sk-lyr-body .meta{color:#b184e0}
+.skin[data-skin="neon"] .sk-lyr-body .ln{color:#8e6fbd}
+.skin[data-skin="neon"] .sk-lyr-body .ln.on{color:#ffd6ff;text-shadow:0 0 12px rgba(255,47,208,.85),0 0 26px rgba(176,38,255,.6)}
+.skin[data-skin="neon"] .sk-lyr-body .none{color:#8e6fbd}
+.skin[data-skin="neon"] .sk-lyr-body::-webkit-scrollbar-track{background:rgba(90,26,150,.28)}
+.skin[data-skin="neon"] .sk-lyr-body::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#ff2fd0,#7a12d6)}
+
+/* 列表与页面 → 紫 */
+.skin[data-skin="neon"] .main{color:#e8d5ff;background:transparent}
+.skin[data-skin="neon"] .head h1{color:#ffe9ff;text-shadow:0 0 10px rgba(176,38,255,.45)}
+.skin[data-skin="neon"] .head p,.skin[data-skin="neon"] .err{color:#b184e0}
+.skin[data-skin="neon"] .thead{color:#c79bff;border-bottom-color:rgba(176,38,255,.35)}
+.skin[data-skin="neon"] .row{color:#e0c9ff}
+.skin[data-skin="neon"] .row:hover{background:rgba(176,38,255,.16)}
+.skin[data-skin="neon"] .row.on{background:rgba(255,47,208,.22);box-shadow:inset 0 0 14px rgba(255,47,208,.25)}
+.skin[data-skin="neon"] .row .name{color:#fff0ff}
+.skin[data-skin="neon"] .row .ca,.skin[data-skin="neon"] .row .cb,.skin[data-skin="neon"] .sub{color:#a184c8}
+.skin[data-skin="neon"] .idx{color:#ff9df0;border-color:#6a1aa8;background:rgba(176,38,255,.14)}
+.skin[data-skin="neon"] .tag{color:#ff9df0;border-color:#6a1aa8}
+.skin[data-skin="neon"] .dur{color:#a184c8}
+.skin[data-skin="neon"] .empty{color:#8e6fbd}
+.skin[data-skin="neon"] .cover{background-color:#22103e}
+.skin[data-skin="neon"] .set-page,.skin[data-skin="neon"] .plugins-page,
+.skin[data-skin="neon"] .local-page,.skin[data-skin="neon"] .q-group{
+  --panel:rgba(176,38,255,.10); --bg:transparent; --txt:#ecd9ff; --dim:#a184c8;
+  --line:rgba(176,38,255,.32); --hover:rgba(176,38,255,.18); --input:#0d0618; --cover:#22103e;
+}
+
 </style>
 </head>
 <body>
@@ -19086,17 +19458,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.30] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.32] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.30] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.32] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.30] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.32] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.30] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.32] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>
