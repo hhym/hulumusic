@@ -148,6 +148,12 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 .app.mini-mode{display:block;grid-template-columns:none;grid-template-rows:none;background:var(--bg)}.app.mini-mode > .menubar,.app.mini-mode > .toolbar,.app.mini-mode > main,
 .app.mini-mode > .nowband,.app.mini-mode > .statusbar,.app.mini-mode > footer{display:none}
 
+.app.skin-mode{display:block;grid-template-columns:none;grid-template-rows:none;background:#160d29}
+.app.skin-mode > .menubar,.app.skin-mode > .toolbar,.app.skin-mode > main,
+.app.skin-mode > .nowband,.app.skin-mode > .statusbar,.app.skin-mode > footer,
+.app.skin-mode > .edge-resize,.app.skin-mode > .mygo-dragbar,.app.skin-mode > .mygo-winctl,
+.app.skin-mode > .desk{display:none}
+
 .mini-player{position:fixed;left:0;top:0;width:348px;height:124px;z-index:50;
   display:block;overflow:visible;background:var(--bg);color:var(--txt)}
 .mini-card{position:absolute;left:10px;top:30px;width:328px;height:88px;
@@ -1066,3 +1072,65 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .desk .dnp-ico,.desk .dnp-play,.desk .dnp-heart,.desk .dnp-right button{display:inline-flex;align-items:center;justify-content:center}
 .mygo-winctl .mygo-win-btn{display:inline-flex;align-items:center;justify-content:center}
 .mini-ops button,.mini-tools button{display:inline-flex;align-items:center;justify-content:center}
+
+/* ===== 竖向皮肤界面 480×1024（深紫经典款） ===== */
+.skin-view{width:480px;height:1024px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;
+  padding:10px;background:linear-gradient(180deg,#241543 0%,#160d29 100%);color:#e8e2ff;overflow:hidden;font:14px/1.5 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+
+.skin-title{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:9px;
+  background:linear-gradient(180deg,#3a2563,#241543);border:1px solid #553a86;cursor:grab;user-select:none}
+.skin-title:active{cursor:grabbing}
+.skin-title-ico{width:18px;height:18px;border-radius:50%;background:#b79bff;color:#1a1030;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.skin-title-name{font-size:13px;font-weight:600;letter-spacing:.5px;flex:1}
+.skin-title-tools{display:flex;gap:6px}
+.skin-title-btn{width:26px;height:26px;border-radius:7px;border:1px solid #553a86;background:#2c1c4e;color:#cfc2f5;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.skin-title-btn:hover{background:#3a2563}
+.skin-title-btn:disabled{opacity:.4;cursor:default}
+
+.skin-panel{background:linear-gradient(180deg,#2c1c4e,#1d1238);border:1px solid #4a3577;border-radius:11px;padding:10px 12px;box-sizing:border-box}
+.skin-panel-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#b79bff;margin-bottom:8px}
+
+/* 主播放面板 */
+.skin-player{display:flex;flex-direction:column;gap:10px}
+.skin-lcd{display:flex;justify-content:space-between;gap:12px;background:#0d0820;border:1px solid #3a2563;border-radius:9px;padding:12px 14px}
+.skin-lcd-left{display:flex;flex-direction:column;gap:6px;min-width:0}
+.skin-lcd-album{font-size:15px;color:#d9c9ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skin-lcd-meta{display:flex;gap:14px;font-size:12px;color:#8f7cc4}
+.skin-lcd-right{text-align:right}
+.skin-lcd-time{font-size:26px;font-weight:700;color:#b79bff;font-variant-numeric:tabular-nums}
+.skin-lcd-dur{font-size:12px;color:#8f7cc4}
+.skin-progress input{width:100%;accent-color:#b79bff}
+.skin-transport{display:flex;align-items:center;gap:16px;justify-content:center}
+.skin-transport button{width:38px;height:38px;border-radius:50%;border:1px solid #553a86;background:#2c1c4e;color:#e8e2ff;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.skin-transport button:hover{background:#3a2563}
+.skin-play{width:48px!important;height:48px!important;background:#4a3577!important}
+.skin-volume{display:flex;align-items:center;gap:8px;color:#cfc2f5}
+.skin-volume input{width:110px;accent-color:#b79bff}
+
+/* 均衡器面板 */
+.skin-eq{flex:0 0 auto}
+.skin-eq-bars{display:flex;gap:10px;justify-content:center;align-items:flex-end;height:74px}
+.skin-eq-fader{position:relative;width:8px;height:70px;background:#0d0820;border:1px solid #3a2563;border-radius:4px}
+.skin-eq-fader i{position:absolute;left:-3px;width:12px;height:14px;border-radius:3px;background:#b79bff;
+  top:calc(50% - var(--gain,0) / 24 * 100% - 7px)}
+
+/* 歌词秀面板 */
+.skin-lyric{flex:0 0 auto}
+.skin-lyric-box{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:14px 8px;min-height:150px;justify-content:center}
+.skin-lyric-prev,.skin-lyric-next{font-size:13px;color:#7a68a8;min-height:20px}
+.skin-lyric-cur{font-size:17px;color:#fff;min-height:26px}
+
+/* 播放列表面板 */
+.skin-playlist{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.skin-pl-count{font-size:11px;color:#8f7cc4}
+.skin-pl-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.skin-pl-empty{color:#7a68a8;text-align:center;padding:30px 0}
+.skin-pl-row{display:grid;grid-template-columns:26px 1fr 90px 52px;gap:8px;align-items:center;padding:7px 8px;border-radius:7px;cursor:pointer;font-size:13px}
+.skin-pl-row:hover{background:#3a2563}
+.skin-pl-row.on{background:#4a3577;color:#fff}
+.skin-pl-idx{color:#8f7cc4;text-align:center}
+.skin-pl-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skin-pl-artist{color:#9d88cf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.skin-pl-dur{color:#8f7cc4;text-align:right;font-variant-numeric:tabular-nums}

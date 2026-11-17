@@ -6,6 +6,8 @@ package qianqian
 
 const (
 	miniW, miniH = 348, 124
+	// 皮肤界面：竖向 480×1024 小窗。
+	skinW, skinH = 480, 1024
 	deskW, deskH = 1190, 780
 	// 主界面的最小尺寸。窗口创建时按这个下限建，缩迷你之前必须先放开，
 	// 否则 SetSize(348,124) 会被系统按 900x560 夹住 —— 结果就是迷你卡
@@ -31,6 +33,28 @@ func (a *App) miniOn() string {
 }
 
 func (a *App) miniOff() string {
+	if a.win == nil {
+		return "窗口还没准备好"
+	}
+	a.win.SetAlwaysOnTop(false)
+	a.win.SetSize(deskW, deskH)
+	a.win.SetMinimumSize(minW, minH)
+	return ""
+}
+
+// skinOn 切到竖向皮肤窗 480×1024：先放开最小尺寸下限，再改尺寸。
+func (a *App) skinOn() string {
+	if a.win == nil {
+		return "窗口还没准备好"
+	}
+	a.win.SetMinimumSize(0, 0)
+	a.win.SetAlwaysOnTop(false)
+	a.win.SetSize(skinW, skinH)
+	return ""
+}
+
+// skinOff 从皮肤窗还原到桌面主界面尺寸。
+func (a *App) skinOff() string {
 	if a.win == nil {
 		return "窗口还没准备好"
 	}

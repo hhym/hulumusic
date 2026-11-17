@@ -9941,7 +9941,7 @@ function PluginsPage({
     }) : null]
   });
 }
-const fmt$2 = (ms) => {
+const fmt$3 = (ms) => {
   if (!ms || !isFinite(ms) || ms < 0)
     return "0:00";
   const s = Math.floor(ms / 1e3);
@@ -10112,7 +10112,7 @@ function NowPlaying(p2) {
         className: "np-prog",
         children: [/* @__PURE__ */ jsx("span", {
           className: "np-time",
-          children: fmt$2(p2.pos)
+          children: fmt$3(p2.pos)
         }), /* @__PURE__ */ jsx("input", {
           type: "range",
           min: 0,
@@ -10125,7 +10125,7 @@ function NowPlaying(p2) {
           }
         }), /* @__PURE__ */ jsx("span", {
           className: "np-time",
-          children: fmt$2(p2.dur)
+          children: fmt$3(p2.dur)
         })]
       }), /* @__PURE__ */ jsxs("div", {
         className: "np-controls",
@@ -10563,6 +10563,262 @@ function MiniPlayer(p2) {
         })]
       })]
     })
+  });
+}
+const fmt$2 = (ms) => {
+  if (!isFinite(ms) || ms < 0)
+    ms = 0;
+  const s = Math.floor(ms / 1e3);
+  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+};
+function SkinView(p2) {
+  var _a;
+  react.exports.useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape")
+        p2.onExpand();
+      if (e.key === " ") {
+        e.preventDefault();
+        p2.onToggle();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [p2]);
+  const drag = react.exports.useRef({
+    dx: 0,
+    dy: 0,
+    raf: 0
+  });
+  const flushMove = () => {
+    var _a2, _b, _c;
+    const st = drag.current;
+    st.raf = 0;
+    if (!st.dx && !st.dy)
+      return;
+    const dpr = window.devicePixelRatio || 1;
+    const dx = Math.round(st.dx * dpr);
+    const dy = Math.round(st.dy * dpr);
+    st.dx = 0;
+    st.dy = 0;
+    const app = (_b = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b.App;
+    try {
+      (_c = app == null ? void 0 : app.WinMoveBy) == null ? void 0 : _c.call(app, dx, dy);
+    } catch {
+    }
+  };
+  const onMouseDown = (e) => {
+    if (e.button !== 0)
+      return;
+    if (e.target.closest("button,input"))
+      return;
+    e.preventDefault();
+    const onMove = (ev) => {
+      drag.current.dx += ev.movementX;
+      drag.current.dy += ev.movementY;
+      if (!drag.current.raf)
+        drag.current.raf = requestAnimationFrame(flushMove);
+    };
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      if (drag.current.raf) {
+        cancelAnimationFrame(drag.current.raf);
+        drag.current.raf = 0;
+        flushMove();
+      }
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+  const title = p2.cur ? `${p2.cur.name} \u2014 ${p2.cur.artist || "\u672A\u77E5\u6B4C\u624B"}` : "\u672A\u5728\u64AD\u653E";
+  const curLine = p2.curIndex >= 0 && p2.lyric[p2.curIndex] ? p2.lyric[p2.curIndex].text : "";
+  const prevLine = p2.curIndex > 0 ? p2.lyric[p2.curIndex - 1].text : "";
+  const nextLine = p2.curIndex >= 0 && p2.lyric[p2.curIndex + 1] ? p2.lyric[p2.curIndex + 1].text : "";
+  return /* @__PURE__ */ jsxs("div", {
+    className: "skin-view",
+    children: [/* @__PURE__ */ jsxs("div", {
+      className: "skin-title",
+      onMouseDown,
+      children: [/* @__PURE__ */ jsx("span", {
+        className: "skin-title-ico",
+        children: "\u266A"
+      }), /* @__PURE__ */ jsx("span", {
+        className: "skin-title-name",
+        children: "\u5343\u5343\u9759\u542C"
+      }), /* @__PURE__ */ jsxs("span", {
+        className: "skin-title-tools",
+        children: [/* @__PURE__ */ jsx("button", {
+          className: "skin-title-btn",
+          onClick: p2.onExpand,
+          title: "\u5207\u6362\u56DE\u684C\u9762",
+          children: /* @__PURE__ */ jsx(Fi, {
+            n: "shirt",
+            size: 12
+          })
+        }), /* @__PURE__ */ jsx("button", {
+          className: "skin-title-btn",
+          onClick: p2.onFav,
+          disabled: !p2.cur,
+          title: p2.inLib ? "\u53D6\u6D88\u6536\u85CF" : "\u6536\u85CF",
+          children: /* @__PURE__ */ jsx(Fi, {
+            n: "heart",
+            fill: true,
+            size: 12
+          })
+        })]
+      })]
+    }), /* @__PURE__ */ jsxs("section", {
+      className: "skin-panel skin-player",
+      children: [/* @__PURE__ */ jsxs("div", {
+        className: "skin-lcd",
+        children: [/* @__PURE__ */ jsxs("div", {
+          className: "skin-lcd-left",
+          children: [/* @__PURE__ */ jsx("div", {
+            className: "skin-lcd-album",
+            children: ((_a = p2.cur) == null ? void 0 : _a.album) || (p2.cur ? p2.cur.name : "\u4E13\u8F91\uFF1A\u2014")
+          }), /* @__PURE__ */ jsxs("div", {
+            className: "skin-lcd-meta",
+            children: [/* @__PURE__ */ jsx("span", {
+              children: "\u7ACB\u4F53\u58F0"
+            }), /* @__PURE__ */ jsxs("span", {
+              children: ["\u72B6\u6001\uFF1A", p2.busy ? "\u53D6\u6D41\u4E2D" : p2.playing ? "\u64AD\u653E" : "\u6682\u505C"]
+            })]
+          })]
+        }), /* @__PURE__ */ jsxs("div", {
+          className: "skin-lcd-right",
+          children: [/* @__PURE__ */ jsx("div", {
+            className: "skin-lcd-time",
+            children: fmt$2(p2.pos)
+          }), /* @__PURE__ */ jsxs("div", {
+            className: "skin-lcd-dur",
+            children: ["/ ", fmt$2(p2.dur)]
+          })]
+        })]
+      }), /* @__PURE__ */ jsx("div", {
+        className: "skin-progress",
+        children: /* @__PURE__ */ jsx("input", {
+          type: "range",
+          min: 0,
+          max: p2.dur || 0,
+          step: 100,
+          value: Math.min(p2.pos, p2.dur || 0),
+          onChange: (e) => p2.onSeek(Number(e.target.value))
+        })
+      }), /* @__PURE__ */ jsxs("div", {
+        className: "skin-transport",
+        children: [/* @__PURE__ */ jsx("button", {
+          onClick: p2.onPrev,
+          title: "\u4E0A\u4E00\u9996",
+          children: /* @__PURE__ */ jsx(Fi, {
+            n: "skip-back",
+            fill: true,
+            size: 18
+          })
+        }), /* @__PURE__ */ jsx("button", {
+          className: "skin-play",
+          onClick: p2.onToggle,
+          disabled: !p2.cur,
+          title: p2.busy ? "\u53D6\u6D41\u4E2D" : p2.playing ? "\u6682\u505C" : "\u64AD\u653E",
+          children: /* @__PURE__ */ jsx(Fi, {
+            n: FN(p2.playing ? "pause" : "play"),
+            fill: true,
+            size: 20
+          })
+        }), /* @__PURE__ */ jsx("button", {
+          onClick: p2.onNext,
+          title: "\u4E0B\u4E00\u9996",
+          children: /* @__PURE__ */ jsx(Fi, {
+            n: "skip-forward",
+            fill: true,
+            size: 18
+          })
+        }), /* @__PURE__ */ jsxs("div", {
+          className: "skin-volume",
+          children: [/* @__PURE__ */ jsx(Fi, {
+            n: p2.volume > 0 ? "volume-high" : "volume-mute",
+            size: 14
+          }), /* @__PURE__ */ jsx("input", {
+            type: "range",
+            min: 0,
+            max: 1,
+            step: 0.01,
+            value: p2.volume,
+            onChange: (e) => p2.onVolume(Number(e.target.value))
+          })]
+        })]
+      })]
+    }), /* @__PURE__ */ jsx("section", {
+      className: "skin-panel skin-eq",
+      children: /* @__PURE__ */ jsxs("div", {
+        className: "skin-panel-head",
+        children: [/* @__PURE__ */ jsx("span", {
+          children: "\u5747\u8861\u5668"
+        }), /* @__PURE__ */ jsx("span", {
+          className: "skin-eq-bars",
+          children: (p2.eqGains.length ? p2.eqGains : Array(10).fill(0)).map((g, i) => /* @__PURE__ */ jsx("span", {
+            className: "skin-eq-fader",
+            style: {
+              "--gain": g
+            },
+            children: /* @__PURE__ */ jsx("i", {})
+          }, i))
+        })]
+      })
+    }), /* @__PURE__ */ jsxs("section", {
+      className: "skin-panel skin-lyric",
+      children: [/* @__PURE__ */ jsx("div", {
+        className: "skin-panel-head",
+        children: /* @__PURE__ */ jsx("span", {
+          children: "\u6B4C\u8BCD\u79C0"
+        })
+      }), /* @__PURE__ */ jsxs("div", {
+        className: "skin-lyric-box",
+        children: [/* @__PURE__ */ jsx("div", {
+          className: "skin-lyric-prev",
+          children: prevLine || " "
+        }), /* @__PURE__ */ jsx("div", {
+          className: "skin-lyric-cur",
+          children: curLine || title
+        }), /* @__PURE__ */ jsx("div", {
+          className: "skin-lyric-next",
+          children: nextLine || " "
+        })]
+      })]
+    }), /* @__PURE__ */ jsxs("section", {
+      className: "skin-panel skin-playlist",
+      children: [/* @__PURE__ */ jsxs("div", {
+        className: "skin-panel-head",
+        children: [/* @__PURE__ */ jsx("span", {
+          children: "\u64AD\u653E\u5217\u8868"
+        }), /* @__PURE__ */ jsxs("span", {
+          className: "skin-pl-count",
+          children: [p2.queue.list.length, " \u9996"]
+        })]
+      }), /* @__PURE__ */ jsxs("div", {
+        className: "skin-pl-list",
+        children: [p2.queue.list.length === 0 && /* @__PURE__ */ jsx("div", {
+          className: "skin-pl-empty",
+          children: "\u5217\u8868\u4E3A\u7A7A\uFF0C\u53BB\u641C\u7D22\u52A0\u6B4C"
+        }), p2.queue.list.map((t2, i) => /* @__PURE__ */ jsxs("div", {
+          className: "skin-pl-row" + (i === p2.queue.idx ? " on" : ""),
+          onClick: () => p2.onPlayAt(i),
+          children: [/* @__PURE__ */ jsx("span", {
+            className: "skin-pl-idx",
+            children: i + 1
+          }), /* @__PURE__ */ jsx("span", {
+            className: "skin-pl-name",
+            children: t2.name
+          }), /* @__PURE__ */ jsx("span", {
+            className: "skin-pl-artist",
+            children: t2.artist || "\u672A\u77E5"
+          }), /* @__PURE__ */ jsx("span", {
+            className: "skin-pl-dur",
+            children: fmt$2((t2.duration || 0) * 1e3)
+          })]
+        }, t2.id + i))]
+      })]
+    })]
   });
 }
 const qrcode = function(typeNumber, errorCorrectionLevel) {
@@ -13019,6 +13275,7 @@ function App() {
   const audio = react.exports.useRef(null);
   const [npOpen, setNpOpen] = react.exports.useState(false);
   const [mini, setMini] = react.exports.useState(START_MINI);
+  const [skin, setSkin] = react.exports.useState(false);
   const [maxedApp, setMaxedApp] = react.exports.useState(false);
   react.exports.useEffect(() => {
     document.body.classList.toggle("qq-mini", mini);
@@ -13427,6 +13684,18 @@ function App() {
       const msg = await call("SetMiniMode", on);
       if (msg) {
         setMini(!on);
+        setErr(String(msg));
+      }
+    } catch {
+    }
+  }
+  async function toggleSkin(on) {
+    setSkin(on);
+    setNpOpen(false);
+    try {
+      const msg = await call("SetSkinMode", on);
+      if (msg) {
+        setSkin(!on);
         setErr(String(msg));
       }
     } catch {
@@ -14314,8 +14583,8 @@ function App() {
     })]
   });
   return /* @__PURE__ */ jsxs("div", {
-    className: "app desk-mode" + (mini ? " mini-mode" : ""),
-    children: [!mini && /* @__PURE__ */ jsxs(Fragment, {
+    className: "app desk-mode" + (mini ? " mini-mode" : "") + (skin ? " skin-mode" : ""),
+    children: [!mini && !skin && /* @__PURE__ */ jsxs(Fragment, {
       children: [/* @__PURE__ */ jsx("div", {
         className: "edge-resize left",
         title: "\u62D6\u8FD9\u91CC\u6539\u5BBD",
@@ -14325,7 +14594,7 @@ function App() {
         title: "\u62D6\u8FD9\u91CC\u6539\u5BBD",
         onPointerDown: (e) => startEdgeResize("right", e)
       })]
-    }), MYGO_HOST && !mini && /* @__PURE__ */ jsxs(Fragment, {
+    }), MYGO_HOST && !mini && !skin && /* @__PURE__ */ jsxs(Fragment, {
       children: [/* @__PURE__ */ jsx("div", {
         className: "mygo-dragbar",
         children: /* @__PURE__ */ jsx("span", {
@@ -14747,6 +15016,14 @@ function App() {
               })
             }), /* @__PURE__ */ jsx("button", {
               className: "ghost-btn icon-only",
+              onClick: () => toggleSkin(true),
+              title: "\u76AE\u80A4\u754C\u9762 480\xD71024",
+              children: /* @__PURE__ */ jsx(Fi, {
+                n: "layout",
+                size: 14
+              })
+            }), /* @__PURE__ */ jsx("button", {
+              className: "ghost-btn icon-only",
               onClick: () => toggleMini(true),
               title: "\u5C0F\u7A97\u53E3\u6A21\u5F0F",
               children: /* @__PURE__ */ jsx(Fi, {
@@ -15100,6 +15377,33 @@ function App() {
       },
       theme,
       onTheme: () => pickTheme(NEXT_THEME[theme])
+    }), skin && /* @__PURE__ */ jsx(SkinView, {
+      cur,
+      playing,
+      busy,
+      pos,
+      dur,
+      lyric,
+      curIndex,
+      queue,
+      volume,
+      eqGains,
+      inLib: !!cur && lib.some((x2) => x2.id === cur.id),
+      onToggle: toggle,
+      onPrev: () => step(-1),
+      onNext: () => step(1),
+      onSeek: (ms) => {
+        const a = audio.current;
+        if (a)
+          a.currentTime = Math.max(0, ms / 1e3);
+      },
+      onVolume: (v2) => setVolumeState(v2),
+      onFav: () => {
+        if (cur)
+          fav(cur);
+      },
+      onPlayAt: playAt,
+      onExpand: () => toggleSkin(false)
     }), /* @__PURE__ */ jsx("audio", {
       ref: audio,
       crossOrigin: "anonymous",
@@ -15359,6 +15663,12 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 
 .app.mini-mode{display:block;grid-template-columns:none;grid-template-rows:none;background:var(--bg)}.app.mini-mode > .menubar,.app.mini-mode > .toolbar,.app.mini-mode > main,
 .app.mini-mode > .nowband,.app.mini-mode > .statusbar,.app.mini-mode > footer{display:none}
+
+.app.skin-mode{display:block;grid-template-columns:none;grid-template-rows:none;background:#160d29}
+.app.skin-mode > .menubar,.app.skin-mode > .toolbar,.app.skin-mode > main,
+.app.skin-mode > .nowband,.app.skin-mode > .statusbar,.app.skin-mode > footer,
+.app.skin-mode > .edge-resize,.app.skin-mode > .mygo-dragbar,.app.skin-mode > .mygo-winctl,
+.app.skin-mode > .desk{display:none}
 
 .mini-player{position:fixed;left:0;top:0;width:348px;height:124px;z-index:50;
   display:block;overflow:visible;background:var(--bg);color:var(--txt)}
@@ -16278,6 +16588,68 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .desk .dnp-ico,.desk .dnp-play,.desk .dnp-heart,.desk .dnp-right button{display:inline-flex;align-items:center;justify-content:center}
 .mygo-winctl .mygo-win-btn{display:inline-flex;align-items:center;justify-content:center}
 .mini-ops button,.mini-tools button{display:inline-flex;align-items:center;justify-content:center}
+
+/* ===== 竖向皮肤界面 480×1024（深紫经典款） ===== */
+.skin-view{width:480px;height:1024px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;
+  padding:10px;background:linear-gradient(180deg,#241543 0%,#160d29 100%);color:#e8e2ff;overflow:hidden;font:14px/1.5 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+
+.skin-title{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:9px;
+  background:linear-gradient(180deg,#3a2563,#241543);border:1px solid #553a86;cursor:grab;user-select:none}
+.skin-title:active{cursor:grabbing}
+.skin-title-ico{width:18px;height:18px;border-radius:50%;background:#b79bff;color:#1a1030;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.skin-title-name{font-size:13px;font-weight:600;letter-spacing:.5px;flex:1}
+.skin-title-tools{display:flex;gap:6px}
+.skin-title-btn{width:26px;height:26px;border-radius:7px;border:1px solid #553a86;background:#2c1c4e;color:#cfc2f5;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.skin-title-btn:hover{background:#3a2563}
+.skin-title-btn:disabled{opacity:.4;cursor:default}
+
+.skin-panel{background:linear-gradient(180deg,#2c1c4e,#1d1238);border:1px solid #4a3577;border-radius:11px;padding:10px 12px;box-sizing:border-box}
+.skin-panel-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#b79bff;margin-bottom:8px}
+
+/* 主播放面板 */
+.skin-player{display:flex;flex-direction:column;gap:10px}
+.skin-lcd{display:flex;justify-content:space-between;gap:12px;background:#0d0820;border:1px solid #3a2563;border-radius:9px;padding:12px 14px}
+.skin-lcd-left{display:flex;flex-direction:column;gap:6px;min-width:0}
+.skin-lcd-album{font-size:15px;color:#d9c9ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skin-lcd-meta{display:flex;gap:14px;font-size:12px;color:#8f7cc4}
+.skin-lcd-right{text-align:right}
+.skin-lcd-time{font-size:26px;font-weight:700;color:#b79bff;font-variant-numeric:tabular-nums}
+.skin-lcd-dur{font-size:12px;color:#8f7cc4}
+.skin-progress input{width:100%;accent-color:#b79bff}
+.skin-transport{display:flex;align-items:center;gap:16px;justify-content:center}
+.skin-transport button{width:38px;height:38px;border-radius:50%;border:1px solid #553a86;background:#2c1c4e;color:#e8e2ff;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.skin-transport button:hover{background:#3a2563}
+.skin-play{width:48px!important;height:48px!important;background:#4a3577!important}
+.skin-volume{display:flex;align-items:center;gap:8px;color:#cfc2f5}
+.skin-volume input{width:110px;accent-color:#b79bff}
+
+/* 均衡器面板 */
+.skin-eq{flex:0 0 auto}
+.skin-eq-bars{display:flex;gap:10px;justify-content:center;align-items:flex-end;height:74px}
+.skin-eq-fader{position:relative;width:8px;height:70px;background:#0d0820;border:1px solid #3a2563;border-radius:4px}
+.skin-eq-fader i{position:absolute;left:-3px;width:12px;height:14px;border-radius:3px;background:#b79bff;
+  top:calc(50% - var(--gain,0) / 24 * 100% - 7px)}
+
+/* 歌词秀面板 */
+.skin-lyric{flex:0 0 auto}
+.skin-lyric-box{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:14px 8px;min-height:150px;justify-content:center}
+.skin-lyric-prev,.skin-lyric-next{font-size:13px;color:#7a68a8;min-height:20px}
+.skin-lyric-cur{font-size:17px;color:#fff;min-height:26px}
+
+/* 播放列表面板 */
+.skin-playlist{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.skin-pl-count{font-size:11px;color:#8f7cc4}
+.skin-pl-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.skin-pl-empty{color:#7a68a8;text-align:center;padding:30px 0}
+.skin-pl-row{display:grid;grid-template-columns:26px 1fr 90px 52px;gap:8px;align-items:center;padding:7px 8px;border-radius:7px;cursor:pointer;font-size:13px}
+.skin-pl-row:hover{background:#3a2563}
+.skin-pl-row.on{background:#4a3577;color:#fff}
+.skin-pl-idx{color:#8f7cc4;text-align:center}
+.skin-pl-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skin-pl-artist{color:#9d88cf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.skin-pl-dur{color:#8f7cc4;text-align:right;font-variant-numeric:tabular-nums}
 
 </style>
 </head>

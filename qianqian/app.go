@@ -80,6 +80,17 @@ func (a *App) SetMiniMode(on bool) string {
 	return a.miniOff()
 }
 
+// SetSkinMode 切换竖向皮肤界面：480×1024 的小窗形态，关掉时还原桌面主界面。
+func (a *App) SetSkinMode(on bool) string {
+	if a.ctx == nil {
+		return "窗口还没准备好"
+	}
+	if on {
+		return a.skinOn()
+	}
+	return a.skinOff()
+}
+
 // Start 在窗口建好后调一次，把目录、收藏、代理准备好。
 func (a *App) Start() { a.startup(context.Background()) }
 

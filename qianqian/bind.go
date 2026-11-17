@@ -111,6 +111,10 @@ func (x API) SetMiniMode(on any) string {
 	return x.App.SetMiniMode(as[bool](on))
 }
 
+func (x API) SetSkinMode(on any) string {
+	return x.App.SetSkinMode(as[bool](on))
+}
+
 func (x API) Search(query any, sources any) SearchResult {
 	return x.App.Search(asStr(query), as[[]string](sources))
 }

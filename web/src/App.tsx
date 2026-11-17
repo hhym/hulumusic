@@ -5,6 +5,7 @@ import SettingsPage from './Settings'
 import PluginsPage from './Plugins'
 import NowPlaying from './NowPlaying'
 import MiniPlayer from './MiniPlayer'
+import SkinView from './SkinView'
 import {NEXT_THEME, THEME_ICON, THEME_LABEL, type Theme} from './theme'
 import {Fi, FN} from './feather'
 import SignInModal, {type SignInRequest} from './SignInModal'
@@ -265,6 +266,8 @@ export default function App() {
   // 二级播放界面
   const [npOpen, setNpOpen] = useState(false)
   const [mini, setMini] = useState(START_MINI)
+  // 竖向皮肤界面：窗口 480×1024，四面板纵向堆叠。
+  const [skin, setSkin] = useState(false)
   // 窗口最大化状态：按钮图标要在「最大化 / 还原」之间换，所以得记着
   const [maxedApp, setMaxedApp] = useState(false)
   // 迷你模式下窗口缩成 348×124，mygo 那边是透明窗口：页面底色要让出来，
@@ -669,6 +672,19 @@ export default function App() {
       // Go 端没切成（比如找不到主窗口）就把界面退回原样，别留半截迷你布局
       if (msg) {
         setMini(!on)
+        setErr(String(msg))
+      }
+    } catch { /* 浏览器预览没有这个方法，忽略 */ }
+  }
+
+  // 竖向皮肤界面：窗口切到 480×1024（Go 端改尺寸），关掉还原桌面主界面。
+  async function toggleSkin(on: boolean) {
+    setSkin(on)
+    setNpOpen(false)
+    try {
+      const msg = await call('SetSkinMode', on)
+      if (msg) {
+        setSkin(!on)
         setErr(String(msg))
       }
     } catch { /* 浏览器预览没有这个方法，忽略 */ }
@@ -1295,14 +1311,14 @@ export default function App() {
   )
 
   return (
-    <div className={'app desk-mode' + (mini ? ' mini-mode' : '')}>
-      {!mini && (
+    <div className={'app desk-mode' + (mini ? ' mini-mode' : '') + (skin ? ' skin-mode' : '')}>
+      {!mini && !skin && (
         <>
           <div className="edge-resize left" title="拖这里改宽" onPointerDown={(e) => startEdgeResize('left', e)} />
           <div className="edge-resize right" title="拖这里改宽" onPointerDown={(e) => startEdgeResize('right', e)} />
         </>
       )}
-      {MYGO_HOST && !mini && (
+      {MYGO_HOST && !mini && !skin && (
         <>
           {/* 拖动条只放标题：--app-region 是继承属性，按钮要是落在 drag 容器里，
               点击会被 mygo 当成拖窗口，click 事件就丢了 —— 所以按钮单独一层。 */}
@@ -1477,6 +1493,9 @@ export default function App() {
               <div className="desk-top-right">
                 <button className="ghost-btn icon-only" onClick={() => pickTheme(NEXT_THEME[theme])} title={'主题：' + THEME_LABEL[theme]}>
                   <span className="dt-theme">{THEME_ICON[theme]}</span>
+                </button>
+                <button className="ghost-btn icon-only" onClick={() => toggleSkin(true)} title="皮肤界面 480×1024">
+                  <Fi n="layout" size={14} />
                 </button>
                 <button className="ghost-btn icon-only" onClick={() => toggleMini(true)} title="小窗口模式">
                   <Fi n="minimize-2" size={14} />
@@ -1660,6 +1679,30 @@ export default function App() {
           onQueue={() => { setTab('queue'); toggleMini(false) }}
           theme={theme}
           onTheme={() => pickTheme(NEXT_THEME[theme])}
+        />
+      )}
+
+      {skin && (
+        <SkinView
+          cur={cur}
+          playing={playing}
+          busy={busy}
+          pos={pos}
+          dur={dur}
+          lyric={lyric}
+          curIndex={curIndex}
+          queue={queue}
+          volume={volume}
+          eqGains={eqGains}
+          inLib={!!cur && lib.some((x) => x.id === cur.id)}
+          onToggle={toggle}
+          onPrev={() => step(-1)}
+          onNext={() => step(1)}
+          onSeek={(ms) => { const a = audio.current; if (a) a.currentTime = Math.max(0, ms / 1000) }}
+          onVolume={(v) => setVolumeState(v)}
+          onFav={() => { if (cur) fav(cur) }}
+          onPlayAt={playAt}
+          onExpand={() => toggleSkin(false)}
         />
       )}
 
