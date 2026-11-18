@@ -2,6 +2,7 @@ import React from 'react'
 import {createRoot} from 'react-dom/client'
 import './style.css'
 import App from './App'
+import DeskLrc from './DeskLrc'
 
 // 任何渲染异常都别留白屏，直接把错误摊在页面上（方便用户截图反馈）
 class Boundary extends React.Component<{children: React.ReactNode}, {err: string | null}> {
@@ -32,10 +33,13 @@ class Boundary extends React.Component<{children: React.ReactNode}, {err: string
 
 const container = document.getElementById('root')
 
+// ?desklrc=1 是桌面歌词那扇独立窗口，只画一行字，别把整个主界面塞进去
+const isDeskLrc = /(^|[?&])desklrc=1(&|$)/.test(location.search)
+
 createRoot(container!).render(
     <React.StrictMode>
         <Boundary>
-            <App/>
+            {isDeskLrc ? <DeskLrc/> : <App/>}
         </Boundary>
     </React.StrictMode>
 )

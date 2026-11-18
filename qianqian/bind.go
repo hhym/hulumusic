@@ -218,6 +218,23 @@ func (x API) PluginExists(id any) bool {
 	return x.App.PluginExists(asStr(id))
 }
 
+func (x API) SkinPacks() ([]TtSkinPack, error) {
+	v, e := x.App.SkinPacks()
+	if e != nil {
+		return []TtSkinPack{}, e
+	}
+	return v, nil
+}
+
+// DecodeSkinPack 解一个皮肤插件的全部 .skn（含贴图 data URI）。
+func (x API) DecodeSkinPack(id any) (TtSkinPack, error) {
+	v, e := x.App.DecodeSkinPack(asStr(id))
+	if e != nil {
+		return TtSkinPack{}, e
+	}
+	return v, nil
+}
+
 func (x API) PluginDir(id any) string {
 	return x.App.PluginDir(asStr(id))
 }

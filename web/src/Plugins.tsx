@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   clearPluginCache,
   encodePluginTrack,
@@ -6,6 +6,7 @@ import {
   type PluginSearchItem,
 } from './pluginRuntime'
 import {getPluginSettingCache, mygoAccount, mygoCapabilities, mygoSignIn, mygoSignOut, setPluginSettingCache} from './mygoRuntime'
+import {applyTtSkinTheme, decodeSkinPack, renderTtSkinWindow, type TtSkin, type TtSkinPack} from './ttskin'
 
 type Plugin = {
   id: string
@@ -54,6 +55,48 @@ async function callList(fn: string, ...args: any[]): Promise<{ list: Plugin[]; e
   return { list: [], err: '' }
 }
 
+// 一套皮肤的缩略图：直接复用渲染器按 156px 等比缩，看到的就是换肤后的样子。
+function SkinThumb({skin}: {skin: TtSkin}) {
+  const box = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const el = box.current
+    if (!el) return
+    let dispose: (() => void) | null = null
+    let drawn = false
+    const draw = () => {
+      if (drawn) return
+      drawn = true
+      try {
+        dispose = renderTtSkinWindow(el, skin, 'player', {fitWidth: 156})
+      } catch {
+        /* 个别皮肤缺背景图时留空，不挡列表 */
+      }
+    }
+    // 滚到眼前再画：一套皮肤要抠几十张 BMP，17 套一起上会卡一下
+    let io: IntersectionObserver | null = null
+    if (typeof IntersectionObserver === 'function') {
+      io = new IntersectionObserver((es) => {
+        if (es.some((e) => e.isIntersecting)) {
+          draw()
+          io?.disconnect()
+        }
+      }, {rootMargin: '120px'})
+      io.observe(el)
+    } else {
+      draw()
+    }
+    return () => {
+      io?.disconnect()
+      try {
+        dispose?.()
+      } catch {
+        /* 卸载时忽略 */
+      }
+    }
+  }, [skin.file])
+  return <div className="skin-thumb" ref={box} />
+}
+
 const fmtSize = (n: number) => (n > 1024 * 1024 ? (n / 1024 / 1024).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB')
 
 // 市场条目：后端 PluginMarket 返回的字段
@@ -97,6 +140,11 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
   const [marketKw, setMarketKw] = useState('')
   const [installing, setInstalling] = useState('')
   const [marketLoading, setMarketLoading] = useState(false)
+
+  // 皮肤插件：解出来的 .skn 列表（贴图按需渲染成缩略图）
+  const [skinPack, setSkinPack] = useState<TtSkinPack | null>(null)
+  const [skinPick, setSkinPick] = useState('')
+  const [skinBusy, setSkinBusy] = useState(false)
 
   // 插件试搜
   const [sel, setSel] = useState('')
@@ -321,12 +369,55 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
   }
 
   async function test(p: Plugin) {
-    void loadDetail(p.id)
     setSel(p.id); setHits([]); setTestErr('')
+    if (p.kind === 'skin') {
+      // 皮肤插件没有 index.js，别去探测 MyGo 能力，否则会多一条「读不到插件」的噪音
+      setManifest(null); setAccount(null)
+      await openSkinPack(p.id)
+      return
+    }
+    void loadDetail(p.id)
     if (!p.enabled) setTestErr('这个插件当前是关闭状态，先启用再试')
     else if (p.compatible === false) {
       setTestErr('这个插件读不出可执行的导出：MyGo 插件要有 plugin.json 和 index.js（ESM 导出）。检查一下目录是否完整。')
     }
+  }
+
+  // 皮肤插件：解全部 .skn（含贴图），失败就把原因显示在试搜那行
+  async function openSkinPack(id: string) {
+    setSkinBusy(true); setSkinPack(null); setTestErr('')
+    try {
+      const pack = await decodeSkinPack(id)
+      if (!pack) {
+        setTestErr('这个皮肤插件里没有可用的 .skn')
+        return
+      }
+      setSkinPack(pack)
+      const cur = skinPick && pack.skins.some((s) => s.file === skinPick) ? skinPick : ''
+      setSkinPick(cur)
+    } catch (e: any) {
+      setTestErr(String(e?.message || e))
+    } finally {
+      setSkinBusy(false)
+    }
+  }
+
+  // 换上一套 .skn：注入 CSS + 通知 App 把 data-skin 切过去
+  async function useSkin(s: TtSkin) {
+    try {
+      const id = await applyTtSkinTheme(s)
+      setSkinPick(s.file)
+      window.dispatchEvent(new CustomEvent('hulu-skin-changed', {detail: {id, name: s.name || s.file}}))
+      flash('已换上「' + (s.name || s.file) + '」')
+    } catch (e: any) {
+      setErr(String(e?.message || e))
+    }
+  }
+
+  // 回到内置皮肤：App 收到空 id 就交回 skinTheme 管
+  function resetSkin() {
+    setSkinPick('')
+    window.dispatchEvent(new CustomEvent('hulu-skin-changed', {detail: {id: ''}}))
   }
 
   async function doSearch() {
@@ -461,7 +552,7 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
                 <div className="plug-name">
                   {p.name}
                   {p.version ? <span className="plug-ver">v{p.version}</span> : null}
-                  <span className="plug-kind">{p.kind === 'musicfree' ? 'MusicFree' : 'MyGo'}</span>
+                  <span className="plug-kind">{p.kind === 'skin' ? '皮肤' : p.kind === 'musicfree' ? 'MusicFree' : 'MyGo'}</span>
                   {!p.compatible && <span className="plug-off" title="读不出可执行导出">不兼容</span>}
                   {!p.enabled && <span className="plug-off">已关闭</span>}
                 </div>
@@ -472,10 +563,12 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
                 </div>
               </div>
               <div className="plug-ops">
-                <button className="mini-btn" onClick={() => test(p)}>试搜</button>
-                <button className={'switch' + (p.enabled ? ' on' : '')} onClick={() => toggle(p)} title="启用 / 关闭">
-                  <i />
-                </button>
+                <button className="mini-btn" onClick={() => test(p)}>{p.kind === 'skin' ? '换肤' : '试搜'}</button>
+                {p.kind === 'skin' ? null : (
+                  <button className={'switch' + (p.enabled ? ' on' : '')} onClick={() => toggle(p)} title="启用 / 关闭">
+                    <i />
+                  </button>
+                )}
                 <button className="danger-mini" onClick={() => remove(p)}>删除</button>
               </div>
             </div>
@@ -483,7 +576,36 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
         </div>
       </section>
 
-      {current && (
+      {current && current.kind === 'skin' && (
+        <section className="set-card">
+          <h3>换肤 · {current.name}</h3>
+          <p className="hint">
+            {skinBusy ? '正在解皮肤包…' : '点一套皮肤立刻换；「恢复内置」回到原来的配色。'}
+          </p>
+          {testErr && <div className="err-msg">{testErr}</div>}
+          <div className="skin-grid">
+            {(skinPack?.skins || []).map((sk) => (
+              /* 缩略图里面本身就是一堆 <button>（播放/暂停…），外层不能用 button，否则嵌套非法 */
+              <div
+                className={'skin-cell' + (skinPick === sk.file ? ' on' : '')}
+                key={sk.file}
+                onClick={() => useSkin(sk)}
+                title={sk.file}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && useSkin(sk)}
+              >
+                <SkinThumb skin={sk} />
+                <span className="skin-name">{sk.name || sk.file}</span>
+                <em className="skin-by">{sk.author || sk.file}</em>
+              </div>
+            ))}
+          </div>
+          <button className="ghost-btn" onClick={resetSkin}>恢复内置</button>
+        </section>
+      )}
+
+      {current && current.kind !== 'skin' && (
         <section className="set-card">
           <h3>试搜 · {current.name}</h3>
           <div className="plug-test">

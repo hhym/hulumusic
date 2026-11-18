@@ -35,9 +35,11 @@ func (a *App) WinClose() {
 
 // App 是 Wails 绑定到前端的入口。所有首字母大写的方法前端都能直接调。
 type App struct {
-	win    *mygo.Window
-	ctx    context.Context
-	mu     sync.Mutex
+	win     *mygo.Window
+	ctx     context.Context
+	mu      sync.Mutex
+	pageURL string
+	desk    *mygo.Window
 	lib    []Track
 	libPth string
 }

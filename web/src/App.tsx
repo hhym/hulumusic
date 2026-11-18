@@ -17,6 +17,7 @@ import {
 } from './pluginRuntime'
 import {mygoAccount, mygoSignIn, mygoSignOut, type MyGoItem} from './mygoRuntime'
 import PluginHome from './PluginHome'
+import TtSkinView from './TtSkinView'
 import {Equalizer, EQ_FREQS, EQ_PRESETS} from './eq'
 import Visualizer from './Visualizer'
 
@@ -162,7 +163,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.36'
+const BUILD_TAG = '3.0.42'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -237,6 +238,8 @@ export default function App() {
   const enabledPl: any[] = plugins.filter((p: any) => p.id)
   const plIdx = Math.max(0, enabledPl.findIndex((p: any) => p.id === homePid))
   const curPlugin = enabledPl[plIdx]
+  // 首页插件 id 可能是「已删掉的 / 皮肤插件」留下的旧值，这里兜底到第一个音源
+  const homePluginId = curPlugin?.id || ''
   // 无边框窗口自绘的最大化：交给 Go 的 ToggleMax 算工作区，它返回切换后的状态
   function toggleMaxApp() {
     const w: any = window
@@ -285,6 +288,13 @@ export default function App() {
   const [volume, setVolumeState] = useState(0.5)
   // 启动一律进桌面界面（主面板），皮肤界面是按钮进去的附属视图，不做启动态
   const [layout, setLayout] = useState<'skin' | 'desk'>('desk')
+  // 皮肤界面下还有一层「TT 模式」：像素级千千静听外壳（.skn 驱动），默认关
+  const [ttMode, setTtMode] = useState<boolean>(() => {
+    try { return localStorage.getItem('qqjt-ttmode') === '1' } catch { return false }
+  })
+  useEffect(() => {
+    try { localStorage.setItem('qqjt-ttmode', ttMode ? '1' : '0') } catch { /* 忽略 */ }
+  }, [ttMode])
   function switchLayout(l: 'skin' | 'desk') {
     setLayout(l)
     // 「歌词」是桌面版专属视图，切回皮肤时退回搜索结果，避免落在皮肤列表里
@@ -311,6 +321,18 @@ export default function App() {
     return 1
   })
   const [eqPreset, setEqPreset] = useState(-1)
+  // 均衡器窗里的「平衡」「环绕」：平衡是 StereoPanner，环绕是 M/S 交叉混
+  const [eqBalance, setEqBalance] = useState<number>(() => {
+    const v = Number(localStorage.getItem('qqjt-eqbal') || '0')
+    return Number.isFinite(v) ? Math.max(-1, Math.min(1, v)) : 0
+  })
+  const [eqSurround, setEqSurround] = useState<number>(() => {
+    const v = Number(localStorage.getItem('qqjt-eqsr') || '0')
+    return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0
+  })
+  // 桌面歌词（独立小窗口，Go 侧建窗）+ 主窗口置顶
+  const [deskLrc, setDeskLrc] = useState(false)
+  const [ontop, setOntop] = useState(false)
   const eqReady = () => {
     const el = audio.current
     const eq = eqRef.current || (eqRef.current = new Equalizer())
@@ -440,18 +462,38 @@ export default function App() {
     const v = localStorage.getItem('qqjt-skin')
     return SKIN_ORDER.includes(v as Skin) ? (v as Skin) : 'glass'
   })
+  // 插件皮肤：.skn 兼容层（插件页「换肤」）注入的 data-skin，形如 ttskn-default。
+  // 有值时盖住内置皮肤；为空就交回 skinTheme 管。CSS 由 ttskin.ts 注入到 <head>。
+  const [ttSkin, setTtSkin] = useState('')
   // 皮肤只给「皮肤界面」定外观，主题给「桌面 + 迷你」定配色。两套本来是平行维度，
   // 各切各的就会出现「桌面橘黄 + 皮肤深紫」这种不搭的组合，所以做成联动：
   // 切皮肤把主题拉到最搭的那档，切主题把皮肤换成对应款式，三个界面始终是一套。
   const SKIN_THEME: Record<Skin, Theme> = {winamp: 'dark', tt: 'amber', light: 'light', glass: 'light', hifi: 'dark', steel: 'light', green: 'green', neon: 'neon'}
   const THEME_SKIN: Record<Theme, Skin> = {dark: 'winamp', amber: 'tt', light: 'light', teal: 'hifi', green: 'green', neon: 'neon'}
+  // 插件页换肤：带上 id 就切过去，空 id 表示恢复内置
+  useEffect(() => {
+    const h = (e: Event) => {
+      const id = String((e as CustomEvent).detail?.id || '')
+      setTtSkin(id)
+      // 换了皮肤就切到皮肤界面：桌面布局看不到 .sk-panel 的变化，会以为没生效
+      if (id) switchLayout('skin')
+    }
+    window.addEventListener('hulu-skin-changed', h)
+    return () => window.removeEventListener('hulu-skin-changed', h)
+  }, [])
+
   const applySkin = (s: Skin) => {
     setSkinTheme(s)
+    setTtSkin('')   // 手动切内置皮肤时，把插件皮肤让掉
     try { localStorage.setItem('qqjt-skin', s) } catch { /* 忽略 */ }
   }
   const pickTheme = (t: Theme) => {
     setTheme(t)
     applySkin(THEME_SKIN[t])
+  }
+  const openTtMode = () => {
+    switchLayout('skin')
+    setTtMode(true)
   }
   const switchSkin = () => {
     const next = SKIN_ORDER[(SKIN_ORDER.indexOf(skinTheme) + 1) % SKIN_ORDER.length]
@@ -631,7 +673,8 @@ export default function App() {
     try {
       const raw: any = await call<any>('Plugins')
       const list = asPluginList(raw)
-      setPlugins(list.filter((p: any) => p.enabled))
+      // 皮肤插件不算音源：它只提供 .skn，进下拉会让「首页」去调它的 index.js 而报错
+      setPlugins(list.filter((p: any) => p.enabled && p.kind !== 'skin'))
     } catch { /* 插件系统没起来时保持原样 */ }
   }, [])
 
@@ -639,11 +682,12 @@ export default function App() {
   async function activePlugins(): Promise<any[]> {
     try {
       const raw: any = await call<any>('Plugins')
-      const on = asPluginList(raw).filter((p: any) => p.enabled)
+      // 皮肤插件不参与搜索：它只提供 .skn，没有 search 导出
+      const on = asPluginList(raw).filter((p: any) => p.enabled && p.kind !== 'skin')
       setPlugins(on)
       return on
     } catch {
-      return plugins.filter((p: any) => p.enabled)
+      return plugins.filter((p: any) => p.enabled && p.kind !== 'skin')
     }
   }
 
@@ -1029,6 +1073,68 @@ export default function App() {
   useEffect(() => {
     if (playing && eqRef.current) eqRef.current.resume()
   }, [playing])
+
+  useEffect(() => {
+    eqRef.current?.setBalance(eqBalance)
+    try { localStorage.setItem('qqjt-eqbal', String(eqBalance)) } catch { /* 忽略 */ }
+  }, [eqBalance])
+  useEffect(() => {
+    eqRef.current?.setSurround(eqSurround)
+    try { localStorage.setItem('qqjt-eqsr', String(eqSurround)) } catch { /* 忽略 */ }
+  }, [eqSurround])
+
+  // 桌面歌词：开关交给 Go 侧建/关窗口，字由这里推过去（解析只在前端做一份）
+  async function toggleDeskLrc() {
+    const app: any = G()
+    if (!app?.DeskLrc) { setErr('这个版本没有桌面歌词'); return }
+    try {
+      const r: any = await app.DeskLrc(!deskLrc)
+      const v = Array.isArray(r) ? r[0] : r
+      setDeskLrc(!!v)
+      try { localStorage.setItem('qqjt-desklrc', v ? '1' : '0') } catch { /* 忽略 */ }
+    } catch (e: any) {
+      setErr(String(e?.message || e))
+    }
+  }
+
+  async function toggleOntop() {
+    const app: any = G()
+    if (!app?.SetAlwaysOnTop) { setErr('这个版本没有置顶接口'); return }
+    try {
+      const r: any = await app.SetAlwaysOnTop(!ontop)
+      const v = Array.isArray(r) ? r[0] : r
+      setOntop(!!v)
+    } catch (e: any) {
+      setErr(String(e?.message || e))
+    }
+  }
+
+  // 启动时把上次开着的桌面歌词恢复出来（窗口本身是 Go 建的，刷新时要重建）
+  useEffect(() => {
+    let gone = false
+    const app: any = G()
+    if (!app?.DeskLrc) return
+    try {
+      if (localStorage.getItem('qqjt-desklrc') === '1') {
+        app.DeskLrc(true).then((r: any) => {
+          if (gone) return
+          const v = Array.isArray(r) ? r[0] : r
+          setDeskLrc(!!v)
+        }).catch(() => {})
+      }
+      if (app.SetAlwaysOnTop) setOntop(!!app.IsAlwaysOnTop?.())
+    } catch { /* 忽略 */ }
+    return () => { gone = true }
+  }, [])
+
+  // 每换一句就推给桌面歌词窗口；窗口没开时 Go 侧是空操作
+  useEffect(() => {
+    if (!deskLrc) return
+    const app: any = G()
+    if (!app?.DeskLrcText) return
+    const who = cur ? cur.name + (cur.artist ? ' - ' + cur.artist : '') : ''
+    app.DeskLrcText(curLine || '', who).catch(() => {})
+  }, [deskLrc, curLine, cur])
 
   const isLive = cur?.source === 'radio'
   const curPl = pls.find((p) => p.id === plSel)
@@ -1529,7 +1635,7 @@ export default function App() {
   )
 
   return (
-    <div className={'app' + (layout === 'desk' ? ' desk-mode' : ' skin') + (mini ? ' mini-mode' : '')} data-skin={skinTheme}>
+    <div className={'app' + (layout === 'desk' ? ' desk-mode' : ' skin') + (mini ? ' mini-mode' : '')} data-skin={ttSkin || skinTheme}>
       {!mini && (
         <>
           <div className="edge-resize left" title="拖这里改宽" onPointerDown={(e) => startEdgeResize('left', e)} />
@@ -1881,6 +1987,65 @@ export default function App() {
                         )}
           </section>
         </div>
+      ) : ttMode ? (
+        <TtSkinView
+          playing={playing}
+          cur={cur}
+          pos={pos}
+          dur={dur}
+          volume={volume}
+          onToggle={toggle}
+          onPrev={() => step(-1)}
+          onNext={() => step(1)}
+          onStop={() => {
+            const a = audio.current
+            if (a) { a.pause(); a.currentTime = 0 }
+            setPlaying(false)
+            setPos(0)
+          }}
+          onMute={() => setVolumeState(volume > 0 ? 0 : 0.5)}
+          onSeek={(r) => {
+            const a = audio.current
+            if (a && isFinite(a.duration) && a.duration > 0) {
+              a.currentTime = r * a.duration
+              setPos(a.currentTime)
+            }
+          }}
+          onVolume={setVolumeState}
+          onMini={() => toggleMini(true)}
+          onExit={() => setTtMode(false)}
+          onOpen={pickLocalDir}
+          onMusicWindow={() => setNpOpen(true)}
+          lrc={lyric}
+          lrcIndex={curIndex}
+          queue={queue.list}
+          qIndex={queue.idx}
+          onPick={(i) => {
+            const t = queue.list[i]
+            if (!t) return
+            setQueue((q) => ({...q, idx: i}))
+            play(t, true)
+          }}
+          eqOn={eqOn}
+          eqGains={eqGains}
+          preamp={preamp}
+          onEqGain={(i, v) => {
+            setEqGains((prev) => prev.map((x, k) => (k === i ? v : x)))
+            setEqPreset(-1)
+          }}
+          onPreamp={setPreamp}
+          onEqToggle={toggleEq}
+          onEqReset={resetEq}
+          ensure={ensureVis}
+          balance={eqBalance}
+          onBalance={setEqBalance}
+          surround={eqSurround}
+          onSurround={setEqSurround}
+          ontop={ontop}
+          onOntop={toggleOntop}
+          deskLrc={deskLrc}
+          onDeskLrc={toggleDeskLrc}
+        />
       ) : (
       <div className={'skin-page' + (skinWide ? '' : ' one-col') + (showLrc ? '' : ' only-left') + (lyrMax ? ' lyr-max' : '')
                       + (skinWide && showLrc && !lyrMax && mainW < 520 ? ' compact-main' : '')}
@@ -1899,6 +2064,8 @@ export default function App() {
               <Fi n="minimize-2" size={11} />
             </button>
 
+            <button className="sk-wb" title="TT 模式（像素级千千静听窗口，用 .skn 皮肤包的贴图）"
+                    onClick={openTtMode}><span className="sk-tt">TT</span></button>
             <button className="sk-wb sk-skin-sw" title={'切换皮肤（当前：' + skinName + '）'}
                     onClick={switchSkin}><Fi n="layers" size={13} /></button>
           </div>

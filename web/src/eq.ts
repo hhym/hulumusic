@@ -31,6 +31,10 @@ export class Equalizer {
   private splitter: ChannelSplitterNode | null = null
   private anL: AnalyserNode | null = null
   private anR: AnalyserNode | null = null
+  private panner: StereoPannerNode | null = null
+  private widen: {gL: GainNode; gR: GainNode; gx1: GainNode; gx2: GainNode; merger: ChannelMergerNode} | null = null
+  private balance = 0
+  private surround = 0
   private enabled = false
   private gains = EQ_FREQS.map(() => 0)
   private preampValue = 1
@@ -92,15 +96,40 @@ export class Equalizer {
         last = f
       })
       last.connect(out)
-      out.connect(ac.destination)
+
+      // 立体声扩展（均衡器窗的「环绕」）：M/S 交叉混一点对侧声道进去。
+      // k=0 时 gx1/gx2 为 0，等于旁路，所以默认没有副作用。
+      const wsplit = ac.createChannelSplitter(2)
+      const wmerge = ac.createChannelMerger(2)
+      const gL = ac.createGain()
+      const gR = ac.createGain()
+      const gx1 = ac.createGain() // L → 右
+      const gx2 = ac.createGain() // R → 左
+      gx1.gain.value = 0
+      gx2.gain.value = 0
+      out.connect(wsplit)
+      wsplit.connect(gL, 0)
+      wsplit.connect(gx2, 0)
+      gL.connect(wmerge, 0, 0)
+      gx2.connect(wmerge, 0, 1)
+      wsplit.connect(gR, 1)
+      wsplit.connect(gx1, 1)
+      gR.connect(wmerge, 0, 1)
+      gx1.connect(wmerge, 0, 0)
+
+      // 声道平衡（均衡器窗的「平衡」）
+      const panner = ac.createStereoPanner()
+      panner.pan.value = this.balance
+      wmerge.connect(panner)
+      panner.connect(ac.destination)
 
       // 可视化旁路：analyser 只做读取，不接 destination，所以不影响出声。
       const analyser = ac.createAnalyser()
       analyser.fftSize = 2048
       analyser.smoothingTimeConstant = 0.82
-      out.connect(analyser)
+      panner.connect(analyser)
       const splitter = ac.createChannelSplitter(2)
-      out.connect(splitter)
+      panner.connect(splitter)
       const anL = ac.createAnalyser()
       const anR = ac.createAnalyser()
       anL.fftSize = 1024
@@ -117,6 +146,9 @@ export class Equalizer {
       this.splitter = splitter
       this.anL = anL
       this.anR = anR
+      this.panner = panner
+      this.widen = {gL, gR, gx1, gx2, merger: wmerge}
+      this.apply()
       await this.resume()
       return true
     } catch {
@@ -151,6 +183,26 @@ export class Equalizer {
     this.apply()
   }
 
+  /** 声道平衡：-1 全左，0 居中，1 全右。 */
+  setBalance(v: number) {
+    this.balance = Math.max(-1, Math.min(1, v))
+    this.apply()
+  }
+
+  /** 立体声扩展强度：0 关，1 最强（交叉混 0.35，再多就糊了）。 */
+  setSurround(v: number) {
+    this.surround = Math.max(0, Math.min(1, v))
+    this.apply()
+  }
+
+  get balanceValue() {
+    return this.balance
+  }
+
+  get surroundValue() {
+    return this.surround
+  }
+
   private apply() {
     if (!this.ac) return
     const on = this.enabled
@@ -158,6 +210,12 @@ export class Equalizer {
       f.gain.value = on ? Math.max(-24, Math.min(24, this.gains[i] || 0)) : 0
     })
     if (this.preamp) this.preamp.gain.value = on ? this.preampValue : 1
+    if (this.panner) this.panner.pan.value = this.balance
+    if (this.widen) {
+      const k = on ? Math.min(0.35, this.surround * 0.35) : 0
+      this.widen.gx1.gain.value = k
+      this.widen.gx2.gain.value = k
+    }
   }
 
   dispose() {
@@ -167,6 +225,12 @@ export class Equalizer {
       this.splitter?.disconnect()
       this.analyser?.disconnect()
       this.out?.disconnect()
+      this.widen?.gL.disconnect()
+      this.widen?.gR.disconnect()
+      this.widen?.gx1.disconnect()
+      this.widen?.gx2.disconnect()
+      this.widen?.merger.disconnect()
+      this.panner?.disconnect()
       this.filters.forEach((f) => f.disconnect())
       this.preamp?.disconnect()
       this.src?.disconnect()
@@ -183,5 +247,7 @@ export class Equalizer {
     this.splitter = null
     this.anL = null
     this.anR = null
+    this.panner = null
+    this.widen = null
   }
 }

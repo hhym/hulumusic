@@ -159,6 +159,7 @@ func runApp() {
 		bootLog("WhenReady 回调触发")
 		a.Start()
 		url := a.PageURL()
+		a.SetPageURL(url)
 		bootLog("本地页面服务已启动，url=%q", url)
 
 		// WebView2 缺失时 NewWindow 会直接 panic，先探一下，给一句人话。
