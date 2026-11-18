@@ -34,7 +34,7 @@
     }
   });
 })();
-</script>>
+</script>
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
@@ -10043,7 +10043,7 @@ function PluginsPage({
         className: "plug-test",
         children: [/* @__PURE__ */ jsx("input", {
           value: kw,
-          placeholder: "\u8F93\u5165\u5173\u952E\u8BCD\uFF0C\u6BD4\u5982 \u6674\u5929",
+          placeholder: "\u8F93\u5165\u5173\u952E\u8BCD\uFF0C\u6BD4\u5982 \u5343\u5343\u9619\u6B4C",
           onChange: (e) => setKw(e.target.value),
           onKeyDown: (e) => e.key === "Enter" && doSearch()
         }), /* @__PURE__ */ jsx("button", {
@@ -19484,17 +19484,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.32] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.30] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.32] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.30] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.32] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.30] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.32] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.30] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

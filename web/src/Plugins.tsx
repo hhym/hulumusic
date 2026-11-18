@@ -489,7 +489,7 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
           <div className="plug-test">
             <input
               value={kw}
-              placeholder="输入关键词，比如 晴天"
+              placeholder="输入关键词，比如 千千阙歌"
               onChange={(e) => setKw(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && doSearch()}
             />
