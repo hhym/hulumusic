@@ -126,6 +126,9 @@ func (x API) DeskLrcState() bool { return x.App.DeskLrcState() }
 // SetAlwaysOnTop 给前端用：主窗口置顶开关。
 func (x API) SetAlwaysOnTop(on any) bool { return x.App.SetAlwaysOnTop(as[bool](on)) }
 
+// IsAlwaysOnTop 给前端用：读一下当前是不是置顶（切皮肤/重开窗口时同步按钮状态）。
+func (x API) IsAlwaysOnTop() bool { return x.App.IsAlwaysOnTop() }
+
 // DeskLrcText 推送一行歌词（仅在窗口开着时有效）。
 func (x API) DeskLrcText(line any, title any) (bool, error) {
 	if err := x.App.DeskLrcText(as[string](line), as[string](title)); err != nil {
@@ -135,6 +138,16 @@ func (x API) DeskLrcText(line any, title any) (bool, error) {
 }
 
 // SetAlwaysOnTop 给 TT 模式歌词窗的「置顶」键用：把主窗口钉在最前面。
+func (a *App) IsAlwaysOnTop() bool {
+	a.mu.Lock()
+	w := a.win
+	a.mu.Unlock()
+	if w == nil {
+		return false
+	}
+	return w.IsAlwaysOnTop()
+}
+
 func (a *App) SetAlwaysOnTop(on bool) bool {
 	a.mu.Lock()
 	w := a.win

@@ -2255,10 +2255,10 @@ export default function App() {
           </div>
 
           <div className="sk-tools">
-            <button className={tab === 'search' ? 'on' : ''} onClick={() => setTab('search')}><Fi n="search" size={12} /><span>搜索</span></button>
+            <button className={tab === 'home' ? 'on' : ''} onClick={() => setTab('home')}><Fi n="home" size={12} /><span>首页</span></button>
             <button className={tab === 'local' ? 'on' : ''}
                     onClick={() => { setTab('local'); G()?.LocalDirs?.().then((d: any) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {}) }}><Fi n="folder" size={12} /><span>乐库</span></button>
-            <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}><Fi n="list" size={12} /><span>待播</span></button>
+            <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}><Fi n="list" size={12} /><span>播单</span></button>
             <div className="sk-search">
               <Fi n="search" size={12} />
               <input value={q} placeholder="搜歌、歌手" onChange={(e) => setQ(e.target.value)}
