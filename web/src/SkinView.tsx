@@ -44,6 +44,16 @@ const SKINS = [
   {id: 'light', label: '浅蓝', color: '#3a86c9'},
 ]
 const SKIN_KEY = 'hulu-skin'
+const ZOOM_KEY = 'hulu-skin-lyric-zoom'
+const zoomClamp = (z: number) => Math.min(300, Math.max(80, Math.round(z / 10) * 10))
+// 歌词字号缩放，跟桌面版歌词秀窗口那排「220% ＋ －」一个意思：80%–300%，10% 一档。
+function loadZoom(): number {
+  try {
+    const v = Number(localStorage.getItem(ZOOM_KEY))
+    if (isFinite(v) && v > 0) return zoomClamp(v)
+  } catch { /* 忽略 */ }
+  return 100
+}
 function loadSkin(): string {
   try {
     const v = localStorage.getItem(SKIN_KEY)
@@ -62,10 +72,22 @@ const HAS_GO_APP = typeof (window as any).go?.main?.App !== 'undefined'
 
 export default function SkinView(p: Props) {
   const [skinName, setSkinName] = useState(loadSkin)
+  const [zoom, setZoom] = useState(loadZoom)
   const selectSkin = (id: string) => {
     setSkinName(id)
     try { localStorage.setItem(SKIN_KEY, id) } catch { /* 忽略 */ }
   }
+  const selectZoom = (z: number) => {
+    const v = zoomClamp(z)
+    setZoom(v)
+    try { localStorage.setItem(ZOOM_KEY, String(v)) } catch { /* 忽略 */ }
+  }
+  // 连点「＋/－」时用函数式更新，避免每次拿到的都是同一份旧 state。
+  const nudgeZoom = (d: number) => setZoom((prev) => {
+    const v = zoomClamp(prev + d)
+    try { localStorage.setItem(ZOOM_KEY, String(v)) } catch { /* 忽略 */ }
+    return v
+  })
 
   // 皮肤窗整页铺皮肤底色：页面外圈和窗口右上那圈不再露出主界面的深色。
   useEffect(() => {
@@ -211,8 +233,21 @@ export default function SkinView(p: Props) {
 
       {/* 歌词秀面板 */}
       <section className="skin-panel skin-lyric">
-        <div className="skin-panel-head"><span>歌词秀</span></div>
-        <div className="skin-lyric-box">
+        <div className="skin-panel-head">
+          <span>歌词秀</span>
+          <span className="skin-lyric-zoom">
+            <button onClick={() => nudgeZoom(-10)} disabled={zoom <= 80} title="歌词缩小">
+              <Fi n="minus" size={10} />
+            </button>
+            <button className="skin-zoom-val" onClick={() => selectZoom(100)} title="点一下回到 100%">
+              {zoom}%
+            </button>
+            <button onClick={() => nudgeZoom(10)} disabled={zoom >= 300} title="歌词放大">
+              <Fi n="plus" size={10} />
+            </button>
+          </span>
+        </div>
+        <div className="skin-lyric-box" style={{'--lz': zoom / 100} as any}>
           <div className="skin-lyric-prev">{prevLine || ' '}</div>
           <div className="skin-lyric-cur">{curLine || title}</div>
           <div className="skin-lyric-next">{nextLine || ' '}</div>
