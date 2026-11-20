@@ -7,6 +7,7 @@ import {
 } from './pluginRuntime'
 import {getPluginSettingCache, mygoAccount, mygoCapabilities, mygoSignIn, mygoSignOut, setPluginSettingCache} from './mygoRuntime'
 import {applyTtSkinTheme, decodeSkinPack, renderTtSkinWindow, type TtSkin, type TtSkinPack} from './ttskin'
+import {Fi} from './feather'
 
 type Plugin = {
   id: string
@@ -579,10 +580,14 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
                   <button className={'mini-btn src-btn' + (srcId === p.id ? ' on' : '')}
                           onClick={() => pickSource(p)}
                           title={srcId === p.id ? '当前音源就是它' : '设为当前音源（左侧下拉、搜索都用它）'}>
-                    {srcId === p.id ? '当前源' : '设为当前源'}
+                    <Fi n="power" size={14} />
                   </button>
                 )}
-                <button className="mini-btn" onClick={() => test(p)}>{p.kind === 'skin' ? '换肤' : '试搜'}</button>
+                <button className={'mini-btn' + (p.kind === 'skin' ? ' txt' : '')}
+                        onClick={() => test(p)}
+                        title={p.kind === 'skin' ? '换肤' : '用这个音源试搜一下'}>
+                  {p.kind === 'skin' ? '换肤' : <Fi n="search" size={14} />}
+                </button>
                 {p.kind === 'skin' ? null : (
                   <button className={'switch' + (p.enabled ? ' on' : '')} onClick={() => toggle(p)} title="启用 / 关闭">
                     <i />
