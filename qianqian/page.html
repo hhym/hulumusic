@@ -9883,6 +9883,28 @@ function PluginsPage({
   const [skinPack, setSkinPack] = react.exports.useState(null);
   const [skinPick, setSkinPick] = react.exports.useState("");
   const [skinBusy, setSkinBusy] = react.exports.useState(false);
+  const [srcId, setSrcId] = react.exports.useState(() => {
+    try {
+      return localStorage.getItem("qqqt-home-plugin") || "";
+    } catch {
+      return "";
+    }
+  });
+  function pickSource(p2) {
+    if (!p2.enabled) {
+      flash("\u5148\u542F\u7528\u8FD9\u4E2A\u63D2\u4EF6\uFF0C\u518D\u8BBE\u4E3A\u5F53\u524D\u6E90");
+      return;
+    }
+    try {
+      localStorage.setItem("qqqt-home-plugin", p2.id);
+    } catch {
+    }
+    setSrcId(p2.id);
+    window.dispatchEvent(new CustomEvent("hulu-source-changed", {
+      detail: p2.id
+    }));
+    flash("\u5DF2\u8BBE\u4E3A\u5F53\u524D\u97F3\u6E90\uFF1A" + p2.name);
+  }
   const [sel, setSel] = react.exports.useState("");
   const [kw, setKw] = react.exports.useState("");
   const [hits, setHits] = react.exports.useState([]);
@@ -10400,7 +10422,12 @@ function PluginsPage({
             })]
           }), /* @__PURE__ */ jsxs("div", {
             className: "plug-ops",
-            children: [/* @__PURE__ */ jsx("button", {
+            children: [p2.kind === "skin" ? null : /* @__PURE__ */ jsx("button", {
+              className: "mini-btn src-btn" + (srcId === p2.id ? " on" : ""),
+              onClick: () => pickSource(p2),
+              title: srcId === p2.id ? "\u5F53\u524D\u97F3\u6E90\u5C31\u662F\u5B83" : "\u8BBE\u4E3A\u5F53\u524D\u97F3\u6E90\uFF08\u5DE6\u4FA7\u4E0B\u62C9\u3001\u641C\u7D22\u90FD\u7528\u5B83\uFF09",
+              children: srcId === p2.id ? "\u5F53\u524D\u6E90" : "\u8BBE\u4E3A\u5F53\u524D\u6E90"
+            }), /* @__PURE__ */ jsx("button", {
               className: "mini-btn",
               onClick: () => test(p2),
               children: p2.kind === "skin" ? "\u6362\u80A4" : "\u8BD5\u641C"
@@ -15061,6 +15088,15 @@ function App() {
     } catch {
     }
   }
+  react.exports.useEffect(() => {
+    const onSrc = (e) => {
+      const id2 = String(e.detail || "");
+      if (id2)
+        setHomePid(id2);
+    };
+    window.addEventListener("hulu-source-changed", onSrc);
+    return () => window.removeEventListener("hulu-source-changed", onSrc);
+  }, []);
   function pickPlugin(id2) {
     setHomePid(id2);
     localStorage.setItem("qqqt-home-plugin", id2);
@@ -18948,6 +18984,8 @@ select{background:var(--input);border:1px solid var(--line);border-radius:8px;co
 .ellipsis{max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
 .dir-row{display:flex;align-items:center;gap:8px;min-width:0}
 .mini-btn{border:1px solid var(--line);background:var(--input);color:var(--txt);border-radius:7px;padding:4px 10px;font-size:12px;cursor:pointer}
+.src-btn.on{background:var(--acc,#2ea36a);border-color:var(--acc,#2ea36a);color:#fff;font-weight:600}
+.src-btn.on:hover{filter:brightness(1.05)}
 .mini-btn:hover{border-color:var(--acc2)}
 .danger-btn{border:1px solid var(--heart-on);color:var(--heart-on);background:transparent;border-radius:8px;padding:5px 14px;font-size:12.5px;cursor:pointer}
 .danger-mini{border:0;background:transparent;color:var(--dim);font-size:12px;cursor:pointer;padding:4px 6px}

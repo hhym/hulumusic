@@ -352,6 +352,8 @@ select{background:var(--input);border:1px solid var(--line);border-radius:8px;co
 .ellipsis{max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
 .dir-row{display:flex;align-items:center;gap:8px;min-width:0}
 .mini-btn{border:1px solid var(--line);background:var(--input);color:var(--txt);border-radius:7px;padding:4px 10px;font-size:12px;cursor:pointer}
+.src-btn.on{background:var(--acc,#2ea36a);border-color:var(--acc,#2ea36a);color:#fff;font-weight:600}
+.src-btn.on:hover{filter:brightness(1.05)}
 .mini-btn:hover{border-color:var(--acc2)}
 .danger-btn{border:1px solid var(--heart-on);color:var(--heart-on);background:transparent;border-radius:8px;padding:5px 14px;font-size:12.5px;cursor:pointer}
 .danger-mini{border:0;background:transparent;color:var(--dim);font-size:12px;cursor:pointer;padding:4px 6px}

@@ -146,6 +146,18 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
   const [skinPick, setSkinPick] = useState('')
   const [skinBusy, setSkinBusy] = useState(false)
 
+  // 当前音源：跟主界面共用 localStorage 的 qqqt-home-plugin，改完发事件让左侧下拉同步
+  const [srcId, setSrcId] = useState<string>(() => {
+    try { return localStorage.getItem('qqqt-home-plugin') || '' } catch { return '' }
+  })
+  function pickSource(p: Plugin) {
+    if (!p.enabled) { flash('先启用这个插件，再设为当前源'); return }
+    try { localStorage.setItem('qqqt-home-plugin', p.id) } catch { /* 忽略 */ }
+    setSrcId(p.id)
+    window.dispatchEvent(new CustomEvent('hulu-source-changed', { detail: p.id }))
+    flash('已设为当前音源：' + p.name)
+  }
+
   // 插件试搜
   const [sel, setSel] = useState('')
   const [kw, setKw] = useState('')
@@ -563,6 +575,13 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
                 </div>
               </div>
               <div className="plug-ops">
+                {p.kind === 'skin' ? null : (
+                  <button className={'mini-btn src-btn' + (srcId === p.id ? ' on' : '')}
+                          onClick={() => pickSource(p)}
+                          title={srcId === p.id ? '当前音源就是它' : '设为当前音源（左侧下拉、搜索都用它）'}>
+                    {srcId === p.id ? '当前源' : '设为当前源'}
+                  </button>
+                )}
                 <button className="mini-btn" onClick={() => test(p)}>{p.kind === 'skin' ? '换肤' : '试搜'}</button>
                 {p.kind === 'skin' ? null : (
                   <button className={'switch' + (p.enabled ? ' on' : '')} onClick={() => toggle(p)} title="启用 / 关闭">

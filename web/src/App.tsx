@@ -250,6 +250,16 @@ export default function App() {
     } catch { /* 忽略 */ }
   }
 
+  // 插件页里点「设为当前源」时同步过来：不必刷新整个页面，左侧下拉和首页立刻跟上
+  useEffect(() => {
+    const onSrc = (e: Event) => {
+      const id = String((e as CustomEvent).detail || '')
+      if (id) setHomePid(id)
+    }
+    window.addEventListener('hulu-source-changed', onSrc)
+    return () => window.removeEventListener('hulu-source-changed', onSrc)
+  }, [])
+
   function pickPlugin(id: string) {
     setHomePid(id)
     localStorage.setItem('qqqt-home-plugin', id)
