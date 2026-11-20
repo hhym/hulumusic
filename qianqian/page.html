@@ -15075,7 +15075,7 @@ function App() {
   const enabledPl = plugins.filter((p2) => p2.id);
   const plIdx = Math.max(0, enabledPl.findIndex((p2) => p2.id === homePid));
   const curPlugin = enabledPl[plIdx];
-  (curPlugin == null ? void 0 : curPlugin.id) || "";
+  const homePluginId = (curPlugin == null ? void 0 : curPlugin.id) || "";
   function toggleMaxApp() {
     var _a2, _b2, _c;
     const w2 = window;
@@ -15570,6 +15570,7 @@ function App() {
     }
   }
   async function doSearch() {
+    var _a2;
     if (!q2.trim() || loading)
       return;
     setLoading(true);
@@ -15585,23 +15586,24 @@ function App() {
         setErr("\u8FD8\u6CA1\u6709\u97F3\u6E90\u63D2\u4EF6\u3002\u53BB\u5DE6\u4FA7\u300C\u63D2\u4EF6\u300D\u9875\u88C5\u4E00\u4E2A MyGo \u63D2\u4EF6\uFF0C\u88C5\u597D\u540E\u56DE\u6765\u641C\u7D22\u3002");
         return;
       }
-      const rs = await Promise.all(act.map(async (p2) => {
+      const cur2 = act.find((p2) => p2.id === homePluginId) || act[0];
+      const rs = [await (async () => {
         try {
           return {
-            id: p2.id,
-            name: p2.name,
-            items: await pluginSearch(p2.id, q2.trim(), 1),
+            id: cur2.id,
+            name: cur2.name,
+            items: await pluginSearch(cur2.id, q2.trim(), 1),
             err: ""
           };
         } catch (e) {
           return {
-            id: p2.id,
-            name: p2.name,
+            id: cur2.id,
+            name: cur2.name,
             items: [],
             err: String((e == null ? void 0 : e.message) || e)
           };
         }
-      }));
+      })()];
       const flat = [];
       const errs = [];
       const logins = [];
@@ -15629,7 +15631,7 @@ function App() {
         }
       }
       setList(flat);
-      setMeta(flat.length + " \u9996 \xB7 " + (Date.now() - t0) + " ms");
+      setMeta(flat.length + " \u9996 \xB7 " + (((_a2 = rs[0]) == null ? void 0 : _a2.name) || "\u5F53\u524D\u97F3\u6E90") + " \xB7 " + (Date.now() - t0) + " ms");
       setNeedLogin(logins);
       if (errs.length)
         setErr(errs.join(" / "));

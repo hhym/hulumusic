@@ -716,15 +716,16 @@ export default function App() {
         setErr('还没有音源插件。去左侧「插件」页装一个 MyGo 插件，装好后回来搜索。')
         return
       }
-      const rs = await Promise.all(
-        act.map(async (p: any) => {
-          try {
-            return { id: p.id, name: p.name, items: await pluginSearch(p.id, q.trim(), 1), err: '' }
-          } catch (e: any) {
-            return { id: p.id, name: p.name, items: [], err: String(e?.message || e) }
-          }
-        })
-      )
+      // 只打当前音源：14 个插件并发搜一轮要等最慢的那个，界面一直「加载中」。
+      // 想换源就在左上角下拉里切，插件页也有「设为当前源」。
+      const cur: any = act.find((p: any) => p.id === homePluginId) || act[0]
+      const rs = [await (async () => {
+        try {
+          return { id: cur.id, name: cur.name, items: await pluginSearch(cur.id, q.trim(), 1), err: '' }
+        } catch (e: any) {
+          return { id: cur.id, name: cur.name, items: [], err: String(e?.message || e) }
+        }
+      })()]
       const flat: Track[] = []
       const errs: string[] = []
       const logins: {id: string; name: string}[] = []
@@ -748,7 +749,7 @@ export default function App() {
         }
       }
       setList(flat)
-      setMeta(flat.length + ' 首 · ' + (Date.now() - t0) + ' ms')
+      setMeta(flat.length + ' 首 · ' + (rs[0]?.name || '当前音源') + ' · ' + (Date.now() - t0) + ' ms')
       setNeedLogin(logins)
       if (errs.length) setErr(errs.join(' / '))
       if (!flat.length && !errs.length) setMeta('插件没搜到结果')
