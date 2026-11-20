@@ -1,5 +1,7 @@
 package qianqian
 
+import "github.com/egoist/mygo"
+
 // 迷你浮卡：窗口缩成 348x124 并置顶。MyGo 的窗口是透明无边框的，
 // 圆角与阴影交给页面里的 CSS（.mini-card / .mini-player），不再像
 // Win32 那版那样用 SetWindowRgn 裁轮廓。
@@ -43,13 +45,24 @@ func (a *App) miniOff() string {
 }
 
 // skinOn 切到竖向皮肤窗 480×1024：先放开最小尺寸下限，再改尺寸。
+// 屏幕工作区装不下 1024 高时（小屏或高 DPI）按工作区收一下，否则窗口底部
+// 会拖出屏幕外，页面又被裁掉一截。页面已按 100% 铺满，收高度只是压紧列表。
 func (a *App) skinOn() string {
 	if a.win == nil {
 		return "窗口还没准备好"
 	}
+	w, h := skinW, skinH
+	if d := mygo.Screen.PrimaryDisplay(); d.WorkArea.Width > 0 && d.WorkArea.Height > 0 {
+		if d.WorkArea.Width < w {
+			w = d.WorkArea.Width
+		}
+		if d.WorkArea.Height < h {
+			h = d.WorkArea.Height
+		}
+	}
 	a.win.SetMinimumSize(0, 0)
 	a.win.SetAlwaysOnTop(false)
-	a.win.SetSize(skinW, skinH)
+	a.win.SetSize(w, h)
 	return ""
 }
 

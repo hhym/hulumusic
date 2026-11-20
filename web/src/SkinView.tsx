@@ -55,12 +55,30 @@ function loadSkin(): string {
 /* 竖向皮肤界面：窗口固定 480×1024，按经典千千静听四面板纵向堆叠——
    主播放面板（LCD + 走带 + 音量）、均衡器面板、歌词秀面板、播放列表面板。
    配色是皮肤自己的一套深紫变量，不跟主界面主题走；后续多套皮肤在这里换皮。 */
+// mygo 宿主认 CSS --app-region:drag 自己拖窗口；只有纯浏览器/Wails 环境才用
+// 前端算位移调 WinMoveBy。两者同时开会互相打断，表现就是拖不动。
+const HAS_MYGO = typeof (window as any).mygo !== 'undefined'
+
 export default function SkinView(p: Props) {
   const [skinName, setSkinName] = useState(loadSkin)
   const selectSkin = (id: string) => {
     setSkinName(id)
     try { localStorage.setItem(SKIN_KEY, id) } catch { /* 忽略 */ }
   }
+
+  // 皮肤窗整页铺皮肤底色：页面外圈和窗口右上那圈不再露出主界面的深色。
+  useEffect(() => {
+    document.body.classList.add('skin-body')
+    return () => {
+      document.body.classList.remove('skin-body')
+      document.body.style.background = ''
+    }
+  }, [])
+  useEffect(() => {
+    const el = document.querySelector('.skin-view') as HTMLElement | null
+    const bg = el ? getComputedStyle(el).getPropertyValue('--bg1').trim() : ''
+    document.body.style.background = bg || '#160d29'
+  }, [skinName])
 
   // Esc 还原桌面窗口；空格播放暂停。
   useEffect(() => {
@@ -72,7 +90,7 @@ export default function SkinView(p: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [p])
 
-  // 无边框窗口：标题栏拖动换算成位移送 Go，和迷你卡同一套做法。
+  // 兜底拖动：mygo 宿主靠 --app-region:drag 原生拖，这里只在没有 mygo 时用。
   const drag = useRef({dx: 0, dy: 0, raf: 0})
   const flushMove = () => {
     const st = drag.current
@@ -87,6 +105,7 @@ export default function SkinView(p: Props) {
     try { app?.WinMoveBy?.(dx, dy) } catch { /* 老版本没这个方法，忽略 */ }
   }
   const onMouseDown = (e: React.MouseEvent) => {
+    if (HAS_MYGO) return
     if (e.button !== 0) return
     if ((e.target as HTMLElement).closest('button,input')) return
     e.preventDefault()

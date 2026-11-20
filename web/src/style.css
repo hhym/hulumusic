@@ -148,11 +148,15 @@ body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,"Segoe UI
 .app.mini-mode{display:block;grid-template-columns:none;grid-template-rows:none;background:var(--bg)}.app.mini-mode > .menubar,.app.mini-mode > .toolbar,.app.mini-mode > main,
 .app.mini-mode > .nowband,.app.mini-mode > .statusbar,.app.mini-mode > footer{display:none}
 
-.app.skin-mode{display:block;grid-template-columns:none;grid-template-rows:none;background:#160d29}
+.app.skin-mode{display:block;grid-template-columns:none;grid-template-rows:none;background:transparent}
 .app.skin-mode > .menubar,.app.skin-mode > .toolbar,.app.skin-mode > main,
 .app.skin-mode > .nowband,.app.skin-mode > .statusbar,.app.skin-mode > footer,
 .app.skin-mode > .edge-resize,.app.skin-mode > .mygo-dragbar,.app.skin-mode > .mygo-winctl,
 .app.skin-mode > .desk{display:none}
+
+/* 皮肤窗：整页铺满皮肤背景，无边框窗口拖动交给 mygo 的 --app-region。 */
+body.skin-body{background:#160d29}
+body.skin-body .app{background:transparent}
 
 .mini-player{position:fixed;left:0;top:0;width:348px;height:124px;z-index:50;
   display:block;overflow:visible;background:var(--bg);color:var(--txt)}
@@ -1077,7 +1081,7 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-view{--bg1:#241543;--bg2:#160d29;--panel1:#2c1c4e;--panel2:#1d1238;--line:#4a3577;
   --lcd:#0d0820;--lcd-line:#3a2563;--txt:#e8e2ff;--dim:#8f7cc4;--accent:#b79bff;--hover:#3a2563;
   --on:#4a3577;--ico-bg:#b79bff;--ico-txt:#1a1030;--album:#d9c9ff;--prevnext:#7a68a8;--artist:#9d88cf;
-  width:480px;height:1024px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;
+  width:100%;height:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;
   padding:10px;background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 100%);color:var(--txt);
   overflow:hidden;font:14px/1.5 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
 
@@ -1090,18 +1094,19 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-view[data-skin="light"]{--bg1:#dfe9f2;--bg2:#b9cde0;--panel1:#eef4fa;--panel2:#d4e4f0;--line:#a9c4d8;--lcd:#f4f8fc;--lcd-line:#b9d2e4;--txt:#1c2e3c;--dim:#6a8296;--accent:#3a86c9;--hover:#dceaf4;--on:#c4dcee;--ico-bg:#3a86c9;--ico-txt:#f4f8fc;--album:#16324a;--prevnext:#7a94a6;--artist:#5a7488}
 
 .skin-title{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:9px;
-  background:linear-gradient(180deg,var(--hover),var(--bg1));border:1px solid var(--line);cursor:grab;user-select:none}
+  background:linear-gradient(180deg,var(--hover),var(--bg1));border:1px solid var(--line);cursor:grab;user-select:none;
+  --app-region:drag}
 .skin-title:active{cursor:grabbing}
 .skin-title-ico{width:18px;height:18px;border-radius:50%;background:var(--ico-bg);color:var(--ico-txt);display:inline-flex;align-items:center;justify-content:center;font-size:11px}
 .skin-title-name{font-size:13px;font-weight:600;letter-spacing:.5px;flex:1}
 .skin-title-tools{display:flex;gap:6px}
 .skin-title-btn{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--panel1);color:var(--txt);
-  display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;--app-region:no-drag}
 .skin-title-btn:hover{background:var(--hover)}
 .skin-title-btn:disabled{opacity:.4;cursor:default}
 
-.skin-swatches{display:flex;align-items:center;gap:8px;padding:2px 4px}
-.skin-swatch{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+.skin-swatches{display:flex;align-items:center;gap:8px;padding:2px 4px;--app-region:no-drag}
+.skin-swatch{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;--app-region:no-drag}
 .skin-swatch.on{border-color:var(--txt)}
 .skin-swatch-lab{font-size:11px;color:var(--dim);margin-left:auto}
 
