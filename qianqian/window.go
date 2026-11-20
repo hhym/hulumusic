@@ -62,6 +62,10 @@ func (a *App) skinOn() string {
 	}
 	a.win.SetMinimumSize(0, 0)
 	a.win.SetAlwaysOnTop(false)
+	// 最大化状态下改尺寸会被系统吞掉，先把窗口还原回普通状态。
+	if a.win.IsMaximized() {
+		a.win.Unmaximize()
+	}
 	a.win.SetSize(w, h)
 	return ""
 }

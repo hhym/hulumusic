@@ -55,9 +55,10 @@ function loadSkin(): string {
 /* 竖向皮肤界面：窗口固定 480×1024，按经典千千静听四面板纵向堆叠——
    主播放面板（LCD + 走带 + 音量）、均衡器面板、歌词秀面板、播放列表面板。
    配色是皮肤自己的一套深紫变量，不跟主界面主题走；后续多套皮肤在这里换皮。 */
-// mygo 宿主认 CSS --app-region:drag 自己拖窗口；只有纯浏览器/Wails 环境才用
-// 前端算位移调 WinMoveBy。两者同时开会互相打断，表现就是拖不动。
-const HAS_MYGO = typeof (window as any).mygo !== 'undefined'
+// 拖动：Windows 上交给 Go 端原生拖动（DragWindow 里轮询光标 + SetWindowPos）。
+// 宿主 mygo 的 --app-region:drag 在 Windows 上走的是系统模态拖动循环，在
+// 这种无边框透明 + 运行时改过尺寸的窗口上不稳，皮肤标题栏已不再设 drag 区。
+const HAS_GO_APP = typeof (window as any).go?.main?.App !== 'undefined'
 
 export default function SkinView(p: Props) {
   const [skinName, setSkinName] = useState(loadSkin)
@@ -90,7 +91,8 @@ export default function SkinView(p: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [p])
 
-  // 兜底拖动：mygo 宿主靠 --app-region:drag 原生拖，这里只在没有 mygo 时用。
+  // 标题栏按下 → Go 端原生拖动（自己轮询光标，松开左键自动结束）。
+  // 纯浏览器预览没有 go 桥时，退回到前端算位移的兜底。
   const drag = useRef({dx: 0, dy: 0, raf: 0})
   const flushMove = () => {
     const st = drag.current
@@ -105,10 +107,14 @@ export default function SkinView(p: Props) {
     try { app?.WinMoveBy?.(dx, dy) } catch { /* 老版本没这个方法，忽略 */ }
   }
   const onMouseDown = (e: React.MouseEvent) => {
-    if (HAS_MYGO) return
     if (e.button !== 0) return
     if ((e.target as HTMLElement).closest('button,input')) return
     e.preventDefault()
+    const app = (window as any).go?.main?.App
+    if (HAS_GO_APP && app?.DragWindow) {
+      try { app.DragWindow() } catch { /* 忽略 */ }
+      return
+    }
     const onMove = (ev: MouseEvent) => {
       drag.current.dx += ev.movementX
       drag.current.dy += ev.movementY

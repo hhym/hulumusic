@@ -281,6 +281,9 @@ func (x API) WinMoveBy(dx any, dy any) string {
 	return x.App.WinMoveBy(as[int](dx), as[int](dy))
 }
 
+// DragWindow 皮肤窗标题栏按下时调用：交给 Go 端轮询光标、SetWindowPos 跟着鼠标走。
+func (x API) DragWindow() { x.App.dragWindow() }
+
 // Quit 迷你卡右上角 ×：直接退出进程。
 func (x API) WinMinimize() { x.App.WinMinimize() }
 

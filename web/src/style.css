@@ -1094,8 +1094,7 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-view[data-skin="light"]{--bg1:#dfe9f2;--bg2:#b9cde0;--panel1:#eef4fa;--panel2:#d4e4f0;--line:#a9c4d8;--lcd:#f4f8fc;--lcd-line:#b9d2e4;--txt:#1c2e3c;--dim:#6a8296;--accent:#3a86c9;--hover:#dceaf4;--on:#c4dcee;--ico-bg:#3a86c9;--ico-txt:#f4f8fc;--album:#16324a;--prevnext:#7a94a6;--artist:#5a7488}
 
 .skin-title{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:9px;
-  background:linear-gradient(180deg,var(--hover),var(--bg1));border:1px solid var(--line);cursor:grab;user-select:none;
-  --app-region:drag}
+  background:linear-gradient(180deg,var(--hover),var(--bg1));border:1px solid var(--line);cursor:grab;user-select:none}
 .skin-title:active{cursor:grabbing}
 .skin-title-ico{width:18px;height:18px;border-radius:50%;background:var(--ico-bg);color:var(--ico-txt);display:inline-flex;align-items:center;justify-content:center;font-size:11px}
 .skin-title-name{font-size:13px;font-weight:600;letter-spacing:.5px;flex:1}

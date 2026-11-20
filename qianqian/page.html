@@ -7637,8 +7637,8 @@ const Fragment = jsxRuntime.exports.Fragment;
 const jsx = jsxRuntime.exports.jsx;
 const jsxs = jsxRuntime.exports.jsxs;
 const bridge$2 = () => {
-  var _a, _b;
-  return (_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App;
+  var _a2, _b2;
+  return (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
 };
 async function callM$1(fn, ...args) {
   const app = bridge$2();
@@ -8442,8 +8442,8 @@ function getPluginSettingCache(id2) {
   return pluginSettings[id2] || {};
 }
 async function initStorage(id2) {
-  var _a;
-  if ((_a = storageCache.get(id2)) == null ? void 0 : _a.size)
+  var _a2;
+  if ((_a2 = storageCache.get(id2)) == null ? void 0 : _a2.size)
     return;
   const app = bridge$1();
   if (!(app == null ? void 0 : app.PluginStorage))
@@ -8802,14 +8802,14 @@ function clearMyGoCache(id2) {
   }
 }
 function mapTrack(t2) {
-  var _a, _b;
+  var _a2, _b2;
   const artists = Array.isArray(t2 == null ? void 0 : t2.artists) ? t2.artists : [];
   return {
     id: String((t2 == null ? void 0 : t2.id) ?? ""),
     title: String((t2 == null ? void 0 : t2.name) ?? (t2 == null ? void 0 : t2.title) ?? "\u672A\u547D\u540D"),
     artist: artists.map((a) => typeof a === "string" ? a : (a == null ? void 0 : a.name) || "").filter(Boolean).join(" / "),
-    album: String(((_a = t2 == null ? void 0 : t2.album) == null ? void 0 : _a.name) ?? ""),
-    artwork: String(((_b = t2 == null ? void 0 : t2.album) == null ? void 0 : _b.imageUrl) ?? (t2 == null ? void 0 : t2.imageUrl) ?? ""),
+    album: String(((_a2 = t2 == null ? void 0 : t2.album) == null ? void 0 : _a2.name) ?? ""),
+    artwork: String(((_b2 = t2 == null ? void 0 : t2.album) == null ? void 0 : _b2.imageUrl) ?? (t2 == null ? void 0 : t2.imageUrl) ?? ""),
     duration: Number(t2 == null ? void 0 : t2.duration) || 0,
     raw: t2 || {}
   };
@@ -8826,11 +8826,11 @@ async function mygoSearch(id2, keyword, page = 1) {
   return list.map(mapTrack).filter((x2) => x2.id);
 }
 async function mygoStream(id2, item, quality = "standard") {
-  var _a;
+  var _a2;
   const mod = await loadMyGoPlugin(id2);
   if (typeof mod.stream !== "function")
     throw new Error("\u8FD9\u4E2A\u63D2\u4EF6\u4E0D\u652F\u6301\u53D6\u6D41");
-  const sid = String((item == null ? void 0 : item.id) ?? ((_a = item == null ? void 0 : item.raw) == null ? void 0 : _a.id) ?? "");
+  const sid = String((item == null ? void 0 : item.id) ?? ((_a2 = item == null ? void 0 : item.raw) == null ? void 0 : _a2.id) ?? "");
   const res = await mod.stream({ id: sid, quality });
   const url = String((res == null ? void 0 : res.url) ?? "");
   if (!url)
@@ -8840,11 +8840,11 @@ async function mygoStream(id2, item, quality = "standard") {
   return { url, referer };
 }
 async function mygoLyric(id2, item) {
-  var _a;
+  var _a2;
   const mod = await loadMyGoPlugin(id2);
   if (typeof mod.lyrics !== "function")
     return [];
-  const sid = String((item == null ? void 0 : item.id) ?? ((_a = item == null ? void 0 : item.raw) == null ? void 0 : _a.id) ?? "");
+  const sid = String((item == null ? void 0 : item.id) ?? ((_a2 = item == null ? void 0 : item.raw) == null ? void 0 : _a2.id) ?? "");
   const res = await mod.lyrics({ id: sid });
   const out = [];
   if (Array.isArray(res == null ? void 0 : res.lines) && res.lines.length) {
@@ -9315,8 +9315,8 @@ async function mfLyric(pluginId, item) {
   return parseLrc(raw);
 }
 const bridge$1 = () => {
-  var _a, _b;
-  return (_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App;
+  var _a2, _b2;
+  return (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
 };
 function b64url(s) {
   return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -9389,8 +9389,8 @@ async function pluginLyric(pluginId, item) {
   return await mygoLyric(pluginId, item);
 }
 const bridge = () => {
-  var _a, _b;
-  return (_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App;
+  var _a2, _b2;
+  return (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
 };
 async function callM(fn, ...args) {
   const app = bridge();
@@ -9433,7 +9433,7 @@ const fmtSize = (n2) => n2 > 1024 * 1024 ? (n2 / 1024 / 1024).toFixed(1) + " MB"
 function PluginsPage({
   onPlay
 }) {
-  var _a, _b;
+  var _a2, _b2;
   const [list, setList] = react.exports.useState([]);
   const [err, setErr] = react.exports.useState("");
   const [msg, setMsg] = react.exports.useState("");
@@ -9548,10 +9548,10 @@ function PluginsPage({
     }
   }
   async function loadDetail(id2) {
-    var _a2, _b2;
+    var _a22, _b22;
     setManifest(null);
     setAccount(null);
-    const app = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
+    const app = (_b22 = (_a22 = window.go) == null ? void 0 : _a22.main) == null ? void 0 : _b22.App;
     if (!(app == null ? void 0 : app.PluginFile))
       return;
     try {
@@ -9591,8 +9591,8 @@ function PluginsPage({
     }
   }
   async function saveSetting(key) {
-    var _a2, _b2;
-    const app = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
+    var _a22, _b22;
+    const app = (_b22 = (_a22 = window.go) == null ? void 0 : _a22.main) == null ? void 0 : _b22.App;
     if (!(app == null ? void 0 : app.SavePluginSetting) || !sel)
       return;
     try {
@@ -9671,7 +9671,7 @@ function PluginsPage({
     }
   }
   async function playHit(it) {
-    var _a2;
+    var _a22;
     const name = it.title || "\u672A\u547D\u540D";
     const artist = it.artist || "";
     const cover = it.artwork || "";
@@ -9679,14 +9679,14 @@ function PluginsPage({
       id: encodePluginTrack(sel, it),
       name,
       artist,
-      album: it.album || "\u63D2\u4EF6 \xB7 " + (((_a2 = list.find((p2) => p2.id === sel)) == null ? void 0 : _a2.name) || sel),
+      album: it.album || "\u63D2\u4EF6 \xB7 " + (((_a22 = list.find((p2) => p2.id === sel)) == null ? void 0 : _a22.name) || sel),
       cover,
       duration: Number(it.duration) || 0,
       source: "plugin"
     });
   }
   const current = list.find((p2) => p2.id === sel);
-  const canSignIn = !!current && (!!((_a = current.actions) == null ? void 0 : _a.includes("signIn")) || caps.signIn);
+  const canSignIn = !!current && (!!((_a2 = current.actions) == null ? void 0 : _a2.includes("signIn")) || caps.signIn);
   return /* @__PURE__ */ jsxs("div", {
     className: "plug-page",
     children: [/* @__PURE__ */ jsxs("section", {
@@ -9853,7 +9853,7 @@ function PluginsPage({
           })]
         }, i))
       })]
-    }), current && (((_b = manifest == null ? void 0 : manifest.settings) == null ? void 0 : _b.length) || (manifest == null ? void 0 : manifest.settings)) ? /* @__PURE__ */ jsxs("section", {
+    }), current && (((_b2 = manifest == null ? void 0 : manifest.settings) == null ? void 0 : _b2.length) || (manifest == null ? void 0 : manifest.settings)) ? /* @__PURE__ */ jsxs("section", {
       className: "set-card",
       children: [/* @__PURE__ */ jsxs("h3", {
         children: ["\u8BBE\u7F6E \xB7 ", current.name]
@@ -9949,7 +9949,7 @@ const fmt$3 = (ms) => {
 };
 const COVER_GRAD = "linear-gradient(174deg,#3a4fc4 0%,#4a4ccb 20%,#6a57c1 46%,#a269ae 72%,#ef7d9d 100%)";
 function NowPlaying(p2) {
-  var _a, _b, _c;
+  var _a2, _b2, _c;
   const LINE = 54;
   const lines = Array.isArray(p2.lyric) ? p2.lyric : [];
   const idx = p2.curIndex;
@@ -9966,7 +9966,7 @@ function NowPlaying(p2) {
     children: [/* @__PURE__ */ jsx("div", {
       className: "np-bg",
       "aria-hidden": "true"
-    }), ((_a = p2.cur) == null ? void 0 : _a.cover) ? /* @__PURE__ */ jsx("div", {
+    }), ((_a2 = p2.cur) == null ? void 0 : _a2.cover) ? /* @__PURE__ */ jsx("div", {
       className: "np-bg-cover",
       style: {
         backgroundImage: `url(${p2.cur.cover})`
@@ -10010,7 +10010,7 @@ function NowPlaying(p2) {
         className: "np-left",
         children: [/* @__PURE__ */ jsx("div", {
           className: "np-cover",
-          style: ((_b = p2.cur) == null ? void 0 : _b.cover) ? {
+          style: ((_b2 = p2.cur) == null ? void 0 : _b2.cover) ? {
             backgroundImage: `url("${p2.cur.cover}"), ${COVER_GRAD}`
           } : {
             background: COVER_GRAD
@@ -10391,7 +10391,7 @@ function Fi({
   });
 }
 function MiniPlayer(p2) {
-  var _a, _b, _c;
+  var _a2, _b2, _c;
   react.exports.useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape")
@@ -10420,7 +10420,7 @@ function MiniPlayer(p2) {
     raf: 0
   });
   const flushMove = () => {
-    var _a2, _b2, _c2;
+    var _a22, _b22, _c2;
     const st = drag.current;
     st.raf = 0;
     if (!st.dx && !st.dy)
@@ -10430,7 +10430,7 @@ function MiniPlayer(p2) {
     const dy = Math.round(st.dy * dpr);
     st.dx = 0;
     st.dy = 0;
-    const app = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
+    const app = (_b22 = (_a22 = window.go) == null ? void 0 : _a22.main) == null ? void 0 : _b22.App;
     try {
       (_c2 = app == null ? void 0 : app.WinMoveBy) == null ? void 0 : _c2.call(app, dx, dy);
     } catch {
@@ -10470,8 +10470,8 @@ function MiniPlayer(p2) {
       title,
       onMouseDown,
       children: [/* @__PURE__ */ jsx("div", {
-        className: "mini-cover" + (((_a = p2.cur) == null ? void 0 : _a.cover) ? "" : " empty"),
-        style: ((_b = p2.cur) == null ? void 0 : _b.cover) ? {
+        className: "mini-cover" + (((_a2 = p2.cur) == null ? void 0 : _a2.cover) ? "" : " empty"),
+        style: ((_b2 = p2.cur) == null ? void 0 : _b2.cover) ? {
           backgroundImage: `url("${p2.cur.cover}")`
         } : void 0,
         children: !((_c = p2.cur) == null ? void 0 : _c.cover) && /* @__PURE__ */ jsx("span", {
@@ -10565,6 +10565,7 @@ function MiniPlayer(p2) {
     })
   });
 }
+var _a, _b;
 const fmt$2 = (ms) => {
   if (!isFinite(ms) || ms < 0)
     ms = 0;
@@ -10614,9 +10615,9 @@ function loadSkin() {
   }
   return "purple";
 }
-const HAS_MYGO = typeof window.mygo !== "undefined";
+const HAS_GO_APP = typeof ((_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App) !== "undefined";
 function SkinView(p2) {
-  var _a, _b;
+  var _a2, _b2;
   const [skinName, setSkinName] = react.exports.useState(loadSkin);
   const selectSkin = (id2) => {
     setSkinName(id2);
@@ -10655,7 +10656,7 @@ function SkinView(p2) {
     raf: 0
   });
   const flushMove = () => {
-    var _a2, _b2, _c;
+    var _a3, _b3, _c;
     const st = drag.current;
     st.raf = 0;
     if (!st.dx && !st.dy)
@@ -10665,20 +10666,27 @@ function SkinView(p2) {
     const dy = Math.round(st.dy * dpr);
     st.dx = 0;
     st.dy = 0;
-    const app = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
+    const app = (_b3 = (_a3 = window.go) == null ? void 0 : _a3.main) == null ? void 0 : _b3.App;
     try {
       (_c = app == null ? void 0 : app.WinMoveBy) == null ? void 0 : _c.call(app, dx, dy);
     } catch {
     }
   };
   const onMouseDown = (e) => {
-    if (HAS_MYGO)
-      return;
+    var _a3, _b3;
     if (e.button !== 0)
       return;
     if (e.target.closest("button,input"))
       return;
     e.preventDefault();
+    const app = (_b3 = (_a3 = window.go) == null ? void 0 : _a3.main) == null ? void 0 : _b3.App;
+    if (HAS_GO_APP && (app == null ? void 0 : app.DragWindow)) {
+      try {
+        app.DragWindow();
+      } catch {
+      }
+      return;
+    }
     const onMove = (ev) => {
       drag.current.dx += ev.movementX;
       drag.current.dy += ev.movementY;
@@ -10746,7 +10754,7 @@ function SkinView(p2) {
         onClick: () => selectSkin(s.id)
       }, s.id)), /* @__PURE__ */ jsx("span", {
         className: "skin-swatch-lab",
-        children: (_a = SKINS.find((s) => s.id === skinName)) == null ? void 0 : _a.label
+        children: (_a2 = SKINS.find((s) => s.id === skinName)) == null ? void 0 : _a2.label
       })]
     }), /* @__PURE__ */ jsxs("section", {
       className: "skin-panel skin-player",
@@ -10756,7 +10764,7 @@ function SkinView(p2) {
           className: "skin-lcd-left",
           children: [/* @__PURE__ */ jsx("div", {
             className: "skin-lcd-album",
-            children: ((_b = p2.cur) == null ? void 0 : _b.album) || (p2.cur ? p2.cur.name : "\u4E13\u8F91\uFF1A\u2014")
+            children: ((_b2 = p2.cur) == null ? void 0 : _b2.album) || (p2.cur ? p2.cur.name : "\u4E13\u8F91\uFF1A\u2014")
           }), /* @__PURE__ */ jsxs("div", {
             className: "skin-lcd-meta",
             children: [/* @__PURE__ */ jsx("span", {
@@ -13063,10 +13071,10 @@ class Equalizer {
       this.preamp.gain.value = on ? this.preampValue : 1;
   }
   dispose() {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h;
     try {
-      (_a = this.anL) == null ? void 0 : _a.disconnect();
-      (_b = this.anR) == null ? void 0 : _b.disconnect();
+      (_a2 = this.anL) == null ? void 0 : _a2.disconnect();
+      (_b2 = this.anR) == null ? void 0 : _b2.disconnect();
       (_c = this.splitter) == null ? void 0 : _c.disconnect();
       (_d = this.analyser) == null ? void 0 : _d.disconnect();
       (_e = this.out) == null ? void 0 : _e.disconnect();
@@ -13120,11 +13128,11 @@ function markMygoHost() {
     });
 }
 function closeApp() {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+  var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
   const w2 = window;
   if (OWNED_WIN) {
     try {
-      (_d = (_c = (_b = (_a = w2.mygo) == null ? void 0 : _a.runtime) == null ? void 0 : _b.window) == null ? void 0 : _c.close) == null ? void 0 : _d.call(_c);
+      (_d = (_c = (_b2 = (_a2 = w2.mygo) == null ? void 0 : _a2.runtime) == null ? void 0 : _b2.window) == null ? void 0 : _c.close) == null ? void 0 : _d.call(_c);
     } catch {
     }
     return;
@@ -13138,19 +13146,19 @@ function closeApp() {
   } catch {
   }
   window.setTimeout(() => {
-    var _a2, _b2, _c2, _d2;
+    var _a22, _b22, _c2, _d2;
     try {
-      (_d2 = (_c2 = (_b2 = (_a2 = w2.mygo) == null ? void 0 : _a2.runtime) == null ? void 0 : _b2.window) == null ? void 0 : _c2.close) == null ? void 0 : _d2.call(_c2);
+      (_d2 = (_c2 = (_b22 = (_a22 = w2.mygo) == null ? void 0 : _a22.runtime) == null ? void 0 : _b22.window) == null ? void 0 : _c2.close) == null ? void 0 : _d2.call(_c2);
     } catch {
     }
   }, 350);
 }
 function minimizeApp() {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+  var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
   const w2 = window;
   if (OWNED_WIN) {
     try {
-      (_d = (_c = (_b = (_a = w2.mygo) == null ? void 0 : _a.runtime) == null ? void 0 : _b.window) == null ? void 0 : _c.minimize) == null ? void 0 : _d.call(_c);
+      (_d = (_c = (_b2 = (_a2 = w2.mygo) == null ? void 0 : _a2.runtime) == null ? void 0 : _b2.window) == null ? void 0 : _c.minimize) == null ? void 0 : _d.call(_c);
     } catch {
     }
     return;
@@ -13219,8 +13227,8 @@ function loadPlaylists() {
   }
 }
 const G = () => {
-  var _a, _b;
-  return (_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App;
+  var _a2, _b2;
+  return (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
 };
 async function callResult(fn, ...args) {
   const r2 = await call(fn, ...args);
@@ -13260,7 +13268,7 @@ const fmt = (ms) => {
 };
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
-  var _a, _b;
+  var _a2, _b2;
   const [theme, setTheme] = react.exports.useState(() => {
     try {
       const saved = localStorage.getItem("hulu-theme");
@@ -13328,9 +13336,9 @@ function App() {
   const plIdx = Math.max(0, enabledPl.findIndex((p2) => p2.id === homePid));
   const curPlugin = enabledPl[plIdx];
   function toggleMaxApp() {
-    var _a2, _b2, _c;
+    var _a22, _b22, _c;
     const w2 = window;
-    const fn = (_c = (_b2 = (_a2 = w2.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App) == null ? void 0 : _c.ToggleMax;
+    const fn = (_c = (_b22 = (_a22 = w2.go) == null ? void 0 : _a22.main) == null ? void 0 : _b22.App) == null ? void 0 : _c.ToggleMax;
     if (typeof fn !== "function")
       return;
     try {
@@ -13533,10 +13541,10 @@ function App() {
     if (!npOpen)
       return;
     const onKey = (e) => {
-      var _a2;
+      var _a22;
       if (e.key === "Escape")
         setNpOpen(false);
-      if (e.key === " " && ((_a2 = e.target) == null ? void 0 : _a2.tagName) !== "INPUT") {
+      if (e.key === " " && ((_a22 = e.target) == null ? void 0 : _a22.tagName) !== "INPUT") {
         e.preventDefault();
         toggle();
       }
@@ -13628,10 +13636,10 @@ function App() {
     }
   }
   function startEdgeResize(dir, e) {
-    var _a2, _b2, _c;
+    var _a22, _b22, _c;
     if (!MYGO_HOST || mini)
       return;
-    (_a2 = e.preventDefault) == null ? void 0 : _a2.call(e);
+    (_a22 = e.preventDefault) == null ? void 0 : _a22.call(e);
     const startX = Number(e.screenX || 0);
     const startW = window.innerWidth;
     let last = 0;
@@ -13656,7 +13664,7 @@ function App() {
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
     try {
-      (_c = (_b2 = e.currentTarget).setPointerCapture) == null ? void 0 : _c.call(_b2, e.pointerId);
+      (_c = (_b22 = e.currentTarget).setPointerCapture) == null ? void 0 : _c.call(_b22, e.pointerId);
     } catch {
     }
   }
@@ -13945,7 +13953,7 @@ function App() {
     }
   }
   async function scanLocalDir(dir) {
-    var _a2;
+    var _a22;
     const app = G();
     if (!(app == null ? void 0 : app.ScanLocalMusic))
       return;
@@ -13960,7 +13968,7 @@ function App() {
       setLocalInfo(stat + (scan.skipped ? `\uFF0C${scan.skipped} \u9879\u8BFB\u4E0D\u8FDB\u53BB` : ""));
       if (scan.err)
         setErr(String(scan.err));
-      const dirs = await ((_a2 = app.LocalDirs) == null ? void 0 : _a2.call(app));
+      const dirs = await ((_a22 = app.LocalDirs) == null ? void 0 : _a22.call(app));
       setLocalDirs(Array.isArray(dirs) ? dirs.map(String) : []);
       setTab("local");
     } catch (e) {
@@ -14029,12 +14037,12 @@ function App() {
     }
   }, [curIndex, cur == null ? void 0 : cur.id]);
   react.exports.useEffect(() => {
-    var _a2;
-    (_a2 = eqRef.current) == null ? void 0 : _a2.setGains(eqGains);
+    var _a22;
+    (_a22 = eqRef.current) == null ? void 0 : _a22.setGains(eqGains);
   }, [eqGains]);
   react.exports.useEffect(() => {
-    var _a2;
-    (_a2 = eqRef.current) == null ? void 0 : _a2.setPreamp(preamp);
+    var _a22;
+    (_a22 = eqRef.current) == null ? void 0 : _a22.setPreamp(preamp);
     try {
       localStorage.setItem("qqjt-eq", JSON.stringify({
         gains: eqGains,
@@ -15118,10 +15126,10 @@ function App() {
             className: "dpl-hero",
             children: [/* @__PURE__ */ jsx("div", {
               className: "dpl-cover",
-              style: ((_a = libView[0]) == null ? void 0 : _a.cover) ? {
+              style: ((_a2 = libView[0]) == null ? void 0 : _a2.cover) ? {
                 backgroundImage: `url("${libView[0].cover}")`
               } : void 0,
-              children: ((_b = libView[0]) == null ? void 0 : _b.cover) ? "" : "\u266A"
+              children: ((_b2 = libView[0]) == null ? void 0 : _b2.cover) ? "" : "\u266A"
             }), /* @__PURE__ */ jsxs("div", {
               className: "dpl-info",
               children: [/* @__PURE__ */ jsx("h2", {
@@ -15441,9 +15449,9 @@ function App() {
       onNext: () => step(1),
       onExpand: () => toggleMini(false),
       onClose: () => {
-        var _a2, _b2, _c, _d;
+        var _a22, _b22, _c, _d;
         try {
-          (_d = (_c = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App) == null ? void 0 : _c.Quit) == null ? void 0 : _d.call(_c);
+          (_d = (_c = (_b22 = (_a22 = window.go) == null ? void 0 : _a22.main) == null ? void 0 : _b22.App) == null ? void 0 : _c.Quit) == null ? void 0 : _d.call(_c);
         } catch {
         }
       },
@@ -16690,8 +16698,7 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-view[data-skin="light"]{--bg1:#dfe9f2;--bg2:#b9cde0;--panel1:#eef4fa;--panel2:#d4e4f0;--line:#a9c4d8;--lcd:#f4f8fc;--lcd-line:#b9d2e4;--txt:#1c2e3c;--dim:#6a8296;--accent:#3a86c9;--hover:#dceaf4;--on:#c4dcee;--ico-bg:#3a86c9;--ico-txt:#f4f8fc;--album:#16324a;--prevnext:#7a94a6;--artist:#5a7488}
 
 .skin-title{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:9px;
-  background:linear-gradient(180deg,var(--hover),var(--bg1));border:1px solid var(--line);cursor:grab;user-select:none;
-  --app-region:drag}
+  background:linear-gradient(180deg,var(--hover),var(--bg1));border:1px solid var(--line);cursor:grab;user-select:none}
 .skin-title:active{cursor:grabbing}
 .skin-title-ico{width:18px;height:18px;border-radius:50%;background:var(--ico-bg);color:var(--ico-txt);display:inline-flex;align-items:center;justify-content:center;font-size:11px}
 .skin-title-name{font-size:13px;font-weight:600;letter-spacing:.5px;flex:1}
