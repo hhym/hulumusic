@@ -37,7 +37,11 @@ func stationByID(id string) *Station {
 	return nil
 }
 
-// Stations 返回电台列表
+// Stations 返回电台列表：内置的一批公开源 + 云听的央广台（取不到就只给内置的）
 func (a *App) Stations() []Station {
-	return radioStations
+	out := append([]Station{}, radioStations...)
+	if cloud := a.CloudStations(); len(cloud) > 0 {
+		out = append(out, cloud...)
+	}
+	return out
 }

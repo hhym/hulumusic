@@ -10718,10 +10718,10 @@ function NowPlaying(p2) {
         })
       }), p2.queue.length > p2.queueIdx + 1 && /* @__PURE__ */ jsxs("aside", {
         className: "np-queue",
-        "aria-label": "\u5F85\u64AD\u6E05\u5355",
+        "aria-label": "\u64AD\u5355",
         children: [/* @__PURE__ */ jsxs("div", {
           className: "npq-head",
-          children: ["\u5F85\u64AD\u6E05\u5355", /* @__PURE__ */ jsx("em", {
+          children: ["\u64AD\u5355", /* @__PURE__ */ jsx("em", {
             children: p2.queue.length - p2.queueIdx - 1
           })]
         }), /* @__PURE__ */ jsx("div", {
@@ -11180,7 +11180,7 @@ function MiniPlayer(p2) {
           })
         }), /* @__PURE__ */ jsx("button", {
           onClick: p2.onQueue,
-          title: "\u5F85\u64AD\u6E05\u5355",
+          title: "\u64AD\u5355",
           children: /* @__PURE__ */ jsx(Fi, {
             n: "list",
             fill: true,
@@ -14386,7 +14386,7 @@ function TtSkinView(props) {
             })]
           }, t2.id + i)) : /* @__PURE__ */ jsx("div", {
             className: "ttskin-pl-empty",
-            children: "\u5F85\u64AD\u6E05\u5355\u662F\u7A7A\u7684"
+            children: "\u64AD\u5355\u662F\u7A7A\u7684"
           })
         })
       });
@@ -15069,6 +15069,12 @@ function App() {
   }
   const [lib, setLib] = react.exports.useState([]);
   const [stations, setStations] = react.exports.useState([]);
+  const [radioQ, setRadioQ] = react.exports.useState("");
+  const [radioRegion, setRadioRegion] = react.exports.useState("");
+  const [recInfo, setRecInfo] = react.exports.useState({
+    recording: false
+  });
+  const [stationBusy, setStationBusy] = react.exports.useState(false);
   const [podQ, setPodQ] = react.exports.useState("\u6709\u58F0\u4E66");
   const [shows, setShows] = react.exports.useState([]);
   const [curShow, setCurShow] = react.exports.useState(null);
@@ -16350,6 +16356,63 @@ function App() {
       });
     }
   }
+  async function toggleRec() {
+    try {
+      if (recInfo.recording) {
+        const r2 = await call("StopRecording");
+        setRecInfo(r2 && typeof r2 === "object" ? r2 : {
+          recording: false
+        });
+      } else {
+        if (!cur || cur.source !== "radio") {
+          setErr("\u5148\u64AD\u4E00\u4E2A\u7535\u53F0\uFF0C\u518D\u5F00\u59CB\u5F55\u5236");
+          return;
+        }
+        const name = cur.name;
+        const r2 = await call("StartRecording", name);
+        setRecInfo(r2 && typeof r2 === "object" ? r2 : {
+          recording: true
+        });
+      }
+    } catch (e) {
+      setErr(String((e == null ? void 0 : e.message) || e));
+    }
+  }
+  async function refreshStations() {
+    setStationBusy(true);
+    try {
+      const s2 = await call("RefreshStations");
+      setStations(toArr(s2));
+    } catch (e) {
+      setErr(String((e == null ? void 0 : e.message) || e));
+    } finally {
+      setStationBusy(false);
+    }
+  }
+  react.exports.useEffect(() => {
+    if (!recInfo.recording)
+      return;
+    const t2 = setInterval(() => {
+      call("RecordingInfo").then((r2) => setRecInfo(r2 && typeof r2 === "object" ? r2 : {
+        recording: false
+      })).catch(() => {
+      });
+    }, 1e3);
+    return () => clearInterval(t2);
+  }, [recInfo.recording]);
+  const radioRegions = Array.from(new Set(stations.map((s) => s.region || "\u4E2D\u56FD")));
+  const radioList = stations.filter((s) => {
+    if (radioRegion && (s.region || "\u4E2D\u56FD") !== radioRegion)
+      return false;
+    const q22 = radioQ.trim();
+    if (!q22)
+      return true;
+    return s.name.includes(q22) || s.desc.includes(q22);
+  });
+  const recDur = (n2) => {
+    const t2 = n2 || 0;
+    return `${String(Math.floor(t2 / 60)).padStart(2, "0")}:${String(t2 % 60).padStart(2, "0")}`;
+  };
   const contentArea = /* @__PURE__ */ jsxs("main", {
     className: "main",
     children: [/* @__PURE__ */ jsxs("header", {
@@ -16357,7 +16420,7 @@ function App() {
       children: [/* @__PURE__ */ jsxs("div", {
         children: [/* @__PURE__ */ jsx("h1", {
           className: "page-h1 ph-" + tab,
-          children: tab === "home" ? "\u9996\u9875" : tab === "library" ? "\u6211\u7684\u6536\u85CF" : tab === "radio" ? "\u7535\u53F0" : tab === "podcast" ? "\u542C\u4E66" : tab === "local" ? "\u6B4C\u66F2" : tab === "queue" ? "\u5F85\u64AD\u6E05\u5355" : tab === "plugins" ? "\u63D2\u4EF6" : tab === "settings" ? "\u8BBE\u7F6E" : tab === "lyric" ? "\u6B4C\u8BCD" : "\u641C\u7D22\u7ED3\u679C"
+          children: tab === "home" ? "\u9996\u9875" : tab === "library" ? "\u6211\u7684\u6536\u85CF" : tab === "radio" ? "\u7535\u53F0" : tab === "podcast" ? "\u542C\u4E66" : tab === "local" ? "\u4E50\u5E93" : tab === "queue" ? "\u64AD\u5355" : tab === "plugins" ? "\u63D2\u4EF6" : tab === "settings" ? "\u8BBE\u7F6E" : tab === "lyric" ? "\u6B4C\u8BCD" : "\u641C\u7D22\u7ED3\u679C"
         }), /* @__PURE__ */ jsx("p", {
           children: meta || (tab === "home" ? "\u5F53\u524D\u63D2\u4EF6\u7684\u9996\u9875\uFF0C\u70B9\u5361\u7247\u76F4\u63A5\u64AD" : tab === "radio" ? "\u7F51\u7EDC\u76F4\u64AD\uFF0C\u70B9\u53F0\u5373\u542C" : tab === "podcast" ? "\u641C\u6709\u58F0\u4E66\u3001\u64AD\u5BA2\u8282\u76EE" : tab === "local" ? localInfo || "\u9009\u4E00\u4E2A\u97F3\u4E50\u6587\u4EF6\u5939\uFF0C\u626B\u51FA\u6765\u7684\u6B4C\u76F4\u63A5\u64AD\uFF08\u540C\u540D .lrc \u4F1A\u5F53\u6B4C\u8BCD\uFF09" : tab === "queue" ? "\u6B63\u5728\u653E\u7684 + \u63A5\u4E0B\u6765\u8981\u653E\u7684\uFF0C\u70B9\u4E00\u4E0B\u5C31\u80FD\u8DF3\u8FC7\u53BB" : tab === "plugins" ? "\u5BFC\u5165 MyGo / MusicFree \u63D2\u4EF6\uFF0C\u6269\u5C55\u97F3\u6E90" : tab === "settings" ? "\u504F\u597D\u8BBE\u7F6E\uFF0C\u6539\u5B8C\u8BB0\u5F97\u70B9\u4FDD\u5B58" : tab === "lyric" ? "\u8DDF\u7740\u5531\uFF0C\u53EF\u5207\u5361\u62C9OK \u5927\u884C / \u6574\u6BB5\u6EDA\u52A8" : "\u8F93\u5165\u5173\u952E\u8BCD\u5F00\u59CB\u641C\u7D22")
         })]
@@ -16581,7 +16644,7 @@ function App() {
         })]
       }), queue.list.length === 0 ? /* @__PURE__ */ jsx("div", {
         className: "empty",
-        children: "\u5F85\u64AD\u6E05\u5355\u662F\u7A7A\u7684\u3002\u641C\u7D22\u7ED3\u679C\u6216\u4E50\u5E93\u6BCF\u884C\u53F3\u8FB9\u7684\u300C\uFF0B\u300D\u80FD\u628A\u6B4C\u6392\u8FDB\u6765\uFF0C\u70B9\u6B4C\u540D\u5219\u4F1A\u76F4\u63A5\u64AD\u3002"
+        children: "\u64AD\u5355\u662F\u7A7A\u7684\u3002\u641C\u7D22\u7ED3\u679C\u6216\u4E50\u5E93\u6BCF\u884C\u53F3\u8FB9\u7684\u300C\uFF0B\u300D\u80FD\u628A\u6B4C\u6392\u8FDB\u6765\uFF0C\u70B9\u6B4C\u540D\u5219\u4F1A\u76F4\u63A5\u64AD\u3002"
       }) : /* @__PURE__ */ jsxs(Fragment, {
         children: [queue.list[queue.idx] && /* @__PURE__ */ jsxs(Fragment, {
           children: [/* @__PURE__ */ jsx("div", {
@@ -16590,7 +16653,7 @@ function App() {
           }), qRow(queue.list[queue.idx], queue.idx, true)]
         }), /* @__PURE__ */ jsxs("div", {
           className: "q-group",
-          children: ["\u5F85\u64AD\u6E05\u5355", /* @__PURE__ */ jsx("em", {
+          children: ["\u64AD\u5355", /* @__PURE__ */ jsx("em", {
             children: Math.max(0, queue.list.length - queue.idx - 1)
           })]
         }), queue.list.length - queue.idx - 1 > 0 ? /* @__PURE__ */ jsx("div", {
@@ -16621,39 +16684,79 @@ function App() {
       onPlay: play,
       onChanged: refreshPlugins
     }) : tab === "radio" ? /* @__PURE__ */ jsxs("div", {
-      className: "grid",
-      children: [stations.map((s) => /* @__PURE__ */ jsxs("button", {
-        className: "station",
-        onClick: () => play({
-          id: s.id,
-          name: s.name,
-          artist: s.desc,
-          album: s.region,
-          cover: s.logo,
-          duration: 0,
-          source: "radio"
-        }),
-        children: [/* @__PURE__ */ jsx("div", {
-          className: "st-logo",
-          style: s.logo ? {
-            backgroundImage: `url(${s.logo})`
-          } : void 0
-        }), /* @__PURE__ */ jsxs("div", {
-          className: "st-info",
-          children: [/* @__PURE__ */ jsx("div", {
-            className: "st-name",
-            children: s.name
-          }), /* @__PURE__ */ jsx("div", {
-            className: "st-desc",
-            children: s.desc
-          })]
-        }), /* @__PURE__ */ jsx("span", {
-          className: "st-region",
-          children: s.region
+      className: "radio-wrap",
+      children: [/* @__PURE__ */ jsxs("div", {
+        className: "rd-bar",
+        children: [/* @__PURE__ */ jsx("input", {
+          className: "rd-q",
+          value: radioQ,
+          placeholder: "\u641C\u53F0\u540D / \u8282\u76EE",
+          onChange: (e) => setRadioQ(e.target.value)
+        }), /* @__PURE__ */ jsxs("select", {
+          className: "rd-region",
+          value: radioRegion,
+          onChange: (e) => setRadioRegion(e.target.value),
+          children: [/* @__PURE__ */ jsx("option", {
+            value: "",
+            children: "\u5168\u90E8\u5730\u533A"
+          }), radioRegions.map((r2) => /* @__PURE__ */ jsx("option", {
+            value: r2,
+            children: r2
+          }, r2))]
+        }), /* @__PURE__ */ jsxs("button", {
+          className: "rd-rec" + (recInfo.recording ? " on" : ""),
+          onClick: toggleRec,
+          title: recInfo.recording ? "\u505C\u6B62\u5F55\u5236\uFF0C\u6587\u4EF6\u5728\u6570\u636E\u76EE\u5F55/\u5F55\u97F3" : "\u628A\u5F53\u524D\u7535\u53F0\u5F55\u6210 .aac",
+          children: [/* @__PURE__ */ jsx("span", {
+            className: "rd-dot"
+          }), recInfo.recording ? "\u5F55\u5236\u4E2D " + recDur(recInfo.seconds) : "\u5F55\u5236"]
+        }), /* @__PURE__ */ jsx("button", {
+          className: "rd-refresh",
+          onClick: refreshStations,
+          disabled: stationBusy,
+          children: stationBusy ? "\u5237\u65B0\u4E2D\u2026" : "\u5237\u65B0\u53F0\u8868"
+        }), /* @__PURE__ */ jsxs("span", {
+          className: "rd-count",
+          children: [radioList.length, " / ", stations.length, " \u53F0"]
         })]
-      }, s.id)), stations.length === 0 && /* @__PURE__ */ jsx("div", {
-        className: "empty",
-        children: "\u7535\u53F0\u5217\u8868\u8FD8\u6CA1\u52A0\u8F7D\u51FA\u6765"
+      }), recInfo.file && !recInfo.recording && /* @__PURE__ */ jsxs("div", {
+        className: "rd-tip",
+        children: ["\u5DF2\u5B58\uFF1A", String(recInfo.file)]
+      }), /* @__PURE__ */ jsxs("div", {
+        className: "grid",
+        children: [radioList.map((s) => /* @__PURE__ */ jsxs("button", {
+          className: "station",
+          onClick: () => play({
+            id: s.id,
+            name: s.name,
+            artist: s.desc,
+            album: s.region,
+            cover: s.logo,
+            duration: 0,
+            source: "radio"
+          }),
+          children: [/* @__PURE__ */ jsx("div", {
+            className: "st-logo",
+            style: s.logo ? {
+              backgroundImage: `url(${s.logo})`
+            } : void 0
+          }), /* @__PURE__ */ jsxs("div", {
+            className: "st-info",
+            children: [/* @__PURE__ */ jsx("div", {
+              className: "st-name",
+              children: s.name
+            }), /* @__PURE__ */ jsx("div", {
+              className: "st-desc",
+              children: s.desc
+            })]
+          }), /* @__PURE__ */ jsx("span", {
+            className: "st-region",
+            children: s.region
+          })]
+        }, s.id)), radioList.length === 0 && /* @__PURE__ */ jsx("div", {
+          className: "empty",
+          children: stations.length === 0 ? "\u7535\u53F0\u5217\u8868\u8FD8\u6CA1\u52A0\u8F7D\u51FA\u6765" : "\u8FD9\u4E2A\u6761\u4EF6\u4E0B\u6CA1\u6709\u53F0"
+        })]
       })]
     }) : tab === "podcast" ? /* @__PURE__ */ jsxs("div", {
       className: "pod-wrap",
@@ -17039,17 +17142,49 @@ function App() {
               children: "\u9996\u9875"
             })]
           }), /* @__PURE__ */ jsxs("button", {
-            className: tab === "search" ? "on" : "",
-            onClick: () => setTab("search"),
+            className: tab === "radio" ? "on" : "",
+            onClick: () => setTab("radio"),
             children: [/* @__PURE__ */ jsx("span", {
               className: "dn-ico",
               children: /* @__PURE__ */ jsx(Fi, {
-                n: "search",
+                n: "radio",
                 size: 14
               })
             }), /* @__PURE__ */ jsx("span", {
               className: "dn-lab",
-              children: "\u641C\u7D22"
+              children: "\u7535\u53F0"
+            }), /* @__PURE__ */ jsx("em", {
+              children: stations.length
+            })]
+          }), /* @__PURE__ */ jsxs("button", {
+            className: tab === "queue" ? "on" : "",
+            onClick: () => setTab("queue"),
+            children: [/* @__PURE__ */ jsx("span", {
+              className: "dn-ico",
+              children: /* @__PURE__ */ jsx(Fi, {
+                n: "list",
+                size: 14
+              })
+            }), /* @__PURE__ */ jsx("span", {
+              className: "dn-lab",
+              children: "\u64AD\u5355"
+            }), /* @__PURE__ */ jsx("em", {
+              children: queue.list.length
+            })]
+          }), /* @__PURE__ */ jsxs("button", {
+            className: tab === "local" ? "on" : "",
+            onClick: openLocal,
+            children: [/* @__PURE__ */ jsx("span", {
+              className: "dn-ico",
+              children: /* @__PURE__ */ jsx(Fi, {
+                n: "folder",
+                size: 14
+              })
+            }), /* @__PURE__ */ jsx("span", {
+              className: "dn-lab",
+              children: "\u4E50\u5E93"
+            }), /* @__PURE__ */ jsx("em", {
+              children: localTracks.length
             })]
           }), /* @__PURE__ */ jsxs("button", {
             className: tab === "library" && !plSel && !libAlbum ? "on" : "",
@@ -17065,49 +17200,6 @@ function App() {
               children: "\u559C\u6B22"
             }), /* @__PURE__ */ jsx("em", {
               children: lib.length
-            })]
-          }), /* @__PURE__ */ jsxs("button", {
-            className: tab === "queue" ? "on" : "",
-            onClick: () => setTab("queue"),
-            children: [/* @__PURE__ */ jsx("span", {
-              className: "dn-ico",
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "list",
-                size: 14
-              })
-            }), /* @__PURE__ */ jsx("span", {
-              className: "dn-lab",
-              children: "\u5F85\u64AD\u6E05\u5355"
-            }), /* @__PURE__ */ jsx("em", {
-              children: queue.list.length
-            })]
-          }), /* @__PURE__ */ jsxs("button", {
-            className: tab === "local" ? "on" : "",
-            onClick: openLocal,
-            children: [/* @__PURE__ */ jsx("span", {
-              className: "dn-ico",
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "folder",
-                size: 14
-              })
-            }), /* @__PURE__ */ jsx("span", {
-              className: "dn-lab",
-              children: "\u6B4C\u66F2"
-            }), /* @__PURE__ */ jsx("em", {
-              children: localTracks.length
-            })]
-          }), /* @__PURE__ */ jsxs("button", {
-            className: tab === "lyric" ? "on" : "",
-            onClick: () => setTab("lyric"),
-            children: [/* @__PURE__ */ jsx("span", {
-              className: "dn-ico",
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "type",
-                size: 14
-              })
-            }), /* @__PURE__ */ jsx("span", {
-              className: "dn-lab",
-              children: "\u6B4C\u8BCD"
             })]
           })]
         }), /* @__PURE__ */ jsxs("div", {
@@ -17581,7 +17673,7 @@ function App() {
               })
             }), /* @__PURE__ */ jsx("button", {
               onClick: () => setTab("queue"),
-              title: "\u5F85\u64AD\u6E05\u5355",
+              title: "\u64AD\u5355",
               children: /* @__PURE__ */ jsx(Fi, {
                 n: "list",
                 size: 15
@@ -18781,6 +18873,20 @@ nav button.on{background:var(--sel);color:var(--txt)}
 .lyric{font-size:12.5px;color:var(--dim);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* 电台卡片 */
+.radio-wrap{display:flex;flex-direction:column;gap:12px}
+.rd-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rd-q{flex:1 1 220px;min-width:160px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 11px;color:var(--txt);font-size:13px;outline:none}
+.rd-q:focus{border-color:var(--acc)}
+.rd-region{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--txt);font-size:13px}
+.rd-rec,.rd-refresh{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:7px 12px;color:var(--txt);font-size:13px;cursor:pointer}
+.rd-rec:hover,.rd-refresh:hover{border-color:var(--acc)}
+.rd-rec .rd-dot{width:8px;height:8px;border-radius:50%;background:var(--dim2,#888)}
+.rd-rec.on{border-color:#e0483d;color:#e0483d}
+.rd-rec.on .rd-dot{background:#e0483d;animation:rd-blink 1.2s infinite}
+@keyframes rd-blink{0%,100%{opacity:1}50%{opacity:.35}}
+.rd-refresh:disabled{opacity:.6;cursor:default}
+.rd-count{color:var(--dim2,#888);font-size:12px}
+.rd-tip{color:var(--dim2,#888);font-size:12px;word-break:break-all}
 .station{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;color:var(--txt);text-align:left;box-shadow:var(--shadow)}
 .station:hover{border-color:var(--acc);transform:translateY(-1px)}
 .st-logo{width:44px;height:44px;flex:0 0 44px;border-radius:10px;background-color:var(--cover);background-position:center;background-size:cover;background-repeat:no-repeat}

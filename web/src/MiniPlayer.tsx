@@ -135,7 +135,7 @@ export default function MiniPlayer(p: Props) {
             <Fi n="skip-forward" fill size={19} />
           </button>
 
-          <button onClick={p.onQueue} title="待播清单">
+          <button onClick={p.onQueue} title="播单">
             <Fi n="list" fill size={20} />
           </button>
         </div>

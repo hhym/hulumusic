@@ -181,3 +181,49 @@ TT2012（327×157），按钮、进度、LED 时间、信息条位置都对得�
 
 新增 Go 绑定：`DeskLrc(on) (bool, error)`、`DeskLrcState()`、`DeskLrcText(line, title)`、
 `SetAlwaysOnTop(on) bool`。
+
+
+### 电台 HLS 直播（3.0.43 beta）
+
+`qianqian/hls.go`：本地代理收到 `.m3u8` 目标时不再转发，而是就地转封装成 ADTS
+（`audio/aac`，chunked 无长度）直接喂 `<audio>`。
+
+- 解析：master → 选最高带宽变体 → media playlist 按 `EXT-X-MEDIA-SEQUENCE` 顺序拉分片；
+- 解复用：`0x47` 同步 → PAT → PMT → 音频 PID（`0x0f` ADTS / `0x03`·`0x04` MP3；`0x11` LATM 暂不支持并写日志）；
+- 只取音频 PID 的 payload，丢掉 PES 头与视频/数据包；ADTS 帧跨分片时残帧留缓冲继续拼；
+- 追不上直播边缘（分片过期）就跳到最新一片，避免越播越落后；
+- 客户端断开（切台/关窗）由 `r.Context().Done()` 立即停止拉流。
+
+`qianqian/cloud.go`：云听目录（19 个央广台，30 分钟缓存，启动后台预热）。
+签名 = `UPPER(MD5(参数按 key 升序 "k=v&..." + "&timestamp=<ms>&key=<固定key>"))`，
+流地址每次都现签，不缓存。
+
+入口：电台页自动多出 19 个「云听 · xxx」的台（`id = cloud:<contentId>`），
+点播 → `StreamURL` 现取 m3u8 → 代理 → ADTS。实测中国之声 195 kbps / AAC LC / 44.1kHz 立体声，
+ffprobe 可解码，Chromium 侧 `canPlayType('audio/aac')=probably`，chunked 直播 `canplay` 正常。
+
+## 3.0.47：LATM 直转、电台录音、979 台全量目录
+
+三件事一起上，都在 Go 侧，前端只是多了一条工具行。
+
+**LATM（PMT `stream_type 0x11`）**：`qianqian/latm.go`。LOAS 元素（`0x56` + 13 位长度）
+里第一个元素带 StreamMuxConfig（ASC 给出 profile / 采样率索引 / 声道数），之后
+`useSameStreamMux=1` 只跟 PayloadLengthInfo。两个必须照编码器实际写法处理的点：
+载荷不按字节对齐（ffmpeg latmenc 里明确写着 "The LATM payload is written unaligned"），
+取出的比特要重新排到字节边界；长度按 255 分块累加。转换后拼 7 字节 ADTS 头，
+与原始 ADTS 路径输出同一条流。PMT 会反复下发，转换器只建一次（重建会把配置和缓冲清掉，
+这是第一版只出半截声音的原因）。实测把 `-f latm` 样本封进 TS（`stream_type=0x11`）后
+走完整解复用，输出与 ffmpeg 直接解 LOAS 的 PCM 相关系数 1.0（bit-exact）。
+
+**录音**：`qianqian/rec.go`。ADTS 是自同步格式，录制就是把这些帧 append 到
+`<数据目录>/录音/<台名>-<开始时间>.aac`，停录不用收尾，文件直接能播。
+入口在电台页工具行（录制状态红点 + 计时，停录后显示落盘路径），录的不是电台时会提示先播台。
+
+**979 台**：`qianqian/cloud.go` 改成全量目录：先取省份表（32 个，含「国家 0」），
+按省拉 `/web/appBroadcast/list?provinceCode=<code>&categoryId=0`，并发 3、批间 180ms、
+失败 300/1200ms 退避重试三次，按 contentId 去重 → 979 个台 / 32 个地区，实测 11–18 秒抓完。
+目录落盘 `cloud-catalog.json`，启动先读本地（零请求），超过 12 小时才后台静默重建，
+重建失败的省沿用上一份目录。电台页多了搜索框、地区下拉、「刷新台表」和台数显示。
+
+省台的码流多为 HE-AACv2（`ffprobe` profile=HE-AACv2），ADTS 头随原流透传；
+Chromium 实测能解码播放（duration/playing 正常），不额外处理。

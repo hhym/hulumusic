@@ -208,6 +208,9 @@ func runApp() {
 		}
 		bootLog("窗口已建，page url: %q", url)
 
+		// 云听目录预热：电台页第一次打开要有央广台，别让它等接口
+		go qianqian.WarmCloudCatalog()
+
 		win.OnClose(func(e *mygo.CloseEvent) { bootLog("窗口收到关闭请求") })
 		win.OnClosed(func() { bootLog("窗口已关闭") })
 

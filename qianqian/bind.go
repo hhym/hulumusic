@@ -290,6 +290,30 @@ func (x API) Stations() []Station {
 	return x.App.Stations()
 }
 
+func (x API) RefreshStations() []Station {
+	return x.App.RefreshCloudStations()
+}
+
+func (x API) CloudCatalogCount() int {
+	return x.App.CloudCatalogCount()
+}
+
+func (x API) StartRecording(name any) (map[string]any, error) {
+	return x.App.StartRecording(asStr(name))
+}
+
+func (x API) StopRecording() (map[string]any, error) {
+	return x.App.StopRecording()
+}
+
+func (x API) RecordingInfo() map[string]any {
+	return x.App.RecordingInfo()
+}
+
+func (x API) RecordingDir() string {
+	return x.App.RecordingDir()
+}
+
 func (x API) GetSettings() Settings {
 	return x.App.GetSettings()
 }

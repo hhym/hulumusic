@@ -117,9 +117,9 @@ export default function NowPlaying(p: Props) {
         </div>
 
         {p.queue.length > p.queueIdx + 1 && (
-          <aside className="np-queue" aria-label="待播清单">
+          <aside className="np-queue" aria-label="播单">
             <div className="npq-head">
-              待播清单<em>{p.queue.length - p.queueIdx - 1}</em>
+              播单<em>{p.queue.length - p.queueIdx - 1}</em>
             </div>
             <div className="npq-list">
               {p.queue.slice(p.queueIdx + 1).map((t, k) => (

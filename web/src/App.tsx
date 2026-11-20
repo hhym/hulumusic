@@ -260,6 +260,10 @@ export default function App() {
 
   // 电台
   const [stations, setStations] = useState<Station[]>([])
+  const [radioQ, setRadioQ] = useState('')
+  const [radioRegion, setRadioRegion] = useState('')
+  const [recInfo, setRecInfo] = useState<any>({ recording: false })
+  const [stationBusy, setStationBusy] = useState(false)
 
   // 听书
   const [podQ, setPodQ] = useState('有声书')
@@ -1311,11 +1315,64 @@ export default function App() {
     }
   }
 
+  // 录制当前电台：ADTS 帧直接 append 到 .aac，边录边播
+  async function toggleRec() {
+    try {
+      if (recInfo.recording) {
+        const r = await call<any>('StopRecording')
+        setRecInfo(r && typeof r === 'object' ? r : { recording: false })
+      } else {
+        if (!cur || cur.source !== 'radio') {
+          setErr('先播一个电台，再开始录制')
+          return
+        }
+        const name = cur.name
+        const r = await call<any>('StartRecording', name)
+        setRecInfo(r && typeof r === 'object' ? r : { recording: true })
+      }
+    } catch (e: any) {
+      setErr(String(e?.message || e))
+    }
+  }
+
+  async function refreshStations() {
+    setStationBusy(true)
+    try {
+      const s2 = await call<Station[]>('RefreshStations')
+      setStations(toArr<Station>(s2))
+    } catch (e: any) {
+      setErr(String(e?.message || e))
+    } finally {
+      setStationBusy(false)
+    }
+  }
+
+  // 录制计时：只在录制时轮询，别一直打后端
+  useEffect(() => {
+    if (!recInfo.recording) return
+    const t = setInterval(() => {
+      call<any>('RecordingInfo').then((r) => setRecInfo(r && typeof r === 'object' ? r : { recording: false })).catch(() => {})
+    }, 1000)
+    return () => clearInterval(t)
+  }, [recInfo.recording])
+
+  const radioRegions = Array.from(new Set(stations.map((s) => s.region || '中国')))
+  const radioList = stations.filter((s) => {
+    if (radioRegion && (s.region || '中国') !== radioRegion) return false
+    const q = radioQ.trim()
+    if (!q) return true
+    return s.name.includes(q) || s.desc.includes(q)
+  })
+  const recDur = (n: number) => {
+    const t = n || 0
+    return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`
+  }
+
   const contentArea = (
     <main className="main">
       <header className={"head hd-" + tab}>
         <div>
-          <h1 className={'page-h1 ph-' + tab}>{tab === 'home' ? '首页' : tab === 'library' ? '我的收藏' : tab === 'radio' ? '电台' : tab === 'podcast' ? '听书' : tab === 'local' ? '歌曲' : tab === 'queue' ? '待播清单' : tab === 'plugins' ? '插件' : tab === 'settings' ? '设置' : tab === 'lyric' ? '歌词' : '搜索结果'}</h1>
+          <h1 className={'page-h1 ph-' + tab}>{tab === 'home' ? '首页' : tab === 'library' ? '我的收藏' : tab === 'radio' ? '电台' : tab === 'podcast' ? '听书' : tab === 'local' ? '乐库' : tab === 'queue' ? '播单' : tab === 'plugins' ? '插件' : tab === 'settings' ? '设置' : tab === 'lyric' ? '歌词' : '搜索结果'}</h1>
           <p>{meta || (tab === 'home' ? '当前插件的首页，点卡片直接播' : tab === 'radio' ? '网络直播，点台即听' : tab === 'podcast' ? '搜有声书、播客节目' : tab === 'local' ? (localInfo || '选一个音乐文件夹，扫出来的歌直接播（同名 .lrc 会当歌词）') : tab === 'queue' ? '正在放的 + 接下来要放的，点一下就能跳过去' : tab === 'plugins' ? '导入 MyGo / MusicFree 插件，扩展音源' : tab === 'settings' ? '偏好设置，改完记得点保存' : tab === 'lyric' ? '跟着唱，可切卡拉OK 大行 / 整段滚动' : '输入关键词开始搜索')}</p>
         </div>
         {err && <div className="err">{err}</div>}
@@ -1464,7 +1521,7 @@ export default function App() {
 
           {queue.list.length === 0 ? (
             <div className="empty">
-              待播清单是空的。搜索结果或乐库每行右边的「＋」能把歌排进来，点歌名则会直接播。
+              播单是空的。搜索结果或乐库每行右边的「＋」能把歌排进来，点歌名则会直接播。
             </div>
           ) : (
             <>
@@ -1476,7 +1533,7 @@ export default function App() {
               )}
 
               <div className="q-group">
-                待播清单
+                播单
                 <em>{Math.max(0, queue.list.length - queue.idx - 1)}</em>
               </div>
               {queue.list.length - queue.idx - 1 > 0 ? (
@@ -1509,8 +1566,28 @@ export default function App() {
       ) : tab === 'plugins' ? (
         <PluginsPage onPlay={play} onChanged={refreshPlugins} />
       ) : tab === 'radio' ? (
-        <div className="grid">
-          {stations.map((s) => (
+        <div className="radio-wrap">
+          <div className="rd-bar">
+            <input className="rd-q" value={radioQ} placeholder="搜台名 / 节目"
+                   onChange={(e) => setRadioQ(e.target.value)} />
+            <select className="rd-region" value={radioRegion} onChange={(e) => setRadioRegion(e.target.value)}>
+              <option value="">全部地区</option>
+              {radioRegions.map((r) => <option key={r} value={r}>{r}</option>)}
+            </select>
+            <button className={'rd-rec' + (recInfo.recording ? ' on' : '')} onClick={toggleRec}
+                    title={recInfo.recording ? '停止录制，文件在数据目录/录音' : '把当前电台录成 .aac'}>
+              <span className="rd-dot" />{recInfo.recording ? '录制中 ' + recDur(recInfo.seconds) : '录制'}
+            </button>
+            <button className="rd-refresh" onClick={refreshStations} disabled={stationBusy}>
+              {stationBusy ? '刷新中…' : '刷新台表'}
+            </button>
+            <span className="rd-count">{radioList.length} / {stations.length} 台</span>
+          </div>
+          {recInfo.file && !recInfo.recording && (
+            <div className="rd-tip">已存：{String(recInfo.file)}</div>
+          )}
+          <div className="grid">
+          {radioList.map((s) => (
             <button key={s.id} className="station"
                     onClick={() => play({id: s.id, name: s.name, artist: s.desc, album: s.region, cover: s.logo, duration: 0, source: 'radio'})}>
               <div className="st-logo" style={s.logo ? {backgroundImage: `url(${s.logo})`} : undefined} />
@@ -1521,7 +1598,8 @@ export default function App() {
               <span className="st-region">{s.region}</span>
             </button>
           ))}
-          {stations.length === 0 && <div className="empty">电台列表还没加载出来</div>}
+          {radioList.length === 0 && <div className="empty">{stations.length === 0 ? '电台列表还没加载出来' : '这个条件下没有台'}</div>}
+          </div>
         </div>
       ) : tab === 'podcast' ? (
         <div className="pod-wrap">
@@ -1716,23 +1794,21 @@ export default function App() {
             </div>
 
             <nav className="dn-quick">
+              {/* 导航按电台形态收敛：首页/搜索/喜欢的入口收进电台页（插件首页仍走左上角音源下拉） */}
               <button className={tab === 'home' ? 'on' : ''} onClick={() => setTab('home')}>
                 <span className="dn-ico"><Fi n="home" size={14} /></span><span className="dn-lab">首页</span>
               </button>
-              <button className={tab === 'search' ? 'on' : ''} onClick={() => setTab('search')}>
-                <span className="dn-ico"><Fi n="search" size={14} /></span><span className="dn-lab">搜索</span>
+              <button className={tab === 'radio' ? 'on' : ''} onClick={() => setTab('radio')}>
+                <span className="dn-ico"><Fi n="radio" size={14} /></span><span className="dn-lab">电台</span><em>{stations.length}</em>
+              </button>
+              <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}>
+                <span className="dn-ico"><Fi n="list" size={14} /></span><span className="dn-lab">播单</span><em>{queue.list.length}</em>
+              </button>
+              <button className={tab === 'local' ? 'on' : ''} onClick={openLocal}>
+                <span className="dn-ico"><Fi n="folder" size={14} /></span><span className="dn-lab">乐库</span><em>{localTracks.length}</em>
               </button>
               <button className={(tab === 'library' && !plSel && !libAlbum) ? 'on' : ''} onClick={() => openLib('')}>
                 <span className="dn-ico"><Fi n="heart" size={14} /></span><span className="dn-lab">喜欢</span><em>{lib.length}</em>
-              </button>
-              <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}>
-                <span className="dn-ico"><Fi n="list" size={14} /></span><span className="dn-lab">待播清单</span><em>{queue.list.length}</em>
-              </button>
-              <button className={tab === 'local' ? 'on' : ''} onClick={openLocal}>
-                <span className="dn-ico"><Fi n="folder" size={14} /></span><span className="dn-lab">歌曲</span><em>{localTracks.length}</em>
-              </button>
-              <button className={tab === 'lyric' ? 'on' : ''} onClick={() => setTab('lyric')}>
-                <span className="dn-ico"><Fi n="type" size={14} /></span><span className="dn-lab">歌词</span>
               </button>
             </nav>
 
@@ -1939,7 +2015,7 @@ export default function App() {
 
               <div className="dnp-right">
                 <button onClick={() => setTab('lyric')} title="歌词界面"><Fi n="type" size={15} /></button>
-                <button onClick={() => setTab('queue')} title="待播清单"><Fi n="list" size={15} /></button>
+                <button onClick={() => setTab('queue')} title="播单"><Fi n="list" size={15} /></button>
               </div>
             </footer>
 

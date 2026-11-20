@@ -111,6 +111,18 @@ func handleAudioProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 电台直播：m3u8 分片是 MPEG-TS，<audio> 放不了，就地转成 ADTS（见 hls.go）
+	if isHLSTarget(target) {
+		ref := ""
+		if encH := r.URL.Query().Get("h"); encH != "" {
+			if h, err := decodeTarget(encH); err == nil {
+				ref = h
+			}
+		}
+		serveHLS(w, r, target, ref)
+		return
+	}
+
 	req, err := http.NewRequest("GET", target, nil)
 	if err != nil {
 		http.Error(w, "bad request", 400)

@@ -775,7 +775,7 @@ export default function TtSkinView(props: TtSkinViewProps) {
                   <span className="t">{t.name}</span>
                   <span className="a">{t.artist || ''}</span>
                 </div>
-              )) : <div className="ttskin-pl-empty">待播清单是空的</div>}
+              )) : <div className="ttskin-pl-empty">播单是空的</div>}
             </div>
           </SubWin>
         )

@@ -221,6 +221,15 @@ func (a *App) StreamURL(id string) (string, string) {
 		}
 		target = st.URL
 		live = true
+	case strings.HasPrefix(id, "cloud:"):
+		// 央广：流地址带签名，必须每次播放现取；拿到的是 m3u8，代理会转成 ADTS
+		cid := strings.TrimPrefix(id, "cloud:")
+		u, e := cloudStreamURL(cid, true)
+		if e != nil {
+			return "", e.Error()
+		}
+		target = u
+		live = true
 	case strings.HasPrefix(id, "loc:"):
 		p, e := localTrackPath(id)
 		if e != nil {
