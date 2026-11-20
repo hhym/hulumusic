@@ -53,19 +53,19 @@ func (a *App) DeskLrc(on bool) (bool, error) {
 		return false, fmt.Errorf("界面地址还没准备好，稍后再试")
 	}
 	opts := mygo.WindowOptions{
-		Title:            "桌面歌词",
-		Width:            620,
-		Height:           110,
-		Frameless:        true,
-		Transparent:      true,
-		AlwaysOnTop:      true,
-		SkipTaskbar:      true,
-		DisableResize:    true,
-		DisableMaximize:  true,
-		DisableMinimize:  true,
-		DisableShadow:    true,
-		CornerRadius:     0,
-		URL:              a.pageURL + "?desklrc=1",
+		Title:           "桌面歌词",
+		Width:           620,
+		Height:          110,
+		Frameless:       true,
+		Transparent:     true,
+		AlwaysOnTop:     true,
+		SkipTaskbar:     true,
+		DisableResize:   true,
+		DisableMaximize: true,
+		DisableMinimize: true,
+		DisableShadow:   true,
+		CornerRadius:    0,
+		URL:             a.pageURL + "?desklrc=1",
 	}
 	w, err := newWindowSafe(opts)
 	if err != nil {

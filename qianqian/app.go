@@ -40,8 +40,8 @@ type App struct {
 	mu      sync.Mutex
 	pageURL string
 	desk    *mygo.Window
-	lib    []Track
-	libPth string
+	lib     []Track
+	libPth  string
 }
 
 func NewApp() *App { return &App{} }
