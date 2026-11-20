@@ -16633,7 +16633,7 @@ function App() {
             title: "\u52A0\u5165\u5F85\u64AD",
             children: /* @__PURE__ */ jsx(Fi, {
               n: "plus",
-              size: 12
+              size: 13
             })
           }), /* @__PURE__ */ jsx("button", {
             className: "heart" + (lib.some((x2) => x2.id === t2.id) ? " on" : ""),
@@ -16988,7 +16988,7 @@ function App() {
           title: "\u52A0\u5165\u5F85\u64AD",
           children: /* @__PURE__ */ jsx(Fi, {
             n: "plus",
-            size: 12
+            size: 13
           })
         }), t2.source !== "radio" && t2.source !== "pod" && /* @__PURE__ */ jsx("button", {
           className: "heart" + (lib.some((x2) => x2.id === t2.id) ? " on" : ""),
@@ -18891,7 +18891,10 @@ nav button.on{background:var(--sel);color:var(--txt)}
 .cb{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tag{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
 .dur{font-size:12px;color:var(--dim);width:44px;text-align:right}
-.heart{background:transparent;border:0;color:var(--heart);cursor:pointer;font-size:15px;padding:0 4px;opacity:.7}
+.heart{background:transparent;border:0;color:var(--heart);cursor:pointer;font-size:14px;padding:0;
+  width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex:0 0 22px;
+  border-radius:6px;line-height:1;opacity:.7}
+.heart:hover{background:var(--hover)}
 .heart:hover,.heart.on{opacity:1}
 .heart:hover{color:var(--heart-on)}
 .heart.on{color:var(--heart-on)}
@@ -19312,9 +19315,10 @@ html[data-theme='dark'] .plug-kind {
 .queue-head{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--dim)}
 .row .rm{border:none;background:transparent;color:var(--dim);cursor:pointer;font-size:15px;padding:2px 8px;border-radius:6px}
 /* 加入待播 */
-.row .add{border:1px dashed var(--line);background:transparent;color:var(--dim);cursor:pointer;
-  font-size:13px;line-height:1;padding:5px 7px;border-radius:7px;margin-right:2px;transition:.15s}
-.row .add:hover{border-color:var(--acc);color:var(--acc);background:var(--hover)}
+.row .add{border:0;background:transparent;color:var(--dim);cursor:pointer;
+  width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+  padding:0;border-radius:6px;flex:0 0 22px;transition:.15s}
+.row .add:hover{color:var(--acc);background:var(--hover)}
 /* 待播清单分组 */
 .q-ops{display:flex;gap:8px;align-items:center}
 .q-ops .ghost-btn{font-size:12px;padding:5px 10px}
@@ -20302,8 +20306,9 @@ html[data-theme='dark'] .plug-kind {
   font-size:11px;font-weight:600;cursor:pointer;flex:0 0 auto}
 
 /* 列表行尾「加入歌单」 */
-.row .addpl{padding:0 7px;border:1px solid transparent;border-radius:6px;background:transparent;
-  color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.row .addpl{padding:0;border:0;border-radius:6px;background:transparent;
+  color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  width:22px;height:22px;flex:0 0 22px}
 .row .addpl:hover{color:var(--acc2);border-color:var(--line);background:var(--hover)}
 .thead>span:nth-child(8){flex:0 0 28px}
 

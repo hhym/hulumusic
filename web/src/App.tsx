@@ -1489,7 +1489,7 @@ export default function App() {
                   </div>
                   <span className="tag">本地</span>
                   <span className="dur">{fmt(t.duration)}</span>
-                  <button className="add" onClick={() => enqueue(t)} title="加入待播"><Fi n="plus" size={12} /></button>
+                  <button className="add" onClick={() => enqueue(t)} title="加入待播"><Fi n="plus" size={13} /></button>
                   <button className={'heart' + (lib.some((x) => x.id === t.id) ? ' on' : '')} onClick={() => fav(t)}>♥</button>
                   {layout === 'desk' && (
                     <button className="addpl" title="加入自建歌单"
@@ -1701,7 +1701,7 @@ export default function App() {
               <span className="tag">{t.source === 'plugin' && t.plug ? t.plug : srcName(t.source)}</span>
               <span className="dur">{fmt(t.duration)}</span>
               {t.source !== 'radio' && (
-                <button className="add" onClick={() => enqueue(t)} title="加入待播"><Fi n="plus" size={12} /></button>
+                <button className="add" onClick={() => enqueue(t)} title="加入待播"><Fi n="plus" size={13} /></button>
               )}
               {t.source !== 'radio' && t.source !== 'pod' && (
                 <button className={'heart' + (lib.some((x) => x.id === t.id) ? ' on' : '')} onClick={() => fav(t)}>♥</button>
