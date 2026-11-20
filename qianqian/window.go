@@ -67,6 +67,8 @@ func (a *App) skinOn() string {
 		a.win.Unmaximize()
 	}
 	a.win.SetSize(w, h)
+	// 打开顶部标题条的原生拖动兜底（只认皮肤模式）。
+	a.autoDragSwitch(true)
 	return ""
 }
 
@@ -75,6 +77,7 @@ func (a *App) skinOff() string {
 	if a.win == nil {
 		return "窗口还没准备好"
 	}
+	a.autoDragSwitch(false)
 	a.win.SetAlwaysOnTop(false)
 	a.win.SetSize(deskW, deskH)
 	a.win.SetMinimumSize(minW, minH)
