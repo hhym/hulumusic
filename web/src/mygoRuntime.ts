@@ -1011,6 +1011,16 @@ export type MyGoItem = {
   raw: AnyObj
 }
 
+/* 插件给的图片地址常带 {size} 占位（汽水的 douyinpic 缩略图就是
+   https://p3-luna.douyinpic.com/img/<uri>~c5-resize:%7Bsize%7D:%7Bsize%7D.png）。
+   宿主不分大小，直接拿去当 background-image 会请求一个含字面量的地址、拿不到图，
+   表现就是封面全空。这里统一换成一个够用的尺寸。 */
+function fixArtwork(raw: any): string {
+  const s = String(raw ?? '')
+  if (!s) return ''
+  return s.replace(/%7Bsize%7D/gi, '480').replace(/\{size\}/gi, '480')
+}
+
 function mapTrack(t: AnyObj): MyGoItem {
   const artists: any[] = Array.isArray(t?.artists) ? t.artists : []
   return {
@@ -1018,7 +1028,7 @@ function mapTrack(t: AnyObj): MyGoItem {
     title: String(t?.name ?? t?.title ?? '未命名'),
     artist: artists.map((a) => (typeof a === 'string' ? a : a?.name || '')).filter(Boolean).join(' / '),
     album: String(t?.album?.name ?? ''),
-    artwork: String(t?.album?.imageUrl ?? t?.imageUrl ?? ''),
+    artwork: fixArtwork(t?.album?.imageUrl ?? t?.imageUrl ?? ''),
     duration: Number(t?.duration) || 0,
     raw: t || {},
   }
@@ -1132,7 +1142,7 @@ function toCard(x: AnyObj, kind: CardKind): HomeCard {
     // 链接卡没有 id，翻页用的 page 才是它真正能打开的东西
     id: String(x?.id ?? x?.page ?? x?.url ?? ''),
     name,
-    cover: String(x?.imageUrl ?? x?.image ?? x?.cover ?? x?.artwork ?? x?.logo ?? ''),
+    cover: fixArtwork(x?.imageUrl ?? x?.image ?? x?.cover ?? x?.artwork ?? x?.logo ?? ''),
     sub: String(x?.artists ? artistsOf(x) : x?.artist ?? x?.author ?? x?.description ?? x?.url ?? ''),
     kind,
   }

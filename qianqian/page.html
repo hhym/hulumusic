@@ -8959,6 +8959,12 @@ function clearMyGoCache(id2) {
     codeCache.clear();
   }
 }
+function fixArtwork(raw) {
+  const s = String(raw ?? "");
+  if (!s)
+    return "";
+  return s.replace(/%7Bsize%7D/gi, "480").replace(/\{size\}/gi, "480");
+}
 function mapTrack(t2) {
   var _a, _b;
   const artists = Array.isArray(t2 == null ? void 0 : t2.artists) ? t2.artists : [];
@@ -8967,7 +8973,7 @@ function mapTrack(t2) {
     title: String((t2 == null ? void 0 : t2.name) ?? (t2 == null ? void 0 : t2.title) ?? "\u672A\u547D\u540D"),
     artist: artists.map((a) => typeof a === "string" ? a : (a == null ? void 0 : a.name) || "").filter(Boolean).join(" / "),
     album: String(((_a = t2 == null ? void 0 : t2.album) == null ? void 0 : _a.name) ?? ""),
-    artwork: String(((_b = t2 == null ? void 0 : t2.album) == null ? void 0 : _b.imageUrl) ?? (t2 == null ? void 0 : t2.imageUrl) ?? ""),
+    artwork: fixArtwork(((_b = t2 == null ? void 0 : t2.album) == null ? void 0 : _b.imageUrl) ?? (t2 == null ? void 0 : t2.imageUrl) ?? ""),
     duration: Number(t2 == null ? void 0 : t2.duration) || 0,
     raw: t2 || {}
   };
@@ -9049,7 +9055,7 @@ function toCard(x2, kind) {
   return {
     id: String((x2 == null ? void 0 : x2.id) ?? (x2 == null ? void 0 : x2.page) ?? (x2 == null ? void 0 : x2.url) ?? ""),
     name,
-    cover: String((x2 == null ? void 0 : x2.imageUrl) ?? (x2 == null ? void 0 : x2.image) ?? (x2 == null ? void 0 : x2.cover) ?? (x2 == null ? void 0 : x2.artwork) ?? (x2 == null ? void 0 : x2.logo) ?? ""),
+    cover: fixArtwork((x2 == null ? void 0 : x2.imageUrl) ?? (x2 == null ? void 0 : x2.image) ?? (x2 == null ? void 0 : x2.cover) ?? (x2 == null ? void 0 : x2.artwork) ?? (x2 == null ? void 0 : x2.logo) ?? ""),
     sub: String((x2 == null ? void 0 : x2.artists) ? artistsOf(x2) : (x2 == null ? void 0 : x2.artist) ?? (x2 == null ? void 0 : x2.author) ?? (x2 == null ? void 0 : x2.description) ?? (x2 == null ? void 0 : x2.url) ?? ""),
     kind
   };
@@ -13962,7 +13968,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.74";
+const BUILD_TAG = "3.0.89";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 const POD_KEYWORDS = ["\u6709\u58F0\u4E66", "\u90ED\u5FB7\u7EB2", "\u4E09\u56FD\u6F14\u4E49", "\u7761\u524D\u6545\u4E8B", "\u76F8\u58F0", "\u82F1\u8BED\u64AD\u5BA2", "\u513F\u7AE5\u6545\u4E8B", "\u5386\u53F2"];
 const POD_PLATFORMS = [{
@@ -20639,17 +20645,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.74] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.89] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.74] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.89] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.74] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.89] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.74] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.89] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>
