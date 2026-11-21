@@ -42,15 +42,15 @@ func (r *bitR) bits(n int) int {
 }
 
 type latmConv struct {
-	buf      []byte
-	ready    bool
-	profile  int // ADTS 的 profile 字段 = ASC 的 object type - 1
-	sfi      int // 采样率索引
-	cc       int // 声道配置
+	buf       []byte
+	ready     bool
+	profile   int // ADTS 的 profile 字段 = ASC 的 object type - 1
+	sfi       int // 采样率索引
+	cc        int // 声道配置
 	subframes int
-	in       int
-	skipped  int
-	bad      int
+	in        int
+	skipped   int
+	bad       int
 }
 
 // feed 吃一段 PES 里的 LATM 数据，吐出可以直接落到 ADTS 流里的字节。

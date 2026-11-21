@@ -29,22 +29,22 @@ import (
 const adtsSampleRate = 44100 // 只用于探测日志，不参与解析
 
 type hlsVariant struct {
-	uri      string
+	uri       string
 	bandwidth int
 }
 
 type hlsSegment struct {
-	seq  int64
-	uri  string
-	dur  float64
+	seq int64
+	uri string
+	dur float64
 }
 
 type hlsPlaylist struct {
-	isMaster   bool
-	variants   []hlsVariant
-	targetDur  float64
-	mediaSeq   int64
-	segments   []hlsSegment
+	isMaster  bool
+	variants  []hlsVariant
+	targetDur float64
+	mediaSeq  int64
+	segments  []hlsSegment
 }
 
 func isHLSTarget(target string) bool {
@@ -467,7 +467,7 @@ func serveHLS(w http.ResponseWriter, r *http.Request, target, referer string) {
 				continue
 			}
 			// 还没生成新分片：等半个目标时长再刷新
-			wait := time.Duration(targetDur/2*float64(time.Second))
+			wait := time.Duration(targetDur / 2 * float64(time.Second))
 			if wait < 300*time.Millisecond {
 				wait = 300 * time.Millisecond
 			}
