@@ -7636,12 +7636,12 @@ reactJsxRuntime_production_min.jsxs = q;
 const Fragment = jsxRuntime.exports.Fragment;
 const jsx = jsxRuntime.exports.jsx;
 const jsxs = jsxRuntime.exports.jsxs;
-const bridge$3 = () => {
+const bridge$2 = () => {
   var _a, _b;
   return (_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App;
 };
 async function callM$1(fn, ...args) {
-  const app = bridge$3();
+  const app = bridge$2();
   if (!app || typeof app[fn] !== "function")
     throw new Error("\u540E\u7AEF\u672A\u5C31\u7EEA");
   return await app[fn](...args);
@@ -8372,7 +8372,7 @@ const codeCache = /* @__PURE__ */ new Map();
 const storageCache = /* @__PURE__ */ new Map();
 const saveTimers = /* @__PURE__ */ new Map();
 const readFile = async (id2, rel) => {
-  const app = bridge$2();
+  const app = bridge$1();
   if (rel === "") {
     const code2 = await app.PluginSource(id2);
     if (typeof code2 !== "string" || !code2.trim())
@@ -8486,7 +8486,7 @@ const pluginSettings = {};
 async function ensureDataDir() {
   if (appDataDir)
     return appDataDir;
-  const app = bridge$2();
+  const app = bridge$1();
   if (app == null ? void 0 : app.GetSettings) {
     try {
       const s = await app.GetSettings();
@@ -8497,7 +8497,7 @@ async function ensureDataDir() {
   return appDataDir;
 }
 async function initSettings(id2) {
-  const app = bridge$2();
+  const app = bridge$1();
   if (!(app == null ? void 0 : app.PluginSettings))
     return;
   try {
@@ -8517,7 +8517,7 @@ async function initStorage(id2) {
   var _a;
   if ((_a = storageCache.get(id2)) == null ? void 0 : _a.size)
     return;
-  const app = bridge$2();
+  const app = bridge$1();
   if (!(app == null ? void 0 : app.PluginStorage))
     return;
   const raw = await app.PluginStorage(id2);
@@ -8534,7 +8534,7 @@ async function initStorage(id2) {
   }
 }
 function scheduleSave(id2) {
-  const app = bridge$2();
+  const app = bridge$1();
   if (!(app == null ? void 0 : app.SavePluginStorage))
     return;
   clearTimeout(saveTimers.get(id2));
@@ -8562,7 +8562,7 @@ function makeSpawn() {
     let result = null;
     let pending = null;
     const run = async () => {
-      const app = bridge$2();
+      const app = bridge$1();
       if (!(app == null ? void 0 : app.RunProcess))
         throw new Error("\u540E\u7AEF\u4E0D\u652F\u6301\u8FD0\u884C\u672C\u673A\u7A0B\u5E8F");
       const { data, err } = pairOf(await app.RunProcess(bin, realArgs, 300));
@@ -8632,7 +8632,7 @@ function makeHost(id2, dataDir) {
       const u2 = String(url ?? "");
       if (!/^https?:\/\//i.test(u2))
         throw new Error("openURL \u53EA\u63A5\u53D7 http/https \u5730\u5740");
-      const app = bridge$2();
+      const app = bridge$1();
       if (app == null ? void 0 : app.OpenExternal) {
         try {
           const p2 = app.OpenExternal(u2);
@@ -8648,7 +8648,7 @@ function makeHost(id2, dataDir) {
       const n2 = String(name ?? "");
       if (!n2 || n2.includes("..") || n2.includes("/") || n2.includes("\\"))
         throw new Error("removeDataDir \u53EA\u63A5\u53D7\u672C\u63D2\u4EF6\u76EE\u5F55\u5185\u7684\u540D\u5B57");
-      const app = bridge$2();
+      const app = bridge$1();
       if (app == null ? void 0 : app.RemovePluginDataDir) {
         try {
           const p2 = app.RemovePluginDataDir(id2, n2);
@@ -8690,7 +8690,7 @@ function makeHost(id2, dataDir) {
 }
 function makeFetch() {
   return async (input, init = {}) => {
-    const app = bridge$2();
+    const app = bridge$1();
     if (!(app == null ? void 0 : app.HttpRequest))
       throw new Error("\u540E\u7AEF\u672A\u5C31\u7EEA");
     const url = typeof input === "string" ? input : String((input == null ? void 0 : input.url) || "");
@@ -8845,7 +8845,7 @@ async function loadMyGoPlugin(id2) {
   await ensureDataDir();
   if (!pluginRealDir.get(id2)) {
     try {
-      const app = bridge$2();
+      const app = bridge$1();
       if (app == null ? void 0 : app.PluginDir) {
         const r2 = await app.PluginDir(id2);
         const v2 = Array.isArray(r2) ? r2[0] : r2;
@@ -9056,7 +9056,7 @@ async function mygoSignOut(pluginId) {
   } catch {
   }
   storageCache.delete(pluginId);
-  const app = bridge$2();
+  const app = bridge$1();
   if (app == null ? void 0 : app.SavePluginStorage) {
     try {
       await app.SavePluginStorage(pluginId, "{}");
@@ -9160,7 +9160,7 @@ function makeAxios() {
     return target + (target.indexOf("?") >= 0 ? "&" : "?") + parts.join("&");
   };
   const request = async (cfg) => {
-    const app = bridge$2();
+    const app = bridge$1();
     if (!(app == null ? void 0 : app.HttpRequest))
       throw new Error("\u7F51\u7EDC\u80FD\u529B\u4E0D\u53EF\u7528");
     const method = String(cfg.method || "GET").toUpperCase();
@@ -9286,7 +9286,7 @@ async function makeRequire(code) {
 async function loadMusicFree(pluginId) {
   if (moduleCache.has(pluginId))
     return moduleCache.get(pluginId);
-  const app = bridge$2();
+  const app = bridge$1();
   if (!(app == null ? void 0 : app.PluginSource))
     throw new Error("\u63D2\u4EF6\u80FD\u529B\u4E0D\u53EF\u7528");
   let code = sourceCache.get(pluginId);
@@ -9386,7 +9386,7 @@ async function mfLyric(pluginId, item) {
   const raw = str((res == null ? void 0 : res.rawLrc) || (res == null ? void 0 : res.lrc) || (res == null ? void 0 : res.lyric) || (typeof res === "string" ? res : ""));
   return parseLrc(raw);
 }
-const bridge$2 = () => {
+const bridge$1 = () => {
   var _a, _b;
   return (_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App;
 };
@@ -9420,7 +9420,7 @@ function clearPluginCache(pluginId) {
 }
 let kindCache = { at: 0, map: {} };
 async function pluginKindOf(id2) {
-  const app = bridge$2();
+  const app = bridge$1();
   if (!(app == null ? void 0 : app.Plugins))
     return "mygo";
   if (Date.now() - kindCache.at > 5e3) {
@@ -9459,289 +9459,6 @@ async function pluginLyric(pluginId, item) {
     return await mfLyric(pluginId, item);
   }
   return await mygoLyric(pluginId, item);
-}
-const bridge$1 = () => {
-  var _a, _b;
-  return (_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App;
-};
-async function loadSkinPacks() {
-  const app = bridge$1();
-  if (!(app == null ? void 0 : app.SkinPacks))
-    return [];
-  try {
-    const raw = await app.SkinPacks();
-    const v2 = Array.isArray(raw) && Array.isArray(raw[0]) ? raw[0] : raw;
-    return Array.isArray(v2) ? v2 : [];
-  } catch {
-    return [];
-  }
-}
-async function decodeSkinPack(id2) {
-  const app = bridge$1();
-  if (!(app == null ? void 0 : app.DecodeSkinPack))
-    return null;
-  try {
-    const raw = await app.DecodeSkinPack(id2);
-    const v2 = Array.isArray(raw) && raw[0] && raw[0].skins ? raw[0] : raw;
-    return v2 && v2.skins ? v2 : null;
-  } catch {
-    return null;
-  }
-}
-const alphaCache = /* @__PURE__ */ new Map();
-function hexToRgb(hex) {
-  const s = hex.replace("#", "");
-  if (s.length === 3) {
-    return [parseInt(s[0] + s[0], 16), parseInt(s[1] + s[1], 16), parseInt(s[2] + s[2], 16)];
-  }
-  return [parseInt(s.slice(0, 2), 16), parseInt(s.slice(2, 4), 16), parseInt(s.slice(4, 6), 16)];
-}
-function knockOut(dataUri, colorKey) {
-  const key = dataUri.slice(-48) + "|" + colorKey;
-  const hit = alphaCache.get(key);
-  if (hit)
-    return hit;
-  const job = new Promise((resolve) => {
-    if (!dataUri)
-      return resolve("");
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const cv = document.createElement("canvas");
-        cv.width = img.naturalWidth;
-        cv.height = img.naturalHeight;
-        const cx = cv.getContext("2d");
-        cx.drawImage(img, 0, 0);
-        const data = cx.getImageData(0, 0, cv.width, cv.height);
-        const [kr, kg2, kb2] = hexToRgb(colorKey || "#ff00ff");
-        const px = data.data;
-        for (let i = 0; i < px.length; i += 4) {
-          if (Math.abs(px[i] - kr) <= 6 && Math.abs(px[i + 1] - kg2) <= 6 && Math.abs(px[i + 2] - kb2) <= 6) {
-            px[i + 3] = 0;
-          }
-        }
-        cx.putImageData(data, 0, 0);
-        resolve(cv.toDataURL("image/png"));
-      } catch {
-        resolve(dataUri);
-      }
-    };
-    img.onerror = () => resolve("");
-    img.src = dataUri;
-  });
-  alphaCache.set(key, job);
-  return job;
-}
-const BUTTON_NAMES = /* @__PURE__ */ new Set([
-  "play",
-  "pause",
-  "stop",
-  "prev",
-  "next",
-  "mute",
-  "open",
-  "browser",
-  "lyric",
-  "equalizer",
-  "playlist",
-  "minimize",
-  "minimode",
-  "exit",
-  "ontop",
-  "desklrc",
-  "close",
-  "enabled",
-  "profile",
-  "reset"
-]);
-function renderTtSkinWindow(container2, skin, windowName = "player", opts = {}) {
-  const win = skin.windows.find((w2) => w2.name === windowName) || skin.windows[0];
-  if (!win)
-    return () => {
-    };
-  const base = skin.assets[win.image] || "";
-  const scale = opts.scale ?? 1;
-  container2.innerHTML = "";
-  container2.style.position = "relative";
-  container2.style.width = "0px";
-  container2.style.height = "0px";
-  container2.style.overflow = "hidden";
-  const stage = document.createElement("div");
-  stage.className = "ttskn-stage";
-  stage.style.cssText = `position:relative;transform:scale(${scale});transform-origin:top left;width:0;height:0;image-rendering:pixelated;`;
-  container2.appendChild(stage);
-  const cleanup = [];
-  const bg2 = document.createElement("div");
-  bg2.style.cssText = `position:absolute;left:0;top:0;background:${skin.assets[win.image] ? "transparent" : "#222"};`;
-  stage.appendChild(bg2);
-  knockOut(base, skin.transparent).then((png) => {
-    if (!png)
-      return;
-    const img = new Image();
-    img.src = png;
-    img.style.cssText = "position:absolute;left:0;top:0;display:block;";
-    img.onload = () => {
-      const sc2 = opts.fitWidth ? Math.min(opts.fitWidth / img.naturalWidth, 1) : scale;
-      stage.style.transform = `scale(${sc2})`;
-      stage.style.width = img.naturalWidth + "px";
-      stage.style.height = img.naturalHeight + "px";
-      container2.style.width = img.naturalWidth * sc2 + "px";
-      container2.style.height = img.naturalHeight * sc2 + "px";
-    };
-    stage.appendChild(img);
-  });
-  for (const c of win.controls) {
-    if (opts.only && !opts.only.includes(c.name))
-      continue;
-    const w2 = Math.max(1, c.x2 - c.x1);
-    const h = Math.max(1, c.y2 - c.y1);
-    const el2 = BUTTON_NAMES.has(c.name) ? document.createElement("button") : document.createElement("div");
-    el2.dataset.ttControl = c.name;
-    el2.style.cssText = `position:absolute;left:${c.x1}px;top:${c.y1}px;width:${w2}px;height:${h}px;border:0;padding:0;margin:0;background:transparent;cursor:${BUTTON_NAMES.has(c.name) ? "pointer" : "default"};`;
-    if (c.image && skin.assets[c.image]) {
-      knockOut(skin.assets[c.image], skin.transparent).then((png) => {
-        if (!png)
-          return;
-        el2.style.backgroundImage = `url(${png})`;
-        el2.style.backgroundSize = "100% 100%";
-      });
-      if (c.hotImage && skin.assets[c.hotImage]) {
-        const enter = () => {
-          knockOut(skin.assets[c.hotImage], skin.transparent).then((png) => {
-            if (png)
-              el2.style.backgroundImage = `url(${png})`;
-          });
-        };
-        const leave = () => {
-          knockOut(skin.assets[c.image], skin.transparent).then((png) => {
-            if (png)
-              el2.style.backgroundImage = `url(${png})`;
-          });
-        };
-        el2.addEventListener("mouseenter", enter);
-        el2.addEventListener("mouseleave", leave);
-        cleanup.push(() => {
-          el2.removeEventListener("mouseenter", enter);
-          el2.removeEventListener("mouseleave", leave);
-        });
-      }
-    }
-    if (c.barImage && skin.assets[c.barImage]) {
-      knockOut(skin.assets[c.barImage], skin.transparent).then((png) => {
-        if (png) {
-          el2.style.backgroundImage = `url(${png})`;
-          el2.style.backgroundSize = "100% 100%";
-        }
-      });
-    }
-    if (c.fillImage && skin.assets[c.fillImage]) {
-      knockOut(skin.assets[c.fillImage], skin.transparent).then((png) => {
-        if (!png)
-          return;
-        const fill = document.createElement("div");
-        fill.dataset.ttFill = c.name;
-        fill.style.cssText = `position:absolute;left:0;top:0;width:${c.vertical ? "100%" : "50%"};height:${c.vertical ? "50%" : "100%"};background:url(${png}) 0 0/100% 100% no-repeat;pointer-events:none;`;
-        el2.appendChild(fill);
-      });
-    }
-    if (c.thumbImage && skin.assets[c.thumbImage]) {
-      knockOut(skin.assets[c.thumbImage], skin.transparent).then((png) => {
-        if (!png)
-          return;
-        const thumb = document.createElement("div");
-        thumb.dataset.ttThumb = c.name;
-        thumb.style.cssText = c.vertical ? `position:absolute;left:0;top:50%;width:100%;background:url(${png}) center/100% auto no-repeat;height:${c.y2 - c.y1}px;pointer-events:none;` : `position:absolute;left:50%;top:0;height:100%;background:url(${png}) center/auto 100% no-repeat;width:${c.x2 - c.x1}px;pointer-events:none;`;
-        el2.appendChild(thumb);
-      });
-    }
-    if (c.font || c.color || c.bkgnd) {
-      el2.style.color = c.color || "#ccc";
-      el2.style.background = c.bkgnd || "transparent";
-      el2.style.fontFamily = c.font ? `"${c.font}", monospace` : "monospace";
-      el2.style.fontSize = (c.fontSize || 12) + "px";
-      el2.style.textAlign = c.align === "right" ? "right" : c.align === "center" ? "center" : "left";
-      el2.style.lineHeight = h + "px";
-      el2.style.overflow = "hidden";
-    }
-    if (c.name === "led" && c.image && skin.assets[c.image]) {
-      knockOut(skin.assets[c.image], skin.transparent).then((png) => {
-        if (png)
-          el2.style.backgroundImage = `url(${png})`;
-      });
-    }
-    if (opts.onControl && BUTTON_NAMES.has(c.name)) {
-      const fire = () => opts.onControl(c.name);
-      el2.addEventListener("click", fire);
-      cleanup.push(() => el2.removeEventListener("click", fire));
-    }
-    stage.appendChild(el2);
-  }
-  return () => {
-    cleanup.forEach((fn) => fn());
-    container2.innerHTML = "";
-  };
-}
-function rgbOf(hexLike) {
-  if (!hexLike)
-    return null;
-  const m2 = hexLike.trim().match(/^#?([0-9a-fA-F]{6})$/);
-  if (!m2)
-    return null;
-  return hexToRgb("#" + m2[1]);
-}
-const FALLBACK = { accent: "#ff9d20", bg: "#1b1b1f", fg: "#ffe6bd", panel: "#2a2a30" };
-function themeOfSkin(skin) {
-  var _a, _b, _c, _d, _e, _f;
-  const win = skin.windows.find((w2) => w2.name === "player") || skin.windows[0];
-  const ctrl = (n2) => win == null ? void 0 : win.controls.find((c) => c.name === n2);
-  const accent = rgbOf((_a = ctrl("stereo")) == null ? void 0 : _a.color) || rgbOf((_b = ctrl("info")) == null ? void 0 : _b.bkgnd) || rgbOf(FALLBACK.accent);
-  const bg2 = rgbOf((_c = ctrl("status")) == null ? void 0 : _c.bkgnd) || rgbOf((_d = ctrl("info")) == null ? void 0 : _d.bkgnd) || rgbOf(FALLBACK.bg);
-  const fg2 = rgbOf((_e = ctrl("info")) == null ? void 0 : _e.color) || rgbOf(FALLBACK.fg);
-  const panel = rgbOf((_f = ctrl("status")) == null ? void 0 : _f.bkgnd) || bg2;
-  const hex = (c) => "#" + c.map((x2) => x2.toString(16).padStart(2, "0")).join("");
-  return {
-    id: "ttskn-" + skin.file.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase(),
-    name: skin.name || skin.file,
-    accent: hex(accent),
-    bg: hex(bg2),
-    fg: hex(fg2),
-    panel: hex(panel),
-    windowImage: (win == null ? void 0 : win.image) || ""
-  };
-}
-async function applyTtSkinTheme(skin) {
-  const t2 = themeOfSkin(skin);
-  const bgPng = t2.windowImage && skin.assets[t2.windowImage] ? await knockOut(skin.assets[t2.windowImage], skin.transparent) : "";
-  const css = `
-[data-skin="${t2.id}"] {
-  --ttskn-accent: ${t2.accent};
-  --ttskn-bg: ${t2.bg};
-  --ttskn-fg: ${t2.fg};
-  --ttskn-panel: ${t2.panel};
-}
-[data-skin="${t2.id}"] .sk-panel{
-  background: ${bgPng ? `url(${bgPng}) 0 0/100% auto no-repeat, ` : ""}${t2.bg};
-  color: ${t2.fg};
-  border-color: ${t2.accent};
-}
-[data-skin="${t2.id}"] .sk-title{background:${t2.panel};color:${t2.fg}}
-[data-skin="${t2.id}"] .sk-title .sk-time{color:${t2.accent}}
-[data-skin="${t2.id}"] .sk-wb{background:linear-gradient(180deg,${t2.accent},${t2.panel});color:${t2.fg}}
-[data-skin="${t2.id}"] .sk-line .k{color:${t2.accent}}
-[data-skin="${t2.id}"] .sk-line .v{color:${t2.fg}}
-[data-skin="${t2.id}"] .sk-status{color:${t2.accent}}
-[data-skin="${t2.id}"] .sk-spec{background:${t2.bg}}
-[data-skin="${t2.id}"] .sk-vis{--vis-lo:${t2.bg};--vis-mid:${t2.accent};--vis-hi:${t2.fg}}
-`;
-  const id2 = "ttskn-style-" + t2.id;
-  let el2 = document.getElementById(id2);
-  if (!el2) {
-    el2 = document.createElement("style");
-    el2.id = id2;
-    document.head.appendChild(el2);
-  }
-  el2.textContent = css;
-  return t2.id;
 }
 const FI = {
   "layout": '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>',
@@ -9897,54 +9614,6 @@ async function callList(fn, ...args) {
     err: ""
   };
 }
-function SkinThumb({
-  skin
-}) {
-  const box = react.exports.useRef(null);
-  react.exports.useEffect(() => {
-    const el2 = box.current;
-    if (!el2)
-      return;
-    let dispose = null;
-    let drawn = false;
-    const draw = () => {
-      if (drawn)
-        return;
-      drawn = true;
-      try {
-        dispose = renderTtSkinWindow(el2, skin, "player", {
-          fitWidth: 156
-        });
-      } catch {
-      }
-    };
-    let io = null;
-    if (typeof IntersectionObserver === "function") {
-      io = new IntersectionObserver((es) => {
-        if (es.some((e) => e.isIntersecting)) {
-          draw();
-          io == null ? void 0 : io.disconnect();
-        }
-      }, {
-        rootMargin: "120px"
-      });
-      io.observe(el2);
-    } else {
-      draw();
-    }
-    return () => {
-      io == null ? void 0 : io.disconnect();
-      try {
-        dispose == null ? void 0 : dispose();
-      } catch {
-      }
-    };
-  }, [skin.file]);
-  return /* @__PURE__ */ jsx("div", {
-    className: "skin-thumb",
-    ref: box
-  });
-}
 const fmtSize = (n2) => n2 > 1024 * 1024 ? (n2 / 1024 / 1024).toFixed(1) + " MB" : Math.round(n2 / 1024) + " KB";
 async function callMarket() {
   const app = bridge();
@@ -9992,9 +9661,6 @@ function PluginsPage({
   const [marketKw, setMarketKw] = react.exports.useState("");
   const [installing, setInstalling] = react.exports.useState("");
   const [marketLoading, setMarketLoading] = react.exports.useState(false);
-  const [skinPack, setSkinPack] = react.exports.useState(null);
-  const [skinPick, setSkinPick] = react.exports.useState("");
-  const [skinBusy, setSkinBusy] = react.exports.useState(false);
   const [srcId, setSrcId] = react.exports.useState(() => {
     try {
       return localStorage.getItem("qqqt-home-plugin") || "";
@@ -10275,60 +9941,12 @@ function PluginsPage({
     setSel(p2.id);
     setHits([]);
     setTestErr("");
-    if (p2.kind === "skin") {
-      setManifest(null);
-      setAccount(null);
-      await openSkinPack(p2.id);
-      return;
-    }
     void loadDetail(p2.id);
     if (!p2.enabled)
       setTestErr("\u8FD9\u4E2A\u63D2\u4EF6\u5F53\u524D\u662F\u5173\u95ED\u72B6\u6001\uFF0C\u5148\u542F\u7528\u518D\u8BD5");
     else if (p2.compatible === false) {
       setTestErr("\u8FD9\u4E2A\u63D2\u4EF6\u8BFB\u4E0D\u51FA\u53EF\u6267\u884C\u7684\u5BFC\u51FA\uFF1AMyGo \u63D2\u4EF6\u8981\u6709 plugin.json \u548C index.js\uFF08ESM \u5BFC\u51FA\uFF09\u3002\u68C0\u67E5\u4E00\u4E0B\u76EE\u5F55\u662F\u5426\u5B8C\u6574\u3002");
     }
-  }
-  async function openSkinPack(id2) {
-    setSkinBusy(true);
-    setSkinPack(null);
-    setTestErr("");
-    try {
-      const pack = await decodeSkinPack(id2);
-      if (!pack) {
-        setTestErr("\u8FD9\u4E2A\u76AE\u80A4\u63D2\u4EF6\u91CC\u6CA1\u6709\u53EF\u7528\u7684 .skn");
-        return;
-      }
-      setSkinPack(pack);
-      const cur = skinPick && pack.skins.some((s) => s.file === skinPick) ? skinPick : "";
-      setSkinPick(cur);
-    } catch (e) {
-      setTestErr(String((e == null ? void 0 : e.message) || e));
-    } finally {
-      setSkinBusy(false);
-    }
-  }
-  async function useSkin(s) {
-    try {
-      const id2 = await applyTtSkinTheme(s);
-      setSkinPick(s.file);
-      window.dispatchEvent(new CustomEvent("hulu-skin-changed", {
-        detail: {
-          id: id2,
-          name: s.name || s.file
-        }
-      }));
-      flash("\u5DF2\u6362\u4E0A\u300C" + (s.name || s.file) + "\u300D");
-    } catch (e) {
-      setErr(String((e == null ? void 0 : e.message) || e));
-    }
-  }
-  function resetSkin() {
-    setSkinPick("");
-    window.dispatchEvent(new CustomEvent("hulu-skin-changed", {
-      detail: {
-        id: ""
-      }
-    }));
   }
   async function doSearch() {
     if (!sel || !kw.trim() || searching)
@@ -10519,7 +10137,7 @@ function PluginsPage({
                 children: ["v", p2.version]
               }) : null, /* @__PURE__ */ jsx("span", {
                 className: "plug-kind",
-                children: p2.kind === "skin" ? "\u76AE\u80A4" : p2.kind === "musicfree" ? "MusicFree" : "MyGo"
+                children: p2.kind === "musicfree" ? "MusicFree" : "MyGo"
               }), !p2.compatible && /* @__PURE__ */ jsx("span", {
                 className: "plug-off",
                 title: "\u8BFB\u4E0D\u51FA\u53EF\u6267\u884C\u5BFC\u51FA",
@@ -10534,7 +10152,7 @@ function PluginsPage({
             })]
           }), /* @__PURE__ */ jsxs("div", {
             className: "plug-ops",
-            children: [p2.kind === "skin" ? null : /* @__PURE__ */ jsx("button", {
+            children: [/* @__PURE__ */ jsx("button", {
               className: "mini-btn src-btn" + (srcId === p2.id ? " on" : ""),
               onClick: () => pickSource(p2),
               title: srcId === p2.id ? "\u5F53\u524D\u97F3\u6E90\u5C31\u662F\u5B83" : "\u8BBE\u4E3A\u5F53\u524D\u97F3\u6E90\uFF08\u5DE6\u4FA7\u4E0B\u62C9\u3001\u641C\u7D22\u90FD\u7528\u5B83\uFF09",
@@ -10543,14 +10161,14 @@ function PluginsPage({
                 size: 14
               })
             }), /* @__PURE__ */ jsx("button", {
-              className: "mini-btn" + (p2.kind === "skin" ? " txt" : ""),
+              className: "mini-btn",
               onClick: () => test(p2),
-              title: p2.kind === "skin" ? "\u6362\u80A4" : "\u7528\u8FD9\u4E2A\u97F3\u6E90\u8BD5\u641C\u4E00\u4E0B",
-              children: p2.kind === "skin" ? "\u6362\u80A4" : /* @__PURE__ */ jsx(Fi, {
+              title: "\u7528\u8FD9\u4E2A\u97F3\u6E90\u8BD5\u641C\u4E00\u4E0B",
+              children: /* @__PURE__ */ jsx(Fi, {
                 n: "search",
                 size: 14
               })
-            }), p2.kind === "skin" ? null : /* @__PURE__ */ jsx("button", {
+            }), /* @__PURE__ */ jsx("button", {
               className: "switch" + (p2.enabled ? " on" : ""),
               onClick: () => toggle(p2),
               title: "\u542F\u7528 / \u5173\u95ED",
@@ -10563,41 +10181,7 @@ function PluginsPage({
           })]
         }, p2.id))
       })]
-    }), current && current.kind === "skin" && /* @__PURE__ */ jsxs("section", {
-      className: "set-card",
-      children: [/* @__PURE__ */ jsxs("h3", {
-        children: ["\u6362\u80A4 \xB7 ", current.name]
-      }), /* @__PURE__ */ jsx("p", {
-        className: "hint",
-        children: skinBusy ? "\u6B63\u5728\u89E3\u76AE\u80A4\u5305\u2026" : "\u70B9\u4E00\u5957\u76AE\u80A4\u7ACB\u523B\u6362\uFF1B\u300C\u6062\u590D\u5185\u7F6E\u300D\u56DE\u5230\u539F\u6765\u7684\u914D\u8272\u3002"
-      }), testErr && /* @__PURE__ */ jsx("div", {
-        className: "err-msg",
-        children: testErr
-      }), /* @__PURE__ */ jsx("div", {
-        className: "skin-grid",
-        children: ((skinPack == null ? void 0 : skinPack.skins) || []).map((sk2) => /* @__PURE__ */ jsxs("div", {
-          className: "skin-cell" + (skinPick === sk2.file ? " on" : ""),
-          onClick: () => useSkin(sk2),
-          title: sk2.file,
-          role: "button",
-          tabIndex: 0,
-          onKeyDown: (e) => e.key === "Enter" && useSkin(sk2),
-          children: [/* @__PURE__ */ jsx(SkinThumb, {
-            skin: sk2
-          }), /* @__PURE__ */ jsx("span", {
-            className: "skin-name",
-            children: sk2.name || sk2.file
-          }), /* @__PURE__ */ jsx("em", {
-            className: "skin-by",
-            children: sk2.author || sk2.file
-          })]
-        }, sk2.file))
-      }), /* @__PURE__ */ jsx("button", {
-        className: "ghost-btn",
-        onClick: resetSkin,
-        children: "\u6062\u590D\u5185\u7F6E"
-      })]
-    }), current && current.kind !== "skin" && /* @__PURE__ */ jsxs("section", {
+    }), current && /* @__PURE__ */ jsxs("section", {
       className: "set-card",
       children: [/* @__PURE__ */ jsxs("h3", {
         children: ["\u8BD5\u641C \xB7 ", current.name]
@@ -13293,1212 +12877,6 @@ function PluginHome({
     })]
   });
 }
-function cvar(el2, name, fb2) {
-  const v2 = getComputedStyle(el2).getPropertyValue(name).trim();
-  return v2 || fb2;
-}
-function bucketEdges(bins, binHz, count) {
-  const lo = 40;
-  const hi2 = 15e3;
-  const edges = [];
-  for (let i = 0; i <= count; i++) {
-    const f2 = lo * Math.pow(hi2 / lo, i / count);
-    const idx = Math.min(bins - 1, Math.max(0, Math.round(f2 / binHz)));
-    edges.push(idx);
-  }
-  return edges;
-}
-function drawSpectrum(ctx, w2, h, an, on, cv, heightsRef, freqBuf) {
-  ctx.clearRect(0, 0, w2, h);
-  const n2 = Math.max(12, Math.min(48, Math.floor(w2 / 6)));
-  const padT = 4;
-  const base = h - 4;
-  const maxH = base - padT;
-  if (heightsRef.current.length !== n2)
-    heightsRef.current = new Array(n2).fill(0);
-  const heights = heightsRef.current;
-  const lo = cvar(cv, "--vis-lo", "#3c45c8");
-  const mid = cvar(cv, "--vis-mid", "#7d88ff");
-  const hi2 = cvar(cv, "--vis-hi", "#c9cfff");
-  let bins = null;
-  let edges = null;
-  if (an && on) {
-    if (freqBuf.current.length !== an.mixed.frequencyBinCount) {
-      freqBuf.current = new Uint8Array(an.mixed.frequencyBinCount);
-    }
-    const buf = freqBuf.current;
-    an.mixed.getByteFrequencyData(buf);
-    bins = buf;
-    const binHz = an.mixed.context.sampleRate / 2 / an.mixed.frequencyBinCount;
-    edges = bucketEdges(an.mixed.frequencyBinCount, binHz, n2);
-  }
-  const slot = w2 / n2;
-  const barW = Math.max(1.5, slot - Math.max(1, slot * 0.22));
-  for (let i = 0; i < n2; i++) {
-    let target = 0;
-    if (bins && edges) {
-      const a = edges[i];
-      const b = Math.max(a + 1, edges[i + 1]);
-      let peak = 0;
-      for (let k2 = a; k2 < b && k2 < bins.length; k2++)
-        if (bins[k2] > peak)
-          peak = bins[k2];
-      const tilt = 0.82 + 0.3 * (i / n2);
-      target = Math.min(1, Math.pow(peak / 255, 0.78) * tilt);
-    }
-    heights[i] = target > heights[i] ? heights[i] + (target - heights[i]) * 0.55 : heights[i] + (target - heights[i]) * 0.16;
-    const bh2 = Math.max(1.5, heights[i] * maxH);
-    const x2 = i * slot + (slot - barW) / 2;
-    const g = ctx.createLinearGradient(0, base, 0, base - bh2);
-    g.addColorStop(0, lo);
-    g.addColorStop(0.55, mid);
-    g.addColorStop(1, hi2);
-    ctx.fillStyle = g;
-    ctx.fillRect(x2, base - bh2, barW, bh2);
-    ctx.fillStyle = hi2;
-    ctx.globalAlpha = 0.85;
-    ctx.fillRect(x2, base - bh2, barW, Math.min(1.6, bh2));
-    ctx.globalAlpha = 1;
-  }
-}
-function drawScope(ctx, w2, h, an, on, cv, buf) {
-  ctx.globalCompositeOperation = "destination-out";
-  ctx.fillStyle = "rgba(0,0,0,0.16)";
-  ctx.fillRect(0, 0, w2, h);
-  ctx.globalCompositeOperation = "source-over";
-  if (!an || !on) {
-    ctx.strokeStyle = cvar(cv, "--vis-line", "#7d88ff");
-    ctx.globalAlpha = 0.35;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(2, h / 2);
-    ctx.lineTo(w2 - 2, h / 2);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    return;
-  }
-  const size = Math.min(buf.length, an.mixed.fftSize);
-  an.mixed.getByteTimeDomainData(buf.subarray(0, size));
-  const mid = 128;
-  const span = Math.min(256, size - 2);
-  let start = 0;
-  for (let i = 1; i < size - span; i++) {
-    if (buf[i - 1] <= mid && buf[i] > mid) {
-      start = i;
-      break;
-    }
-  }
-  const line = cvar(cv, "--vis-line", "#c9cfff");
-  ctx.strokeStyle = line;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  const step = w2 / span;
-  for (let i = 0; i < span; i++) {
-    const v2 = (buf[start + i] - 128) / 128;
-    const reach = h / 2 - 4;
-    const y2 = h / 2 + Math.max(-reach, Math.min(reach, v2 * reach * 1.6));
-    const x2 = i * step;
-    if (i === 0)
-      ctx.moveTo(x2, y2);
-    else
-      ctx.lineTo(x2, y2);
-  }
-  ctx.stroke();
-}
-function drawVu(ctx, w2, h, an, on, cv, buf, vu) {
-  ctx.clearRect(0, 0, w2, h);
-  const dial = cvar(cv, "--vis-dial", "#8a93ea");
-  const needle = cvar(cv, "--vis-needle", "#ff6a3d");
-  const dim = cvar(cv, "--vis-dim", "#6a74c0");
-  const hot = cvar(cv, "--vis-hot", "#ff5252");
-  const targetL = an && on ? level(buf, an.l, "l") : 0;
-  const targetR = an && on ? level(buf, an.r, "r") : 0;
-  const s = vu.current;
-  s.l = targetL > s.l ? s.l + (targetL - s.l) * 0.55 : s.l + (targetL - s.l) * 0.18;
-  s.r = targetR > s.r ? s.r + (targetR - s.r) * 0.55 : s.r + (targetR - s.r) * 0.18;
-  s.pl = Math.max(s.l, s.pl - 6e-3);
-  s.pr = Math.max(s.r, s.pr - 6e-3);
-  const gap = 8;
-  const colW = Math.min(260, (w2 - gap - 16) / 2);
-  const rail = (w2 - (colW * 2 + gap)) / 2;
-  paintMeter(ctx, rail, 2, colW, h - 6, s.l, s.pl, dial, needle, dim, hot);
-  paintMeter(ctx, rail + colW + gap, 2, colW, h - 6, s.r, s.pr, dial, needle, dim, hot);
-}
-function level(buf, an, side) {
-  const size = Math.min(buf.length, an.fftSize);
-  an.getByteTimeDomainData(buf.subarray(0, size));
-  let sum = 0;
-  for (let i = 0; i < size; i++) {
-    const v2 = (buf[i] - 128) / 128;
-    sum += v2 * v2;
-  }
-  const rms = Math.sqrt(sum / size);
-  const db2 = 20 * Math.log10(rms > 0 ? rms : 1e-7);
-  const pos = Math.pow(Math.max(0, (db2 + 30) / 28), 0.7);
-  if (side === "l" || side === "r")
-    return Math.max(0, Math.min(1, pos));
-  return 0;
-}
-function paintMeter(ctx, x2, y2, w2, h, v2, peak, dial, needle, dim, hot) {
-  const cx = x2 + w2 / 2;
-  const cy = y2 + h - 7;
-  const r2 = Math.min(w2 / 2 - 12, h * 0.74);
-  if (r2 < 8)
-    return;
-  const a0 = Math.PI * -0.78;
-  const a1 = Math.PI * -0.22;
-  const over = 20 / 23;
-  ctx.fillStyle = dial;
-  ctx.globalAlpha = 0.09;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.arc(cx, cy, r2, a0, a1);
-  ctx.closePath();
-  ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = dial;
-  ctx.globalAlpha = 0.7;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r2, a0, a1);
-  ctx.stroke();
-  ctx.strokeStyle = hot;
-  ctx.globalAlpha = 0.9;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r2, a0 + (a1 - a0) * over, a1);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = dim;
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 8; i++) {
-    const t2 = i / 8;
-    const a2 = a0 + (a1 - a0) * t2;
-    const major = i === 0 || i === 4 || i === 8;
-    ctx.globalAlpha = major ? 0.9 : 0.5;
-    ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(a2) * (r2 - (major ? 5 : 3)), cy + Math.sin(a2) * (r2 - (major ? 5 : 3)));
-    ctx.lineTo(cx + Math.cos(a2) * r2, cy + Math.sin(a2) * r2);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-  const ap = a0 + (a1 - a0) * peak;
-  ctx.fillStyle = hot;
-  const px = cx + Math.cos(ap) * (r2 - 6);
-  const py = cy + Math.sin(ap) * (r2 - 6);
-  ctx.beginPath();
-  ctx.arc(px, py, 1.8, 0, Math.PI * 2);
-  ctx.fill();
-  const a = a0 + (a1 - a0) * v2;
-  ctx.strokeStyle = needle;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + Math.cos(a) * (r2 - 1.5), cy + Math.sin(a) * (r2 - 1.5));
-  ctx.stroke();
-  ctx.fillStyle = dial;
-  ctx.beginPath();
-  ctx.arc(cx, cy, 2.4, 0, Math.PI * 2);
-  ctx.fill();
-}
-const LS_SKIN = "qqjt-ttskin-file";
-function fmtT(sec) {
-  const s = Math.max(0, Math.floor(sec || 0));
-  const m2 = Math.floor(s / 60);
-  const r2 = s % 60;
-  return String(m2).padStart(2, "0") + ":" + String(r2).padStart(2, "0");
-}
-function measure(uri) {
-  return new Promise((resolve) => {
-    const im = new Image();
-    im.onload = () => resolve({
-      w: im.naturalWidth,
-      h: im.naturalHeight
-    });
-    im.onerror = () => resolve({
-      w: 0,
-      h: 0
-    });
-    im.src = uri;
-  });
-}
-let packCache = {
-  at: 0,
-  pack: null
-};
-async function getPack() {
-  if (packCache.pack && Date.now() - packCache.at < 6e4)
-    return packCache.pack;
-  try {
-    const packs = await loadSkinPacks();
-    const first = packs[0];
-    if (!first)
-      return null;
-    const pack = await decodeSkinPack(first.id);
-    packCache = {
-      at: Date.now(),
-      pack
-    };
-    return pack;
-  } catch {
-    return null;
-  }
-}
-async function prepareAssets(skin) {
-  const out = {};
-  const need = /* @__PURE__ */ new Set();
-  for (const win of skin.windows) {
-    if (win.image)
-      need.add(win.image);
-    for (const c of win.controls || []) {
-      for (const k2 of [c.image, c.hotImage, c.thumbImage, c.fillImage, c.barImage]) {
-        if (k2)
-          need.add(k2);
-      }
-    }
-  }
-  await Promise.all(Array.from(need).map(async (name) => {
-    const raw = skin.assets[name];
-    if (!raw)
-      return;
-    const url = await knockOut(raw, skin.transparent) || raw;
-    const {
-      w: w2,
-      h
-    } = await measure(url);
-    out[name] = {
-      url,
-      w: w2,
-      h
-    };
-  }));
-  return out;
-}
-function frameCount(t2, cw, ch2) {
-  if (!t2 || !cw || !ch2)
-    return {
-      fw: 1,
-      fh: 1
-    };
-  const fw = Math.round(t2.w / cw) || 1;
-  const fh2 = Math.round(t2.h / ch2) || 1;
-  if (fw >= 2 && Math.abs(t2.w - fw * cw) <= 2 && Math.abs(t2.h - ch2) <= 2)
-    return {
-      fw,
-      fh: 1
-    };
-  if (fh2 >= 2 && Math.abs(t2.h - fh2 * ch2) <= 2 && Math.abs(t2.w - cw) <= 2)
-    return {
-      fw: 1,
-      fh: fh2
-    };
-  return {
-    fw: 1,
-    fh: 1
-  };
-}
-function Btn(props) {
-  const {
-    c,
-    assets,
-    swap
-  } = props;
-  const w2 = Math.max(1, c.x2 - c.x1);
-  const h = Math.max(1, c.y2 - c.y1);
-  const tex = assets[swap || c.image || ""];
-  const hotTex = assets[c.hotImage || ""];
-  const frames = frameCount(tex, w2, h);
-  const hotFrames = frameCount(hotTex, w2, h);
-  const [state, setState] = react.exports.useState("idle");
-  const useHot = state !== "idle" && hotTex;
-  const t2 = useHot ? hotTex : tex;
-  const f2 = useHot ? hotFrames : frames;
-  const count = f2.fw > 1 ? f2.fw : f2.fh;
-  const idx = state === "down" ? Math.min(2, count - 1) : state === "hot" ? Math.min(1, count - 1) : 0;
-  return /* @__PURE__ */ jsx("button", {
-    className: "ttskn-btn" + (props.active ? " on" : ""),
-    "data-c": c.name,
-    title: props.title || c.name,
-    onClick: props.onClick,
-    onMouseEnter: () => setState("hot"),
-    onMouseLeave: () => setState("idle"),
-    onPointerDown: () => setState("down"),
-    onPointerUp: () => setState("hot"),
-    style: {
-      left: c.x1,
-      top: c.y1,
-      width: w2,
-      height: h,
-      backgroundImage: t2 ? `url(${t2.url})` : void 0,
-      backgroundSize: t2 ? `${f2.fw > 1 ? t2.w : w2}px ${f2.fh > 1 ? t2.h : h}px` : void 0,
-      backgroundPosition: f2.fw > 1 ? `${-idx * w2}px 0` : f2.fh > 1 ? `0 ${-idx * h}px` : "0 0",
-      backgroundRepeat: "no-repeat"
-    }
-  });
-}
-function Slider(props) {
-  var _a, _b, _c;
-  const {
-    c,
-    assets,
-    value
-  } = props;
-  const w2 = Math.max(1, c.x2 - c.x1);
-  const h = Math.max(1, c.y2 - c.y1);
-  const vertical = !!c.vertical;
-  const track = (_a = assets[c.barImage || ""]) == null ? void 0 : _a.url;
-  const fill = (_b = assets[c.fillImage || ""]) == null ? void 0 : _b.url;
-  const thumb = (_c = assets[c.thumbImage || ""]) == null ? void 0 : _c.url;
-  const pct = Math.max(0, Math.min(1, value)) * 100;
-  const set = (clientX, clientY, el2) => {
-    const r2 = el2.getBoundingClientRect();
-    const v2 = vertical ? 1 - (clientY - r2.top) / r2.height : (clientX - r2.left) / r2.width;
-    props.onChange(Math.max(0, Math.min(1, v2)));
-  };
-  return /* @__PURE__ */ jsxs("div", {
-    className: "ttskn-slider",
-    style: {
-      left: c.x1,
-      top: c.y1,
-      width: w2,
-      height: h,
-      backgroundImage: track ? `url(${track})` : void 0
-    },
-    onPointerDown: (e) => {
-      var _a2, _b2;
-      (_b2 = (_a2 = e.currentTarget).setPointerCapture) == null ? void 0 : _b2.call(_a2, e.pointerId);
-      set(e.clientX, e.clientY, e.currentTarget);
-    },
-    onPointerMove: (e) => {
-      if (e.buttons !== 1)
-        return;
-      set(e.clientX, e.clientY, e.currentTarget);
-    },
-    children: [fill && /* @__PURE__ */ jsx("i", {
-      className: "ttskn-fill",
-      style: vertical ? {
-        left: 0,
-        bottom: 0,
-        width: "100%",
-        height: pct + "%",
-        backgroundImage: `url(${fill})`
-      } : {
-        left: 0,
-        top: 0,
-        height: "100%",
-        width: pct + "%",
-        backgroundImage: `url(${fill})`
-      }
-    }), thumb && /* @__PURE__ */ jsx("b", {
-      className: "ttskn-thumb",
-      style: vertical ? {
-        left: 0,
-        top: `calc(${pct}% - ${h / 2}px)`,
-        width: "100%",
-        height: h,
-        backgroundImage: `url(${thumb})`,
-        backgroundSize: "100% auto"
-      } : {
-        top: 0,
-        left: `calc(${pct}% - ${w2 / 2}px)`,
-        width: w2,
-        height: h,
-        backgroundImage: `url(${thumb})`,
-        backgroundSize: "auto 100%"
-      }
-    })]
-  });
-}
-function Fader(props) {
-  const {
-    left,
-    top,
-    width,
-    height,
-    value,
-    fill,
-    thumb
-  } = props;
-  const pct = Math.max(0, Math.min(1, value)) * 100;
-  const set = (clientY, el2) => {
-    var _a;
-    const r2 = el2.getBoundingClientRect();
-    (_a = props.onChange) == null ? void 0 : _a.call(props, Math.max(0, Math.min(1, 1 - (clientY - r2.top) / r2.height)));
-  };
-  return /* @__PURE__ */ jsxs("div", {
-    className: "ttskn-fader",
-    title: props.title,
-    style: {
-      left,
-      top,
-      width,
-      height
-    },
-    onPointerDown: (e) => {
-      var _a, _b;
-      (_b = (_a = e.currentTarget).setPointerCapture) == null ? void 0 : _b.call(_a, e.pointerId);
-      set(e.clientY, e.currentTarget);
-    },
-    onPointerMove: (e) => {
-      if (e.buttons !== 1)
-        return;
-      set(e.clientY, e.currentTarget);
-    },
-    children: [fill && /* @__PURE__ */ jsx("i", {
-      style: {
-        backgroundImage: `url(${fill})`,
-        height: pct + "%"
-      }
-    }), thumb && /* @__PURE__ */ jsx("b", {
-      style: {
-        backgroundImage: `url(${thumb})`,
-        top: `calc(${100 - pct}% - ${Math.min(height / 2, 9)}px)`
-      }
-    })]
-  });
-}
-function Led(props) {
-  const {
-    c,
-    assets,
-    text
-  } = props;
-  const w2 = Math.max(1, c.x2 - c.x1);
-  const h = Math.max(1, c.y2 - c.y1);
-  const tex = assets[c.image || ""];
-  const glyphs = 12;
-  const usable = !!tex && tex.w > 0 && tex.w % glyphs === 0;
-  if (!usable) {
-    return /* @__PURE__ */ jsx("div", {
-      className: "ttskin-led",
-      style: {
-        left: c.x1,
-        top: c.y1,
-        width: w2,
-        height: h,
-        lineHeight: h + "px",
-        color: props.color,
-        background: props.bkgnd || "transparent",
-        textAlign: c.align === "right" ? "right" : "left"
-      },
-      children: text
-    });
-  }
-  const gw = tex.w / glyphs;
-  const scale = h / tex.h;
-  const cw = gw * scale;
-  const maxChars = Math.max(1, Math.floor(w2 / cw));
-  const chars = text.split("").slice(-maxChars);
-  const startX = c.align === "right" ? w2 - chars.length * cw : 0;
-  const index = (ch2) => {
-    if (ch2 >= "0" && ch2 <= "9")
-      return ch2.charCodeAt(0) - 48;
-    if (ch2 === ":")
-      return 10;
-    if (ch2 === "-")
-      return 11;
-    return -1;
-  };
-  return /* @__PURE__ */ jsx("div", {
-    className: "ttskin-led-sprite",
-    style: {
-      left: c.x1,
-      top: c.y1,
-      width: w2,
-      height: h,
-      background: props.bkgnd || "transparent"
-    },
-    children: chars.map((ch2, i) => {
-      const gi2 = index(ch2);
-      if (gi2 < 0)
-        return null;
-      return /* @__PURE__ */ jsx("span", {
-        style: {
-          left: startX + i * cw,
-          width: cw,
-          height: h,
-          backgroundImage: `url(${tex.url})`,
-          backgroundSize: `${tex.w * scale}px ${tex.h * scale}px`,
-          backgroundPosition: `${-gi2 * gw * scale}px 0`
-        }
-      }, i);
-    })
-  });
-}
-function Bars(props) {
-  const {
-    c,
-    playing,
-    color
-  } = props;
-  const w2 = Math.max(1, c.x2 - c.x1);
-  const h = Math.max(1, c.y2 - c.y1);
-  const cv = react.exports.useRef(null);
-  const anRef = react.exports.useRef(null);
-  const heights = react.exports.useRef([]);
-  const ensureRef = react.exports.useRef(props.ensure);
-  ensureRef.current = props.ensure;
-  react.exports.useEffect(() => {
-    let gone = false;
-    if (!playing || anRef.current)
-      return;
-    ensureRef.current().then((a) => {
-      if (!gone)
-        anRef.current = a;
-    });
-    return () => {
-      gone = true;
-    };
-  }, [playing]);
-  react.exports.useEffect(() => {
-    let raf = 0;
-    let frame = 0;
-    const buf = {
-      data: new Uint8Array(1024)
-    };
-    const edges = {
-      list: [],
-      n: 0,
-      bins: 0
-    };
-    const n2 = Math.max(12, Math.min(48, Math.floor(w2 / 5)));
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
-      frame++;
-      if (!playing && frame % 6 !== 0)
-        return;
-      const el2 = cv.current;
-      if (!el2)
-        return;
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      if (el2.width !== w2 * dpr || el2.height !== h * dpr) {
-        el2.width = w2 * dpr;
-        el2.height = h * dpr;
-      }
-      const ctx = el2.getContext("2d");
-      if (!ctx)
-        return;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, w2, h);
-      const an = anRef.current;
-      let target;
-      if (an && playing) {
-        const mixed = an.mixed;
-        if (buf.data.length !== mixed.frequencyBinCount)
-          buf.data = new Uint8Array(mixed.frequencyBinCount);
-        mixed.getByteFrequencyData(buf.data);
-        const binHz = mixed.context.sampleRate / 2 / mixed.frequencyBinCount;
-        if (edges.n !== n2 || edges.bins !== mixed.frequencyBinCount) {
-          edges.list = bucketEdges(mixed.frequencyBinCount, binHz, n2);
-          edges.n = n2;
-          edges.bins = mixed.frequencyBinCount;
-        }
-        const e = edges.list;
-        const b = buf.data;
-        target = Array.from({
-          length: n2
-        }, (_, i) => {
-          let sum = 0;
-          let cnt = 0;
-          for (let k2 = e[i]; k2 <= e[i + 1] && k2 < b.length; k2++) {
-            sum += b[k2];
-            cnt++;
-          }
-          if (!cnt)
-            return 0;
-          const v2 = sum / cnt / 255 * (i > n2 / 2 ? 1.35 : 1);
-          return Math.min(1, v2);
-        });
-      } else {
-        const t2 = frame / 7;
-        target = Array.from({
-          length: n2
-        }, (_, i) => {
-          if (!playing)
-            return 0.05;
-          const s = Math.sin((i + 1) * 1.7 + t2) * Math.cos(i * 0.9 - t2 * 0.6);
-          return 0.1 + Math.abs(s) * 0.8;
-        });
-      }
-      if (heights.current.length !== n2)
-        heights.current = new Array(n2).fill(0);
-      const hs = heights.current;
-      const bw = w2 / n2;
-      ctx.fillStyle = color;
-      for (let i = 0; i < n2; i++) {
-        hs[i] = Math.max(target[i], hs[i] * 0.86);
-        const bh2 = Math.max(1, Math.floor(hs[i] * (h - 2)));
-        ctx.fillRect(Math.floor(i * bw), h - bh2, Math.max(1, Math.floor(bw * 0.72)), bh2);
-      }
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [w2, h, color, playing]);
-  return /* @__PURE__ */ jsx("canvas", {
-    ref: cv,
-    className: "ttskin-vis",
-    style: {
-      left: c.x1,
-      top: c.y1,
-      width: w2,
-      height: h
-    }
-  });
-}
-function SubWin(props) {
-  const {
-    win,
-    assets,
-    scale,
-    extras = []
-  } = props;
-  const bg2 = win.image ? assets[win.image] : void 0;
-  const nat = bg2 && bg2.w > 0 ? {
-    w: bg2.w,
-    h: bg2.h
-  } : {
-    w: Math.max(1, win.w),
-    h: Math.max(1, win.h)
-  };
-  const skip = /* @__PURE__ */ new Set(["close", ...extras.map((x2) => x2.c.name)]);
-  return /* @__PURE__ */ jsx("div", {
-    className: "ttskin-frame",
-    style: {
-      width: nat.w * scale,
-      height: nat.h * scale
-    },
-    children: /* @__PURE__ */ jsxs("div", {
-      className: "ttskin-stage",
-      style: {
-        width: nat.w,
-        height: nat.h,
-        transform: `scale(${scale})`
-      },
-      children: [bg2 && /* @__PURE__ */ jsx("img", {
-        className: "ttskin-bg",
-        src: bg2.url,
-        alt: "",
-        width: nat.w,
-        height: nat.h
-      }), props.children, extras.map((x2) => /* @__PURE__ */ jsx(Btn, {
-        c: x2.c,
-        assets,
-        onClick: x2.onClick,
-        title: x2.title,
-        active: x2.active
-      }, x2.c.name)), win.controls.filter((c) => c.image && ["close", "ontop", "desklrc", "title", "toolbar"].includes(c.name) && !skip.has(c.name)).map((c) => c.name === "close" ? /* @__PURE__ */ jsx(Btn, {
-        c,
-        assets,
-        onClick: props.onClose,
-        title: "\u5173\u95ED\u8FD9\u4E2A\u7A97\u53E3"
-      }, c.name) : /* @__PURE__ */ jsx(Btn, {
-        c,
-        assets,
-        title: c.name
-      }, c.name))]
-    })
-  });
-}
-function TtSkinView(props) {
-  var _a, _b, _c, _d;
-  const {
-    playing,
-    cur,
-    pos,
-    dur,
-    volume,
-    eqGains,
-    preamp,
-    lrc,
-    lrcIndex,
-    queue,
-    qIndex,
-    balance,
-    surround
-  } = props;
-  const [pack, setPack] = react.exports.useState(null);
-  const [file, setFile] = react.exports.useState(() => localStorage.getItem(LS_SKIN) || "");
-  const [err, setErr] = react.exports.useState("");
-  const [busy, setBusy] = react.exports.useState(true);
-  const [assets, setAssets] = react.exports.useState({});
-  const [nat, setNat] = react.exports.useState({
-    w: 270,
-    h: 168
-  });
-  const [scale, setScale] = react.exports.useState(1);
-  const [subs, setSubs] = react.exports.useState({
-    lyric: false,
-    playlist: false,
-    equalizer: false
-  });
-  const box = react.exports.useRef(null);
-  const plBox = react.exports.useRef(null);
-  react.exports.useEffect(() => {
-    let alive = true;
-    (async () => {
-      setBusy(true);
-      const p2 = await getPack();
-      if (!alive)
-        return;
-      if (!p2 || !p2.skins.length) {
-        setErr("\u6CA1\u627E\u5230\u76AE\u80A4\u63D2\u4EF6\uFF1A\u53BB\u300C\u63D2\u4EF6\u300D\u9875\u88C5\u300C\u5343\u5343\u9759\u542C\u76AE\u80A4\u300D");
-        setBusy(false);
-        return;
-      }
-      setPack(p2);
-      setBusy(false);
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
-  const skin = react.exports.useMemo(() => {
-    if (!pack)
-      return null;
-    return pack.skins.find((s) => s.file === file) || pack.skins[0];
-  }, [pack, file]);
-  react.exports.useEffect(() => {
-    if (!skin)
-      return;
-    let alive = true;
-    (async () => {
-      const a = await prepareAssets(skin);
-      if (!alive)
-        return;
-      setAssets(a);
-      const win2 = skin.windows.find((w2) => w2.name === "player") || skin.windows[0];
-      const bg2 = (win2 == null ? void 0 : win2.image) ? a[win2.image] : void 0;
-      if (bg2 && bg2.w > 0)
-        setNat({
-          w: bg2.w,
-          h: bg2.h
-        });
-      else if (win2)
-        setNat({
-          w: Math.max(1, win2.w),
-          h: Math.max(1, win2.h)
-        });
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [skin]);
-  react.exports.useEffect(() => {
-    const el2 = box.current;
-    if (!el2)
-      return;
-    const fit = () => {
-      const avail = Math.max(120, el2.clientWidth - 24);
-      setScale(Math.min(1, avail / Math.max(1, nat.w)));
-    };
-    fit();
-    if (typeof ResizeObserver === "function") {
-      const ro = new ResizeObserver(fit);
-      ro.observe(el2);
-      return () => ro.disconnect();
-    }
-    window.addEventListener("resize", fit);
-    return () => window.removeEventListener("resize", fit);
-  }, [nat]);
-  const win = (skin == null ? void 0 : skin.windows.find((w2) => w2.name === "player")) || (skin == null ? void 0 : skin.windows[0]);
-  const ctrl = (n2) => win == null ? void 0 : win.controls.find((c) => c.name === n2);
-  const bgPng = win ? ((_a = assets[win.image]) == null ? void 0 : _a.url) || "" : "";
-  react.exports.useEffect(() => {
-    const el2 = plBox.current;
-    if (!el2 || !subs.playlist)
-      return;
-    const rowH = 18;
-    el2.scrollTop = Math.max(0, qIndex * rowH - el2.clientHeight / 2 + rowH / 2);
-  }, [subs.playlist, qIndex, queue.length]);
-  if (busy)
-    return /* @__PURE__ */ jsx("div", {
-      className: "ttskin-tip",
-      children: "\u6B63\u5728\u89E3\u76AE\u80A4\u5305\u2026"
-    });
-  if (err)
-    return /* @__PURE__ */ jsx("div", {
-      className: "ttskin-tip",
-      children: err
-    });
-  if (!pack || !skin || !win)
-    return /* @__PURE__ */ jsx("div", {
-      className: "ttskin-tip",
-      children: "\u76AE\u80A4\u5305\u91CC\u6CA1\u6709\u53EF\u7528\u7684\u7A97\u53E3"
-    });
-  const info = ctrl("info");
-  const status = ctrl("status");
-  const led = ctrl("led");
-  const visual = ctrl("visual");
-  const progress = ctrl("progress");
-  const vol = ctrl("volume");
-  const play = ctrl("play");
-  const tone = (status == null ? void 0 : status.color) || "#a0a0a0";
-  const visColor = ((_b = ctrl("stereo")) == null ? void 0 : _b.color) || "#00c000";
-  const lwin = skin.windows.find((w2) => w2.name === "lyric" && w2.image);
-  const pwin = skin.windows.find((w2) => w2.name === "playlist" && w2.image);
-  const ewin = skin.windows.find((w2) => w2.name === "equalizer" && w2.image);
-  const rectOf = (w2, name) => {
-    const c = w2 == null ? void 0 : w2.controls.find((x2) => x2.name === name);
-    return c && c.x2 > c.x1 && c.y2 > c.y1 ? c : null;
-  };
-  const lrcView = (rect, fs) => {
-    const lineH = Math.max(12, fs + 4);
-    const rows = Math.max(1, Math.floor((((rect == null ? void 0 : rect.y2) || 0) - ((rect == null ? void 0 : rect.y1) || 0)) / lineH));
-    const half = Math.max(0, Math.floor((rows - 1) / 2));
-    const out = [];
-    if (!lrc.length)
-      return out;
-    const from = Math.max(0, lrcIndex - half);
-    const to = Math.min(lrc.length, lrcIndex + (rows - 1 - half) + 1);
-    for (let i = from; i < to; i++)
-      out.push({
-        i,
-        text: lrc[i].text
-      });
-    return out;
-  };
-  const eqBase = ewin ? rectOf(ewin, "eqfactor") : null;
-  const eqPre = ewin ? rectOf(ewin, "preamp") : null;
-  return /* @__PURE__ */ jsxs("div", {
-    className: "ttskin-view",
-    ref: box,
-    children: [/* @__PURE__ */ jsxs("div", {
-      className: "ttskin-toolbar",
-      children: [/* @__PURE__ */ jsx("select", {
-        value: skin.file,
-        onChange: (e) => {
-          setFile(e.target.value);
-          try {
-            localStorage.setItem(LS_SKIN, e.target.value);
-          } catch {
-          }
-        },
-        title: "\u6362\u4E00\u5957 .skn",
-        children: pack.skins.map((s) => /* @__PURE__ */ jsx("option", {
-          value: s.file,
-          children: s.name || s.file
-        }, s.file))
-      }), /* @__PURE__ */ jsx("span", {
-        className: "ttskin-by",
-        children: skin.author || "\u672A\u77E5\u4F5C\u8005"
-      }), /* @__PURE__ */ jsx("button", {
-        className: "ghost-btn",
-        onClick: props.onExit,
-        children: "\u9000\u51FA TT \u6A21\u5F0F"
-      })]
-    }), /* @__PURE__ */ jsx("div", {
-      className: "ttskin-frame",
-      style: {
-        width: nat.w * scale,
-        height: nat.h * scale
-      },
-      children: /* @__PURE__ */ jsxs("div", {
-        className: "ttskin-stage",
-        style: {
-          width: nat.w,
-          height: nat.h,
-          transform: `scale(${scale})`
-        },
-        children: [bgPng && /* @__PURE__ */ jsx("img", {
-          className: "ttskin-bg",
-          src: bgPng,
-          alt: "",
-          width: nat.w,
-          height: nat.h
-        }), info && /* @__PURE__ */ jsx("div", {
-          className: "ttskin-text",
-          style: {
-            left: info.x1,
-            top: info.y1,
-            width: info.x2 - info.x1,
-            height: info.y2 - info.y1,
-            color: info.color || "#fff",
-            background: info.bkgnd || "transparent",
-            fontFamily: info.font ? `"${info.font}", "SimSun", sans-serif` : '"SimSun", sans-serif',
-            fontSize: (info.fontSize || 12) + "px",
-            lineHeight: info.y2 - info.y1 + "px",
-            textAlign: info.align === "right" ? "right" : info.align === "center" ? "center" : "left"
-          },
-          children: cur ? (cur.name || "\u672A\u547D\u540D") + (cur.artist ? " - " + cur.artist : "") : "\u5343\u5343\u9759\u542C"
-        }), led && /* @__PURE__ */ jsx(Led, {
-          c: led,
-          assets,
-          text: fmtT(pos),
-          color: tone,
-          bkgnd: status == null ? void 0 : status.bkgnd
-        }), status && /* @__PURE__ */ jsxs("div", {
-          className: "ttskin-text small",
-          style: {
-            left: status.x1,
-            top: status.y1,
-            width: status.x2 - status.x1,
-            height: status.y2 - status.y1,
-            color: tone,
-            background: status.bkgnd || "transparent",
-            fontFamily: status.font ? `"${status.font}", "SimSun", sans-serif` : '"SimSun", sans-serif',
-            fontSize: (status.fontSize || 11) + "px",
-            lineHeight: status.y2 - status.y1 + "px",
-            textAlign: status.align === "right" ? "right" : "left"
-          },
-          children: [playing ? "\u72B6\u6001: \u64AD\u653E" : "\u72B6\u6001: \u6682\u505C", props.eqOn ? " \xB7 EQ" : ""]
-        }), visual && /* @__PURE__ */ jsx(Bars, {
-          c: visual,
-          playing,
-          color: visColor,
-          ensure: props.ensure
-        }), progress && /* @__PURE__ */ jsx(Slider, {
-          c: progress,
-          assets,
-          value: dur > 0 ? pos / dur : 0,
-          onChange: (v2) => props.onSeek(v2)
-        }), vol && /* @__PURE__ */ jsx(Slider, {
-          c: vol,
-          assets,
-          value: volume,
-          onChange: props.onVolume
-        }), play && /* @__PURE__ */ jsx(Btn, {
-          c: play,
-          assets,
-          swap: playing ? "pause" : void 0,
-          onClick: props.onToggle,
-          title: playing ? "\u6682\u505C" : "\u64AD\u653E"
-        }), ctrl("stop") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("stop"),
-          assets,
-          onClick: props.onStop,
-          title: "\u505C\u6B62"
-        }), ctrl("prev") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("prev"),
-          assets,
-          onClick: props.onPrev,
-          title: "\u4E0A\u4E00\u9996"
-        }), ctrl("next") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("next"),
-          assets,
-          onClick: props.onNext,
-          title: "\u4E0B\u4E00\u9996"
-        }), ctrl("mute") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("mute"),
-          assets,
-          onClick: props.onMute,
-          title: "\u9759\u97F3"
-        }), ctrl("open") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("open"),
-          assets,
-          onClick: props.onOpen,
-          title: "\u6253\u5F00\u6587\u4EF6\u5939\uFF08\u52A0\u6B4C\uFF09"
-        }), ctrl("browser") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("browser"),
-          assets,
-          onClick: props.onMusicWindow,
-          title: "\u97F3\u4E50\u7A97"
-        }), ctrl("lyric") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("lyric"),
-          assets,
-          onClick: () => setSubs((s) => ({
-            ...s,
-            lyric: !s.lyric
-          })),
-          title: "\u6B4C\u8BCD\u79C0",
-          active: subs.lyric
-        }), ctrl("equalizer") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("equalizer"),
-          assets,
-          onClick: () => setSubs((s) => ({
-            ...s,
-            equalizer: !s.equalizer
-          })),
-          title: "\u5747\u8861\u5668",
-          active: subs.equalizer
-        }), ctrl("playlist") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("playlist"),
-          assets,
-          onClick: () => setSubs((s) => ({
-            ...s,
-            playlist: !s.playlist
-          })),
-          title: "\u64AD\u653E\u5217\u8868",
-          active: subs.playlist
-        }), ctrl("minimize") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("minimize"),
-          assets,
-          onClick: props.onMini,
-          title: "\u5C0F\u7A97\u53E3"
-        }), ctrl("minimode") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("minimode"),
-          assets,
-          onClick: props.onMini,
-          title: "\u8FF7\u4F60\u6A21\u5F0F"
-        }), ctrl("exit") && /* @__PURE__ */ jsx(Btn, {
-          c: ctrl("exit"),
-          assets,
-          onClick: props.onExit,
-          title: "\u9000\u51FA TT \u6A21\u5F0F"
-        }), win.controls.filter((c) => c.image && !["play", "pause", "stop", "prev", "next", "mute", "minimize", "minimode", "exit", "open", "browser", "lyric", "equalizer", "playlist"].includes(c.name) && !["progress", "volume", "info", "led", "status", "visual", "stereo", "icon", "set"].includes(c.name) && !/^mode_/.test(c.name)).map((c) => /* @__PURE__ */ jsx(Btn, {
-          c,
-          assets,
-          title: c.name
-        }, c.name))]
-      })
-    }), lwin && subs.lyric && (() => {
-      const r2 = rectOf(lwin, "lyric");
-      const fs = Math.max(11, (r2 == null ? void 0 : r2.fontSize) || 13);
-      const lines = r2 ? lrcView(r2, fs) : [];
-      const extras = lwin.controls.filter((c) => c.name === "ontop" || c.name === "desklrc").map((c) => c.name === "ontop" ? {
-        c,
-        onClick: props.onOntop,
-        title: props.ontop ? "\u53D6\u6D88\u7F6E\u9876" : "\u7A97\u53E3\u7F6E\u9876",
-        active: props.ontop
-      } : {
-        c,
-        onClick: props.onDeskLrc,
-        title: props.deskLrc ? "\u5173\u95ED\u684C\u9762\u6B4C\u8BCD" : "\u684C\u9762\u6B4C\u8BCD\uFF08\u72EC\u7ACB\u5C0F\u7A97\u53E3\uFF09",
-        active: props.deskLrc
-      });
-      return /* @__PURE__ */ jsx(SubWin, {
-        win: lwin,
-        assets,
-        scale,
-        onClose: () => setSubs((s) => ({
-          ...s,
-          lyric: false
-        })),
-        extras,
-        children: r2 && /* @__PURE__ */ jsx("div", {
-          className: "ttskin-lyric",
-          style: {
-            left: r2.x1,
-            top: r2.y1,
-            width: r2.x2 - r2.x1,
-            height: r2.y2 - r2.y1,
-            fontFamily: r2.font ? `"${r2.font}", "SimSun", sans-serif` : '"SimSun", sans-serif',
-            fontSize: fs + "px",
-            lineHeight: fs + 4 + "px"
-          },
-          children: lines.length ? lines.map((l2) => /* @__PURE__ */ jsx("div", {
-            className: l2.i === lrcIndex ? "on" : "",
-            children: l2.text || "\u2026"
-          }, l2.i)) : /* @__PURE__ */ jsx("div", {
-            className: "dim",
-            children: "\u6CA1\u6709\u6B4C\u8BCD"
-          })
-        })
-      });
-    })(), pwin && subs.playlist && (() => {
-      const r2 = rectOf(pwin, "playlist");
-      if (!r2)
-        return null;
-      return /* @__PURE__ */ jsx(SubWin, {
-        win: pwin,
-        assets,
-        scale,
-        onClose: () => setSubs((s) => ({
-          ...s,
-          playlist: false
-        })),
-        children: /* @__PURE__ */ jsx("div", {
-          className: "ttskin-pl",
-          ref: plBox,
-          style: {
-            left: r2.x1,
-            top: r2.y1,
-            width: r2.x2 - r2.x1,
-            height: r2.y2 - r2.y1
-          },
-          children: queue.length ? queue.map((t2, i) => /* @__PURE__ */ jsxs("div", {
-            className: "ttskin-pl-row" + (i === qIndex ? " on" : ""),
-            onClick: () => props.onPick(i),
-            title: t2.name + (t2.artist ? " - " + t2.artist : ""),
-            children: [/* @__PURE__ */ jsx("span", {
-              className: "n",
-              children: i + 1
-            }), /* @__PURE__ */ jsx("span", {
-              className: "t",
-              children: t2.name
-            }), /* @__PURE__ */ jsx("span", {
-              className: "a",
-              children: t2.artist || ""
-            })]
-          }, t2.id + i)) : /* @__PURE__ */ jsx("div", {
-            className: "ttskin-pl-empty",
-            children: "\u64AD\u5355\u662F\u7A7A\u7684"
-          })
-        })
-      });
-    })(), ewin && subs.equalizer && /* @__PURE__ */ jsxs(SubWin, {
-      win: ewin,
-      assets,
-      scale,
-      onClose: () => setSubs((s) => ({
-        ...s,
-        equalizer: false
-      })),
-      extras: [...ewin.controls.filter((c) => c.name === "enabled").map((c) => ({
-        c,
-        onClick: props.onEqToggle,
-        title: props.eqOn ? "\u5173\u95ED\u5747\u8861\u5668" : "\u6253\u5F00\u5747\u8861\u5668",
-        active: props.eqOn
-      })), ...ewin.controls.filter((c) => c.name === "reset").map((c) => ({
-        c,
-        onClick: props.onEqReset,
-        title: "\u5168\u90E8\u5F52\u96F6"
-      }))],
-      children: [(() => {
-        const bal = rectOf(ewin, "balance");
-        const sur = rectOf(ewin, "surround");
-        return /* @__PURE__ */ jsxs(Fragment, {
-          children: [bal && /* @__PURE__ */ jsx(Slider, {
-            c: bal,
-            assets,
-            value: (balance + 1) / 2,
-            onChange: (v2) => props.onBalance(v2 * 2 - 1)
-          }), sur && /* @__PURE__ */ jsx(Slider, {
-            c: sur,
-            assets,
-            value: surround,
-            onChange: (v2) => props.onSurround(v2)
-          })]
-        });
-      })(), eqPre && /* @__PURE__ */ jsx(Fader, {
-        left: eqPre.x1,
-        top: eqPre.y1,
-        width: Math.max(6, eqPre.x2 - eqPre.x1),
-        height: eqPre.y2 - eqPre.y1,
-        value: Math.max(0, Math.min(1, (preamp - 0.2) / 1.8)),
-        fill: (_c = assets[eqPre.fillImage || ""]) == null ? void 0 : _c.url,
-        thumb: (_d = assets[eqPre.thumbImage || ""]) == null ? void 0 : _d.url,
-        title: "\u524D\u7F6E\u653E\u5927 " + preamp.toFixed(2),
-        onChange: (v2) => props.onPreamp(0.2 + v2 * 1.8)
-      }), eqBase && (() => {
-        var _a2, _b2, _c2;
-        const n2 = 10;
-        const winW = ewin.image && ((_a2 = assets[ewin.image]) == null ? void 0 : _a2.w) || ewin.w;
-        const x0 = eqBase.x1;
-        const x1 = Math.max(x0 + 40, winW - 16);
-        const step = (x1 - x0) / (n2 - 1);
-        const bw = Math.max(6, eqBase.x2 - eqBase.x1);
-        const fill = (_b2 = assets[eqBase.fillImage || ""]) == null ? void 0 : _b2.url;
-        const thumb = (_c2 = assets[eqBase.thumbImage || ""]) == null ? void 0 : _c2.url;
-        const hz = ["31", "62", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"];
-        return Array.from({
-          length: n2
-        }, (_, i) => {
-          const g = eqGains[i] || 0;
-          return /* @__PURE__ */ jsx(Fader, {
-            left: Math.round(x0 + step * i),
-            top: eqBase.y1,
-            width: bw,
-            height: eqBase.y2 - eqBase.y1,
-            value: (g + 12) / 24,
-            fill,
-            thumb,
-            title: hz[i] + "Hz  " + (g > 0 ? "+" : "") + g + "dB",
-            onChange: (v2) => props.onEqGain(i, Math.round(v2 * 24 - 12))
-          }, i);
-        });
-      })()]
-    })]
-  });
-}
 const EQ_FREQS = [31, 62, 125, 250, 500, 1e3, 2e3, 4e3, 8e3, 16e3];
 const EQ_PRESETS = [
   { name: "\u5E73\u76F4", gains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
@@ -14716,6 +13094,213 @@ class Equalizer {
     this.panner = null;
     this.widen = null;
   }
+}
+function cvar(el2, name, fb2) {
+  const v2 = getComputedStyle(el2).getPropertyValue(name).trim();
+  return v2 || fb2;
+}
+function bucketEdges(bins, binHz, count) {
+  const lo = 40;
+  const hi2 = 15e3;
+  const edges = [];
+  for (let i = 0; i <= count; i++) {
+    const f2 = lo * Math.pow(hi2 / lo, i / count);
+    const idx = Math.min(bins - 1, Math.max(0, Math.round(f2 / binHz)));
+    edges.push(idx);
+  }
+  return edges;
+}
+function drawSpectrum(ctx, w2, h, an, on, cv, heightsRef, freqBuf) {
+  ctx.clearRect(0, 0, w2, h);
+  const n2 = Math.max(12, Math.min(48, Math.floor(w2 / 6)));
+  const padT = 4;
+  const base = h - 4;
+  const maxH = base - padT;
+  if (heightsRef.current.length !== n2)
+    heightsRef.current = new Array(n2).fill(0);
+  const heights = heightsRef.current;
+  const lo = cvar(cv, "--vis-lo", "#3c45c8");
+  const mid = cvar(cv, "--vis-mid", "#7d88ff");
+  const hi2 = cvar(cv, "--vis-hi", "#c9cfff");
+  let bins = null;
+  let edges = null;
+  if (an && on) {
+    if (freqBuf.current.length !== an.mixed.frequencyBinCount) {
+      freqBuf.current = new Uint8Array(an.mixed.frequencyBinCount);
+    }
+    const buf = freqBuf.current;
+    an.mixed.getByteFrequencyData(buf);
+    bins = buf;
+    const binHz = an.mixed.context.sampleRate / 2 / an.mixed.frequencyBinCount;
+    edges = bucketEdges(an.mixed.frequencyBinCount, binHz, n2);
+  }
+  const slot = w2 / n2;
+  const barW = Math.max(1.5, slot - Math.max(1, slot * 0.22));
+  for (let i = 0; i < n2; i++) {
+    let target = 0;
+    if (bins && edges) {
+      const a = edges[i];
+      const b = Math.max(a + 1, edges[i + 1]);
+      let peak = 0;
+      for (let k2 = a; k2 < b && k2 < bins.length; k2++)
+        if (bins[k2] > peak)
+          peak = bins[k2];
+      const tilt = 0.82 + 0.3 * (i / n2);
+      target = Math.min(1, Math.pow(peak / 255, 0.78) * tilt);
+    }
+    heights[i] = target > heights[i] ? heights[i] + (target - heights[i]) * 0.55 : heights[i] + (target - heights[i]) * 0.16;
+    const bh2 = Math.max(1.5, heights[i] * maxH);
+    const x2 = i * slot + (slot - barW) / 2;
+    const g = ctx.createLinearGradient(0, base, 0, base - bh2);
+    g.addColorStop(0, lo);
+    g.addColorStop(0.55, mid);
+    g.addColorStop(1, hi2);
+    ctx.fillStyle = g;
+    ctx.fillRect(x2, base - bh2, barW, bh2);
+    ctx.fillStyle = hi2;
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(x2, base - bh2, barW, Math.min(1.6, bh2));
+    ctx.globalAlpha = 1;
+  }
+}
+function drawScope(ctx, w2, h, an, on, cv, buf) {
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.fillStyle = "rgba(0,0,0,0.16)";
+  ctx.fillRect(0, 0, w2, h);
+  ctx.globalCompositeOperation = "source-over";
+  if (!an || !on) {
+    ctx.strokeStyle = cvar(cv, "--vis-line", "#7d88ff");
+    ctx.globalAlpha = 0.35;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(2, h / 2);
+    ctx.lineTo(w2 - 2, h / 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    return;
+  }
+  const size = Math.min(buf.length, an.mixed.fftSize);
+  an.mixed.getByteTimeDomainData(buf.subarray(0, size));
+  const mid = 128;
+  const span = Math.min(256, size - 2);
+  let start = 0;
+  for (let i = 1; i < size - span; i++) {
+    if (buf[i - 1] <= mid && buf[i] > mid) {
+      start = i;
+      break;
+    }
+  }
+  const line = cvar(cv, "--vis-line", "#c9cfff");
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  const step = w2 / span;
+  for (let i = 0; i < span; i++) {
+    const v2 = (buf[start + i] - 128) / 128;
+    const reach = h / 2 - 4;
+    const y2 = h / 2 + Math.max(-reach, Math.min(reach, v2 * reach * 1.6));
+    const x2 = i * step;
+    if (i === 0)
+      ctx.moveTo(x2, y2);
+    else
+      ctx.lineTo(x2, y2);
+  }
+  ctx.stroke();
+}
+function drawVu(ctx, w2, h, an, on, cv, buf, vu) {
+  ctx.clearRect(0, 0, w2, h);
+  const dial = cvar(cv, "--vis-dial", "#8a93ea");
+  const needle = cvar(cv, "--vis-needle", "#ff6a3d");
+  const dim = cvar(cv, "--vis-dim", "#6a74c0");
+  const hot = cvar(cv, "--vis-hot", "#ff5252");
+  const targetL = an && on ? level(buf, an.l, "l") : 0;
+  const targetR = an && on ? level(buf, an.r, "r") : 0;
+  const s = vu.current;
+  s.l = targetL > s.l ? s.l + (targetL - s.l) * 0.55 : s.l + (targetL - s.l) * 0.18;
+  s.r = targetR > s.r ? s.r + (targetR - s.r) * 0.55 : s.r + (targetR - s.r) * 0.18;
+  s.pl = Math.max(s.l, s.pl - 6e-3);
+  s.pr = Math.max(s.r, s.pr - 6e-3);
+  const gap = 8;
+  const colW = Math.min(260, (w2 - gap - 16) / 2);
+  const rail = (w2 - (colW * 2 + gap)) / 2;
+  paintMeter(ctx, rail, 2, colW, h - 6, s.l, s.pl, dial, needle, dim, hot);
+  paintMeter(ctx, rail + colW + gap, 2, colW, h - 6, s.r, s.pr, dial, needle, dim, hot);
+}
+function level(buf, an, side) {
+  const size = Math.min(buf.length, an.fftSize);
+  an.getByteTimeDomainData(buf.subarray(0, size));
+  let sum = 0;
+  for (let i = 0; i < size; i++) {
+    const v2 = (buf[i] - 128) / 128;
+    sum += v2 * v2;
+  }
+  const rms = Math.sqrt(sum / size);
+  const db2 = 20 * Math.log10(rms > 0 ? rms : 1e-7);
+  const pos = Math.pow(Math.max(0, (db2 + 30) / 28), 0.7);
+  if (side === "l" || side === "r")
+    return Math.max(0, Math.min(1, pos));
+  return 0;
+}
+function paintMeter(ctx, x2, y2, w2, h, v2, peak, dial, needle, dim, hot) {
+  const cx = x2 + w2 / 2;
+  const cy = y2 + h - 7;
+  const r2 = Math.min(w2 / 2 - 12, h * 0.74);
+  if (r2 < 8)
+    return;
+  const a0 = Math.PI * -0.78;
+  const a1 = Math.PI * -0.22;
+  const over = 20 / 23;
+  ctx.fillStyle = dial;
+  ctx.globalAlpha = 0.09;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, r2, a0, a1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = dial;
+  ctx.globalAlpha = 0.7;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r2, a0, a1);
+  ctx.stroke();
+  ctx.strokeStyle = hot;
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r2, a0 + (a1 - a0) * over, a1);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = dim;
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 8; i++) {
+    const t2 = i / 8;
+    const a2 = a0 + (a1 - a0) * t2;
+    const major = i === 0 || i === 4 || i === 8;
+    ctx.globalAlpha = major ? 0.9 : 0.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a2) * (r2 - (major ? 5 : 3)), cy + Math.sin(a2) * (r2 - (major ? 5 : 3)));
+    ctx.lineTo(cx + Math.cos(a2) * r2, cy + Math.sin(a2) * r2);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  const ap = a0 + (a1 - a0) * peak;
+  ctx.fillStyle = hot;
+  const px = cx + Math.cos(ap) * (r2 - 6);
+  const py = cy + Math.sin(ap) * (r2 - 6);
+  ctx.beginPath();
+  ctx.arc(px, py, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+  const a = a0 + (a1 - a0) * v2;
+  ctx.strokeStyle = needle;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(a) * (r2 - 1.5), cy + Math.sin(a) * (r2 - 1.5));
+  ctx.stroke();
+  ctx.fillStyle = dial;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 2.4, 0, Math.PI * 2);
+  ctx.fill();
 }
 const VIS_KEY = "qqjt-vis-mode";
 const MODES = [{
@@ -15012,7 +13597,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.56";
+const BUILD_TAG = "3.0.57";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -15137,19 +13722,6 @@ function App() {
   }, [mini]);
   const [volume, setVolumeState] = react.exports.useState(0.5);
   const [layout, setLayout] = react.exports.useState("desk");
-  const [ttMode, setTtMode] = react.exports.useState(() => {
-    try {
-      return localStorage.getItem("qqjt-ttmode") === "1";
-    } catch {
-      return false;
-    }
-  });
-  react.exports.useEffect(() => {
-    try {
-      localStorage.setItem("qqjt-ttmode", ttMode ? "1" : "0");
-    } catch {
-    }
-  }, [ttMode]);
   function switchLayout(l2) {
     setLayout(l2);
     if (l2 === "skin" && tab === "lyric")
@@ -15361,7 +13933,6 @@ function App() {
     const v2 = localStorage.getItem("qqjt-skin");
     return SKIN_ORDER.includes(v2) ? v2 : "glass";
   });
-  const [ttSkin, setTtSkin] = react.exports.useState("");
   const SKIN_THEME = {
     winamp: "dark",
     tt: "amber",
@@ -15380,20 +13951,8 @@ function App() {
     green: "green",
     neon: "neon"
   };
-  react.exports.useEffect(() => {
-    const h = (e) => {
-      var _a2;
-      const id2 = String(((_a2 = e.detail) == null ? void 0 : _a2.id) || "");
-      setTtSkin(id2);
-      if (id2)
-        switchLayout("skin");
-    };
-    window.addEventListener("hulu-skin-changed", h);
-    return () => window.removeEventListener("hulu-skin-changed", h);
-  }, []);
   const applySkin = (s) => {
     setSkinTheme(s);
-    setTtSkin("");
     try {
       localStorage.setItem("qqjt-skin", s);
     } catch {
@@ -15570,18 +14129,18 @@ function App() {
     try {
       const raw = await call("Plugins");
       const list2 = asPluginList(raw);
-      setPlugins(list2.filter((p2) => p2.enabled && p2.kind !== "skin"));
+      setPlugins(list2.filter((p2) => p2.enabled));
     } catch {
     }
   }, []);
   async function activePlugins() {
     try {
       const raw = await call("Plugins");
-      const on = asPluginList(raw).filter((p2) => p2.enabled && p2.kind !== "skin");
+      const on = asPluginList(raw).filter((p2) => p2.enabled);
       setPlugins(on);
       return on;
     } catch {
-      return plugins.filter((p2) => p2.enabled && p2.kind !== "skin");
+      return plugins.filter((p2) => p2.enabled);
     }
   }
   async function doSearch() {
@@ -16151,38 +14710,6 @@ function App() {
     } catch {
     }
   }, [eqSurround]);
-  async function toggleDeskLrc() {
-    const app = G();
-    if (!(app == null ? void 0 : app.DeskLrc)) {
-      setErr("\u8FD9\u4E2A\u7248\u672C\u6CA1\u6709\u684C\u9762\u6B4C\u8BCD");
-      return;
-    }
-    try {
-      const r2 = await app.DeskLrc(!deskLrc);
-      const v2 = Array.isArray(r2) ? r2[0] : r2;
-      setDeskLrc(!!v2);
-      try {
-        localStorage.setItem("qqjt-desklrc", v2 ? "1" : "0");
-      } catch {
-      }
-    } catch (e) {
-      setErr(String((e == null ? void 0 : e.message) || e));
-    }
-  }
-  async function toggleOntop() {
-    const app = G();
-    if (!(app == null ? void 0 : app.SetAlwaysOnTop)) {
-      setErr("\u8FD9\u4E2A\u7248\u672C\u6CA1\u6709\u7F6E\u9876\u63A5\u53E3");
-      return;
-    }
-    try {
-      const r2 = await app.SetAlwaysOnTop(!ontop);
-      const v2 = Array.isArray(r2) ? r2[0] : r2;
-      setOntop(!!v2);
-    } catch (e) {
-      setErr(String((e == null ? void 0 : e.message) || e));
-    }
-  }
   react.exports.useEffect(() => {
     var _a2;
     let gone = false;
@@ -17088,7 +15615,7 @@ function App() {
   });
   return /* @__PURE__ */ jsxs("div", {
     className: "app" + (layout === "desk" ? " desk-mode" : " skin") + (mini ? " mini-mode" : ""),
-    "data-skin": ttSkin || skinTheme,
+    "data-skin": skinTheme,
     children: [!mini && /* @__PURE__ */ jsxs(Fragment, {
       children: [/* @__PURE__ */ jsx("div", {
         className: "edge-resize left",
@@ -17866,70 +16393,6 @@ function App() {
           })]
         })]
       })]
-    }) : ttMode ? /* @__PURE__ */ jsx(TtSkinView, {
-      playing,
-      cur,
-      pos,
-      dur,
-      volume,
-      onToggle: toggle,
-      onPrev: () => step(-1),
-      onNext: () => step(1),
-      onStop: () => {
-        const a = audio.current;
-        if (a) {
-          a.pause();
-          a.currentTime = 0;
-        }
-        setPlaying(false);
-        setPos(0);
-      },
-      onMute: () => setVolumeState(volume > 0 ? 0 : 0.5),
-      onSeek: (r2) => {
-        const a = audio.current;
-        if (a && isFinite(a.duration) && a.duration > 0) {
-          a.currentTime = r2 * a.duration;
-          setPos(a.currentTime);
-        }
-      },
-      onVolume: setVolumeState,
-      onMini: () => toggleMini(true),
-      onExit: () => setTtMode(false),
-      onOpen: pickLocalDir,
-      onMusicWindow: () => setNpOpen(true),
-      lrc: lyric,
-      lrcIndex: curIndex,
-      queue: queue.list,
-      qIndex: queue.idx,
-      onPick: (i) => {
-        const t2 = queue.list[i];
-        if (!t2)
-          return;
-        setQueue((q22) => ({
-          ...q22,
-          idx: i
-        }));
-        play(t2, true);
-      },
-      eqOn,
-      eqGains,
-      preamp,
-      onEqGain: (i, v2) => {
-        setEqGains((prev) => prev.map((x2, k2) => k2 === i ? v2 : x2));
-        setEqPreset(-1);
-      },
-      onPreamp: setPreamp,
-      onEqToggle: toggleEq,
-      onEqReset: resetEq,
-      ensure: ensureVis,
-      balance: eqBalance,
-      onBalance: setEqBalance,
-      surround: eqSurround,
-      onSurround: setEqSurround,
-      ontop,
-      onOntop: toggleOntop,
-      deskLrc,
-      onDeskLrc: toggleDeskLrc
     }) : /* @__PURE__ */ jsxs("div", {
       className: "skin-page" + (skinWide ? "" : " one-col") + (showLrc ? "" : " only-left") + (lyrMax ? " lyr-max" : "") + (skinWide && showLrc && !lyrMax && mainW < 520 ? " compact-main" : ""),
       style: {
@@ -21400,65 +19863,6 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 }
 
 
-/* 皮肤插件（.skn 兼容层）：插件页「换肤」的卡片网格 */
-.skin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px;margin:10px 0 12px}
-.skin-cell{display:flex;flex-direction:column;gap:4px;padding:8px;border:1px solid rgba(255,255,255,.12);
-  border-radius:10px;background:rgba(255,255,255,.04);cursor:pointer;text-align:left}
-.skin-cell:hover{border-color:var(--accent,#ff9d20)}
-.skin-cell.on{border-color:var(--accent,#ff9d20);box-shadow:0 0 0 1px var(--accent,#ff9d20) inset}
-.skin-thumb{width:156px;height:auto;min-height:40px;overflow:hidden;border-radius:6px;background:#1b1b1f}
-.skin-name{font-size:12px;color:#e9ecf5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.skin-by{font-size:11px;color:#9aa3b8;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-
-/* ── TT 模式：像素级千千静听窗口（.skn 驱动） ── */
-.ttskin-view{display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px;min-height:0;flex:1}
-.ttskin-toolbar{display:flex;align-items:center;gap:8px;width:100%;justify-content:center}
-.ttskin-toolbar select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
-  color:#e9ecf5;border-radius:960px;padding:4px 10px;font-size:12px;outline:none}
-.ttskin-by{font-size:11px;color:#9aa3b8}
-.ttskin-frame{position:relative;line-height:0;filter:drop-shadow(0 8px 24px rgba(0,0,0,.45))}
-.ttskin-stage{position:relative;transform-origin:top left;image-rendering:pixelated;overflow:hidden}
-.ttskin-bg{position:absolute;left:0;top:0;display:block;image-rendering:pixelated}
-.ttskn-btn{position:absolute;border:0;padding:0;margin:0;background:transparent center/100% 100% no-repeat;
-  cursor:pointer;image-rendering:pixelated}
-.ttskn-btn:active{filter:brightness(.85)}
-.ttskn-slider{position:absolute;background:transparent center/100% 100% no-repeat;cursor:pointer;touch-action:none}
-.ttskn-fill{position:absolute;background-position:0 0;background-repeat:repeat-x;pointer-events:none}
-.ttskn-thumb{position:absolute;background-repeat:no-repeat;pointer-events:none}
-.ttskin-text{position:absolute;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;pointer-events:none}
-.ttskin-text.small{font-size:11px}
-.ttskin-led-sprite{position:absolute;overflow:hidden;pointer-events:none}
-.ttskin-led-sprite span{position:absolute;top:0;background-repeat:no-repeat;display:block}
-.ttskin-led{position:absolute;font-family:"Consolas","Courier New",monospace;font-weight:700;
-  font-size:12px;letter-spacing:1px;overflow:hidden;pointer-events:none}
-.ttskin-vis{position:absolute;overflow:hidden;background:transparent;border-radius:2px}
-.ttskin-vis .ttskin-vis-bars{display:flex;align-items:flex-end;gap:1px;height:100%;padding:1px}
-.ttskin-vis-bars span{flex:1 1 0;min-width:1px;opacity:.9;transition:height .12s linear}
-.ttskin-tip{padding:40px 16px;text-align:center;color:#9aa3b8;font-size:13px}
-.sk-tt{font-size:10px;font-weight:700;letter-spacing:.5px;color:#ffe6bd}
-
-/* TT 模式子窗口：歌词 / 播放列表 / 均衡器推子 */
-.ttskn-btn.on{outline:1px solid rgba(255,214,102,.75);outline-offset:0}
-.ttskin-lyric{position:absolute;display:flex;flex-direction:column;justify-content:center;gap:2px;
-  overflow:hidden;text-align:center;text-shadow:0 0 4px rgba(0,0,0,.9);pointer-events:none;
-  font-family:"SimSun",sans-serif;font-size:13px;color:#9fd8ff}
-.ttskin-lyric .on{color:#ffd200;font-weight:700}
-.ttskin-lyric .dim{color:#8891a5}
-.ttskin-pl{position:absolute;overflow:auto;color:#dfe6f2;background:rgba(6,10,20,.55);
-  font:12px/18px "SimSun",sans-serif;border-radius:2px}
-.ttskin-pl-row{display:grid;grid-template-columns:24px 1fr minmax(0,42%);gap:6px;height:18px;
-  line-height:18px;padding:0 4px;cursor:pointer}
-.ttskin-pl-row:hover{background:rgba(255,255,255,.10)}
-.ttskin-pl-row.on{background:rgba(70,140,255,.55);color:#fff}
-.ttskin-pl-row .n{color:#8891a5;text-align:right}
-.ttskin-pl-row .t{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.ttskin-pl-row .a{color:#9fb0c8;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.ttskin-pl-empty{padding:14px;color:#8891a5;text-align:center}
-.ttskn-fader{position:absolute;cursor:pointer;touch-action:none}
-.ttskn-fader i{position:absolute;left:2px;right:2px;bottom:0;background-repeat:repeat-y;background-position:center bottom}
-.ttskn-fader b{position:absolute;left:0;right:0;height:16px;background-repeat:no-repeat;background-position:center}
-
 /* ── 桌面歌词（独立窗口，透明 + 置顶，窗口自己只有一行字） ── */
 .dl-root{height:100vh;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 18px;
   --app-region:drag;user-select:none;cursor:default}
@@ -21506,17 +19910,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.56] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.57] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.56] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.57] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.56] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.57] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.56] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.57] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

@@ -36,7 +36,7 @@ type Settings struct {
 	Version   string `json:"version"`
 }
 
-const appVersion = "3.0.56"
+const appVersion = "3.0.57"
 
 func defaultSettings() Settings {
 	return Settings{

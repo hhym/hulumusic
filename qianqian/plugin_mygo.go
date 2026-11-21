@@ -412,14 +412,6 @@ func scanMyGoPlugins(state map[string]bool) []Plugin {
 		if fi != nil {
 			installed = fi.ModTime().Format("2006-01-02 15:04")
 		}
-		// 皮肤插件（.skn）也放在插件目录里，但对前端是另一套用法：不搜索、只换肤。
-		kind := "mygo"
-		if _, isSkin := isSkinDir(pluginDir(id)); isSkin {
-			kind = "skin"
-			if desc == "" || desc == "MyGo 插件" {
-				desc = "千千静听 .skn 皮肤包"
-			}
-		}
 		out = append(out, Plugin{
 			ID:          id,
 			Name:        name,
@@ -432,7 +424,7 @@ func scanMyGoPlugins(state map[string]bool) []Plugin {
 			Size:        size,
 			InstalledAt: installed,
 			File:        m.Main,
-			Kind:        kind,
+			Kind:        "mygo",
 			Navigation:  navigationJSON(m),
 			Actions:     actionList(m, id),
 		})
