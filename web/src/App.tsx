@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.67'
+const BUILD_TAG = '3.0.68'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -819,8 +819,17 @@ export default function App() {
   }
 
   async function play(t: Track, inQueue = false) {
-    if (busy) return
+    if (busy) {
+      // 以前这里静默 return，用户点了没声音也没提示，看不出是「上一首还在取流」
+      setErr('上一首还在取流，等一下再点（播放按钮现在不会排队）')
+      return
+    }
     setBusy(true); setErr('')
+    // 看门狗：取流卡住时把 busy 放掉，否则后面点什么都像死了一样
+    const watchdog = window.setTimeout(() => {
+      setBusy(false)
+      setErr('取流超过 25 秒没回，已复位。再点一次；要是这个源一直这样，换首歌或换个音源试试')
+    }, 25000)
     // 记录播放队列，供上一首 / 下一首使用
     if (!inQueue) {
       const srcList = tab === 'library' ? lib : tab === 'local' ? localTracks : list
@@ -832,8 +841,8 @@ export default function App() {
       if (t.source === 'plugin') {
         const ref = decodePluginTrackId(t.id)
         if (!ref) throw new Error('插件曲目信息损坏，重新搜一次')
-        const src = await pluginMediaSource(ref.pluginId, ref.item)
-        const proxied: any = await call<any>('PluginPlayURL', src.url, src.referer || '')
+        const src = await withTimeout(pluginMediaSource(ref.pluginId, ref.item), 15000, '插件取流')
+        const proxied: any = await withTimeout(call<any>('PluginPlayURL', src.url, src.referer || ''), 8000, '打开本地代理')
         url = typeof proxied === 'string' && /^(http|blob|data):/.test(proxied) ? proxied : ''
         if (!url) throw new Error(typeof proxied === 'string' && proxied.trim() ? proxied : '插件取流失败')
       } else {
@@ -851,6 +860,15 @@ export default function App() {
         throw new Error(await explainPlayFail(url, pe))
       }
       setPlaying(true)
+      // 自检：3 秒后已经缓冲好了但时间还在 0，说明这段流浏览器认了却不解码（进度条不动=没声音）
+      const selfId = t.id
+      window.setTimeout(() => {
+        const a2 = audio.current
+        if (!a2 || cur?.id !== selfId || a2.paused) return
+        if (a2.currentTime === 0 && a2.readyState >= 2) {
+          setErr('音频已经读进来但一直不走（3 秒还是 0 秒）：这段流浏览器解不了，换码率或换个音源试试')
+        }
+      }, 3000)
       if (t.source === 'ne' || t.source === 'qq' || t.source === 'local') {
         callResult<LyricLine[]>('Lyric', t.id)
           .then(({data}) => setLyric(toArr<LyricLine>(data)))
@@ -861,8 +879,19 @@ export default function App() {
       }
     } catch (e: any) {
       setErr(String(e?.message || e)); setPlaying(false)
-    } finally { setBusy(false) }
+    } finally { window.clearTimeout(watchdog); setBusy(false) }
   }
+
+/** 给插件取流这类可能永远不回的操作加个上限，别让播放按钮一直卡着没反应。 */
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = window.setTimeout(() => reject(new Error(label + '超时（' + Math.round(ms / 1000) + ' 秒）')), ms)
+    p.then(
+      (v) => { window.clearTimeout(t); resolve(v) },
+      (e) => { window.clearTimeout(t); reject(e) },
+    )
+  })
+}
 
 // <audio> 报「no supported sources」时浏览器只给一句干巴巴的英文，
 // 这里回读一次代理响应头，把真实原因（HTTP 码 / Content-Type / 站点提示）带出来。
@@ -886,7 +915,13 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
   function toggle() {
     const a = audio.current
     if (!a || !cur) return
-    if (a.paused) { a.play(); setPlaying(true) } else { a.pause(); setPlaying(false) }
+    if (a.paused) {
+      // play() 是 Promise，被拒时以前完全没人管，表现就是「点了没反应、也没声音」
+      a.play().then(() => setPlaying(true)).catch((e: any) => {
+        setPlaying(false)
+        setErr('播放没起来：' + String(e?.message || e || '未知原因'))
+      })
+    } else { a.pause(); setPlaying(false) }
   }
 
   // 迷你播放器：窗口缩成一条并置顶（Go 端改尺寸），关掉时还原
@@ -2422,7 +2457,12 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={onEnded}
-        onError={() => { setErr('这条音频播不了（可能是 VIP 曲、无版权，或电台暂时连不上）'); setPlaying(false) }}
+        onError={(e) => {
+          const code = Number((e.target as any)?.error?.code) || 0
+          const why = code === 1 ? '加载被中断' : code === 2 ? '网络/取流出错' : code === 3 ? '解码失败（格式不支持）' : code === 4 ? '地址不能用（可能是 VIP 曲或已失效）' : '未知错误'
+          setErr('这条音频播不了：' + why + '（code ' + code + '）')
+          setPlaying(false)
+        }}
       />
 
       {npOpen && (

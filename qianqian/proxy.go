@@ -2,6 +2,7 @@ package qianqian
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -191,6 +192,14 @@ func handleAudioProxy(w http.ResponseWriter, r *http.Request) {
 			if s2 := sniffAudioCT(b); s2 != "" {
 				w.Header().Set("Content-Type", s2)
 			}
+		}
+	}
+	// 汽水这类抖音音源给的是纯音频 M4A，但上游 Content-Type 写 video/mp4。
+	// <audio> 收 video/* 在部分 WebView 上会不认（表现就是「点了没声音」），
+	// 看到 ftypM4A 就正名成 audio/mp4
+	if strings.HasPrefix(strings.ToLower(w.Header().Get("Content-Type")), "video/") {
+		if b, err := br.Peek(16); err == nil && bytes.Contains(b, []byte("ftypM4A")) {
+			w.Header().Set("Content-Type", "audio/mp4")
 		}
 	}
 	if w.Header().Get("Content-Type") == "" {
