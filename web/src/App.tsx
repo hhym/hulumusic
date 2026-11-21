@@ -163,7 +163,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.55'
+const BUILD_TAG = '3.0.56'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -2191,8 +2191,6 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
               <Fi n="minimize-2" size={11} />
             </button>
 
-            <button className="sk-wb" title="TT 模式（像素级千千静听窗口，用 .skn 皮肤包的贴图）"
-                    onClick={openTtMode}><span className="sk-tt">TT</span></button>
             <button className="sk-wb sk-skin-sw" title={'切换皮肤（当前：' + skinName + '）'}
                     onClick={switchSkin}><Fi n="layers" size={13} /></button>
           </div>
