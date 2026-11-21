@@ -57,28 +57,30 @@ export function decodePluginTrackId(id: string): {pluginId: string; item: AnyObj
 export function clearPluginCache(pluginId?: string) {
   clearMyGoCache(pluginId)
   clearMusicFreeCache(pluginId)
+  if (pluginId) delete kindCache[pluginId]
+  else for (const k of Object.keys(kindCache)) delete kindCache[k]
 }
 
-/* 插件 kind 的缓存：问一次 Go 就够了，5 秒内复用，避免搜索时每个插件都打一轮 IPC。 */
-let kindCache: {at: number; map: Record<string, string>} = {at: 0, map: {}}
+/* 插件 kind 的缓存：按 id 单独向后端问，5 秒内复用，避免搜索时每个插件都打一轮 IPC。
+   之前是从整份插件列表里反查 kind，遇到「同 id 既有遗留目录又有 .js」时会串成 MyGo，
+   单文件插件于是被当成目录型去执行，报「插件只支持相对路径 import：axios」。 */
+const kindCache: Record<string, {at: number; kind: string}> = {}
 
 async function pluginKindOf(id: string): Promise<string> {
   const app: any = bridge()
-  if (!app?.Plugins) return 'mygo'
-  if (Date.now() - kindCache.at > 5000) {
-    try {
-      const raw: any = await app.Plugins()
-      const list: any[] = Array.isArray(raw) ? raw[0] != null ? raw[0] : raw : raw
-      const map: Record<string, string> = {}
-      for (const p of Array.isArray(list) ? list : []) {
-        if (p && p.id) map[String(p.id)] = String(p.kind || 'mygo')
-      }
-      kindCache = {at: Date.now(), map}
-    } catch {
-      /* 问不到就按 MyGo 处理 */
-    }
+  if (!app?.PluginKind) return 'mygo'
+  const c = kindCache[id]
+  if (c && Date.now() - c.at < 5000) return c.kind
+  try {
+    const raw: any = await app.PluginKind(id)
+    // Wails 把 (值, 错误) 打包成 [值, 错误]；后端未就绪时也可能只给值
+    const v = Array.isArray(raw) ? raw[0] : raw
+    const kind = String(v || '').trim() || 'mygo'
+    kindCache[id] = {at: Date.now(), kind}
+    return kind
+  } catch {
+    return 'mygo'
   }
-  return kindCache.map[id] || 'mygo'
 }
 
 /* ---------- 调用能力 ---------- */

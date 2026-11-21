@@ -74,7 +74,14 @@ func mygoManifest(id string) *PluginManifest {
 }
 
 // pluginEntryFile 返回插件主文件路径（目录型返回 index.js 一类，单文件型返回 <id>.js）。
+// 类型以 pluginKind 为准：万一同 id 目录和 <id>.js 并存，也能读到该读的那份。
 func pluginEntryFile(id string) (string, bool) {
+	if pluginKind(id) == "musicfree" {
+		p := filepath.Join(pluginsDir(), id+".js")
+		if _, err := os.Stat(p); err == nil {
+			return p, true
+		}
+	}
 	if m := mygoManifest(id); m != nil {
 		p := filepath.Join(pluginDir(id), filepath.FromSlash(m.Main))
 		if _, err := os.Stat(p); err == nil {
@@ -93,12 +100,60 @@ func pluginEntryFile(id string) (string, bool) {
 	return "", false
 }
 
-// pluginKind 报给前端：mygo（目录型）/ musicfree（单文件）。
+// ---------- 插件类型记录 ----------
+//
+// 光看文件形态判断类型会踩坑：同一个 id 有可能既留着早前装失败的目录，
+// 又有后来装好的 <id>.js。这时按「目录存在就是 MyGo」去判，单文件插件会被
+// 当成 MyGo 执行，最后报「插件只支持相对路径 import：axios」。
+// 所以把「这个 id 是用哪种方式装的」落盘记下来，判定一律以记录为准，
+// 没有记录才回退到文件形态（老数据自愈）。
+
+func pluginKindsPath() string { return filepath.Join(dataDir(), "plugin-kinds.json") }
+
+func loadPluginKinds() map[string]string {
+	m := map[string]string{}
+	if b, err := os.ReadFile(pluginKindsPath()); err == nil {
+		json.Unmarshal(b, &m)
+	}
+	return m
+}
+
+func savePluginKinds(m map[string]string) {
+	b, _ := json.MarshalIndent(m, "", "  ")
+	os.WriteFile(pluginKindsPath(), b, 0o644)
+}
+
+func setPluginKind(id, kind string) {
+	m := loadPluginKinds()
+	m[id] = kind
+	savePluginKinds(m)
+}
+
+func forgetPluginKind(id string) {
+	m := loadPluginKinds()
+	if _, ok := m[id]; ok {
+		delete(m, id)
+		savePluginKinds(m)
+	}
+}
+
+// pluginKind 报给前端：mygo（目录型）/ musicfree（单文件）。记录优先。
 func pluginKind(id string) string {
+	if k := strings.TrimSpace(loadPluginKinds()[id]); k == "mygo" || k == "musicfree" {
+		return k
+	}
 	if mygoManifest(id) != nil {
 		return "mygo"
 	}
 	return "musicfree"
+}
+
+// PluginKind 让前端按 id 精确问一次插件类型，不用整份列表去反查。
+func (a *App) PluginKind(id string) (string, error) {
+	if !safePluginID(id) {
+		return "", fmt.Errorf("插件 id 不合法")
+	}
+	return pluginKind(id), nil
 }
 
 // PluginDir 把插件的安装目录告诉前端：插件的 host.dir 就是它，
@@ -200,6 +255,7 @@ func (a *App) installPluginJS(name string, code []byte) (string, error) {
 	state := loadPluginState()
 	state[id] = true
 	savePluginState(state)
+	setPluginKind(id, "musicfree")
 	return id, nil
 }
 
@@ -329,6 +385,9 @@ func (a *App) installPluginDir(src string) (string, error) {
 	state := loadPluginState()
 	state[id] = true
 	savePluginState(state)
+	// 装的是目录型，同 id 的单文件就没用了，清掉并记成 mygo，免得两份打起来
+	_ = os.Remove(filepath.Join(pluginsDir(), id+".js"))
+	setPluginKind(id, "mygo")
 	return id, nil
 }
 
@@ -461,6 +520,11 @@ func scanMyGoPlugins(state map[string]bool) []Plugin {
 			if !safePluginID(id) {
 				continue
 			}
+			// 老数据没有类型记录，而同一 id 又留着目录：单文件更新更可能是用户
+			// 真正在用的那个，补一条 musicfree 记录，目录 Entry 那边会被跳过。
+			if k := loadPluginKinds()[id]; k == "" {
+				setPluginKind(id, "musicfree")
+			}
 			fi, _ := e.Info()
 			size := int64(0)
 			installed := ""
@@ -482,12 +546,20 @@ func scanMyGoPlugins(state map[string]bool) []Plugin {
 				Size:        size,
 				InstalledAt: installed,
 				File:        name,
-				Kind:        "musicfree",
+				Kind:        "musicfree", // 单文件插件恒为 MusicFree
 				Description: "MusicFree 单文件插件",
 			})
 			continue
 		}
 		id := e.Name()
+		// 同 id 的单文件插件优先（见 pluginKind 的说明）：目录这份不再重复出现在列表里。
+		// ReadDir 按名字排序，目录「GD音乐台」会排在「GD音乐台.js」之前，所以这里要主动判一次。
+		if _, err := os.Stat(filepath.Join(dir, id+".js")); err == nil {
+			if k := loadPluginKinds()[id]; k != "mygo" {
+				setPluginKind(id, "musicfree")
+				continue
+			}
+		}
 		m := mygoManifest(id)
 		if m == nil {
 			continue
@@ -527,7 +599,7 @@ func scanMyGoPlugins(state map[string]bool) []Plugin {
 			Size:        size,
 			InstalledAt: installed,
 			File:        m.Main,
-			Kind:        "mygo",
+			Kind:        pluginKind(id),
 			Navigation:  navigationJSON(m),
 			Actions:     actionList(m, id),
 		})

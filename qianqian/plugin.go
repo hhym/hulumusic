@@ -221,6 +221,7 @@ func (a *App) RemovePlugin(id string) ([]Plugin, string) {
 	state := loadPluginState()
 	delete(state, id)
 	savePluginState(state)
+	forgetPluginKind(id)
 	return a.scanPlugins(), ""
 }
 

@@ -9447,26 +9447,29 @@ function decodePluginTrackId(id2) {
 function clearPluginCache(pluginId) {
   clearMyGoCache(pluginId);
   clearMusicFreeCache(pluginId);
+  if (pluginId)
+    delete kindCache[pluginId];
+  else
+    for (const k2 of Object.keys(kindCache))
+      delete kindCache[k2];
 }
-let kindCache = { at: 0, map: {} };
+const kindCache = {};
 async function pluginKindOf(id2) {
   const app = bridge$1();
-  if (!(app == null ? void 0 : app.Plugins))
+  if (!(app == null ? void 0 : app.PluginKind))
     return "mygo";
-  if (Date.now() - kindCache.at > 5e3) {
-    try {
-      const raw = await app.Plugins();
-      const list = Array.isArray(raw) ? raw[0] != null ? raw[0] : raw : raw;
-      const map = {};
-      for (const p2 of Array.isArray(list) ? list : []) {
-        if (p2 && p2.id)
-          map[String(p2.id)] = String(p2.kind || "mygo");
-      }
-      kindCache = { at: Date.now(), map };
-    } catch {
-    }
+  const c = kindCache[id2];
+  if (c && Date.now() - c.at < 5e3)
+    return c.kind;
+  try {
+    const raw = await app.PluginKind(id2);
+    const v2 = Array.isArray(raw) ? raw[0] : raw;
+    const kind = String(v2 || "").trim() || "mygo";
+    kindCache[id2] = { at: Date.now(), kind };
+    return kind;
+  } catch {
+    return "mygo";
   }
-  return kindCache.map[id2] || "mygo";
 }
 async function pluginSearch(pluginId, keyword, page = 1) {
   if (await pluginKindOf(pluginId) === "musicfree") {
@@ -13670,7 +13673,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.61";
+const BUILD_TAG = "3.0.62";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -20056,17 +20059,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.61] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.62] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.61] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.62] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.61] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.62] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.61] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.62] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>
