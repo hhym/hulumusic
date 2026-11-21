@@ -13597,7 +13597,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.57";
+const BUILD_TAG = "3.0.58";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -16502,6 +16502,37 @@ function App() {
                 })]
               })]
             })]
+          }), !showLrc && /* @__PURE__ */ jsx("div", {
+            className: "sk-mini-lyric",
+            title: "\u5C0F\u6B4C\u8BCD \xB7 \u70B9\u51FB\u5C55\u5F00\u6B4C\u8BCD\u79C0",
+            onClick: toggleLrc,
+            children: isLive ? /* @__PURE__ */ jsx("span", {
+              className: "ml-dim",
+              children: "\u7535\u53F0\u64AD\u653E\u4E2D \xB7 \u65E0\u6B4C\u8BCD"
+            }) : lyric.length === 0 ? /* @__PURE__ */ jsx("span", {
+              className: "ml-dim",
+              children: cur ? "\u6B63\u5728\u53D6\u6B4C\u8BCD\u2026" : "\u672A\u5728\u64AD\u653E"
+            }) : /* @__PURE__ */ jsxs(Fragment, {
+              children: [/* @__PURE__ */ jsx("span", {
+                className: "ml-now",
+                children: /* @__PURE__ */ jsxs("span", {
+                  className: "kowrap",
+                  children: [/* @__PURE__ */ jsx("span", {
+                    className: "kbase",
+                    children: lyric[curIndex] ? lyric[curIndex].text : "\u266A"
+                  }), /* @__PURE__ */ jsx("span", {
+                    className: "kfill",
+                    style: {
+                      width: kProgress * 100 + "%"
+                    },
+                    children: lyric[curIndex] ? lyric[curIndex].text : "\u266A"
+                  })]
+                })
+              }), /* @__PURE__ */ jsx("span", {
+                className: "ml-next",
+                children: lyric[curIndex + 1] ? lyric[curIndex + 1].text : " "
+              })]
+            })
           }), isLive ? /* @__PURE__ */ jsx("div", {
             className: "sk-seek",
             children: /* @__PURE__ */ jsx("span", {
@@ -17982,6 +18013,17 @@ html[data-theme='dark'] .plug-kind {
 .sk-mini-btns button.on{background:linear-gradient(180deg,#a9b2ff,#6a72d6 55%,#434aa6);color:#fff}
 
 /* 进度条 */
+/* 主面板小歌词条（右侧歌词秀收起时出现）：当前行逐字填充 + 下一行灰字 */
+.sk-mini-lyric{margin:3px 8px 0;height:32px;padding:3px 7px;display:flex;flex-direction:column;
+  justify-content:center;gap:2px;border-radius:6px;cursor:pointer;overflow:hidden;
+  background:rgba(120,132,255,.10);border:1px solid rgba(140,152,240,.30)}
+.sk-mini-lyric:hover{background:rgba(140,152,255,.18);border-color:rgba(170,182,255,.55)}
+.sk-mini-lyric .ml-now{font-size:12px;line-height:16px;font-weight:600;color:inherit;
+  white-space:nowrap;overflow:hidden;max-width:100%}
+.sk-mini-lyric .ml-now .kbase{opacity:.78}
+.sk-mini-lyric .ml-now .kfill{color:var(--acc,#3f6fe0);text-shadow:none;font-weight:700;opacity:1}
+.sk-mini-lyric .ml-next{font-size:10.5px;line-height:13px;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sk-mini-lyric .ml-dim{font-size:11px;opacity:.72}
 .sk-seek{display:flex;align-items:center;gap:6px;padding:4px 8px 0}
 .sk-seek .tt{font-size:10.5px;color:#b7bff0;font-variant-numeric:tabular-nums;flex:0 0 auto}
 .sk-seek input{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;
@@ -19910,17 +19952,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.57] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.58] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.57] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.58] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.57] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.58] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.57] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.58] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

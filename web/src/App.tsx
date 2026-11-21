@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.57'
+const BUILD_TAG = '3.0.58'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -2122,6 +2122,30 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
               </div>
             </div>
           </div>
+
+          {/* 小歌词：右侧歌词秀收起时，在 230px 主面板里显示当前行 + 下一行（点击展开歌词秀） */}
+          {!showLrc && (
+            <div className="sk-mini-lyric" title="小歌词 · 点击展开歌词秀"
+                 onClick={toggleLrc}>
+              {isLive ? (
+                <span className="ml-dim">电台播放中 · 无歌词</span>
+              ) : lyric.length === 0 ? (
+                <span className="ml-dim">{cur ? '正在取歌词…' : '未在播放'}</span>
+              ) : (
+                <>
+                  <span className="ml-now">
+                    <span className="kowrap">
+                      <span className="kbase">{lyric[curIndex] ? lyric[curIndex].text : '♪'}</span>
+                      <span className="kfill" style={{ width: (kProgress * 100) + '%' }}>
+                        {lyric[curIndex] ? lyric[curIndex].text : '♪'}
+                      </span>
+                    </span>
+                  </span>
+                  <span className="ml-next">{lyric[curIndex + 1] ? lyric[curIndex + 1].text : ' '}</span>
+                </>
+              )}
+            </div>
+          )}
 
           {isLive ? (
             <div className="sk-seek"><span className="tt">直播中</span></div>
