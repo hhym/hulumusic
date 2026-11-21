@@ -26,8 +26,8 @@ func (a *App) PickPluginZip() PickResult {
 	}
 	paths, err := mygo.Dialog.Open(mygo.OpenDialogOptions{
 		Parent:  a.win,
-		Title:   "选择插件（MyGo .zip 或 MusicFree .js）",
-		Filters: []mygo.FileFilter{{Name: "插件（.zip / MusicFree .js）", Extensions: []string{"zip", "js"}}},
+		Title:   "选择 MyGo 插件压缩包",
+		Filters: []mygo.FileFilter{{Name: "MyGo 插件 (*.zip)", Extensions: []string{"zip"}}},
 	})
 	if err != nil {
 		return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}
@@ -40,6 +40,26 @@ func (a *App) PickPluginZip() PickResult {
 		return PickResult{Plugins: a.scanPlugins(), Canceled: true}
 	}
 	return a.InstallPluginFile(path)
+}
+
+// PickMusicFreePlugin 弹文件对话框，只挑 MusicFree 单文件插件（.js）。
+// 和 MyGo 的 .zip / 文件夹分开入口，免得用户在两套规范之间来回猜。
+func (a *App) PickMusicFreePlugin() PickResult {
+	if a.ctx == nil {
+		return PickResult{Plugins: a.scanPlugins(), Err: "窗口还没就绪"}
+	}
+	paths, err := mygo.Dialog.Open(mygo.OpenDialogOptions{
+		Parent:  a.win,
+		Title:   "选择 MusicFree 插件（.js）",
+		Filters: []mygo.FileFilter{{Name: "MusicFree 插件 (*.js)", Extensions: []string{"js"}}},
+	})
+	if err != nil {
+		return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}
+	}
+	if len(paths) == 0 || paths[0] == "" {
+		return PickResult{Plugins: a.scanPlugins(), Canceled: true}
+	}
+	return a.InstallPluginFile(paths[0])
 }
 
 // PickPluginDir 弹目录选择，直接装一个插件文件夹。

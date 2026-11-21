@@ -240,6 +240,10 @@ func (x API) PickPluginZip() PickResult {
 	return x.App.PickPluginZip()
 }
 
+func (x API) PickMusicFreePlugin() PickResult {
+	return x.App.PickMusicFreePlugin()
+}
+
 func (x API) PickPluginDir() PickResult {
 	return x.App.PickPluginDir()
 }

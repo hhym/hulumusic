@@ -9685,6 +9685,7 @@ function PluginsPage({
   const [err, setErr] = react.exports.useState("");
   const [msg, setMsg] = react.exports.useState("");
   const [url, setUrl] = react.exports.useState("");
+  const [mfUrl, setMfUrl] = react.exports.useState("");
   const [busy, setBusy] = react.exports.useState(false);
   const [market, setMarket] = react.exports.useState([]);
   const [marketErr, setMarketErr] = react.exports.useState("");
@@ -9792,13 +9793,14 @@ function PluginsPage({
     setMsg(t2);
     setTimeout(() => setMsg(""), 2500);
   }
-  async function installURL() {
-    if (!url.trim() || busy)
+  async function installURL(target) {
+    const link = String(target == null ? url : target).trim();
+    if (!link || busy)
       return;
     setBusy(true);
     setErr("");
     try {
-      const raw = await callM("InstallPluginURL", url.trim());
+      const raw = await callM("InstallPluginURL", link);
       const r2 = Array.isArray(raw) ? {
         plugins: raw[0],
         err: raw[1]
@@ -9811,7 +9813,10 @@ function PluginsPage({
         setErr(String(r2.err));
       else {
         flash("\u63D2\u4EF6\u5DF2\u5B89\u88C5");
-        setUrl("");
+        if (target == null || target === url)
+          setUrl("");
+        else
+          setMfUrl("");
       }
     } catch (e) {
       setErr(String((e == null ? void 0 : e.message) || e));
@@ -9825,7 +9830,8 @@ function PluginsPage({
     setBusy(true);
     setErr("");
     try {
-      const r2 = await callM(kind === "zip" ? "PickPluginZip" : "PickPluginDir");
+      const method = kind === "zip" ? "PickPluginZip" : kind === "dir" ? "PickPluginDir" : "PickMusicFreePlugin";
+      const r2 = await callM(method);
       if (r2 == null ? void 0 : r2.canceled)
         return;
       if (Array.isArray(r2 == null ? void 0 : r2.plugins)) {
@@ -10050,7 +10056,7 @@ function PluginsPage({
         children: marketErr
       }), market.length === 0 && !marketLoading && /* @__PURE__ */ jsx("div", {
         className: "empty small",
-        children: "\u5B89\u88C5\u5305\u5185\u6682\u65E0\u5185\u7F6E\u63D2\u4EF6\u6761\u76EE\uFF0C\u53EF\u7528\u4E0B\u65B9\u300C\u9009 zip / \u9009\u6587\u4EF6\u5939\u300D\u5BFC\u5165\u672C\u5730\u63D2\u4EF6\uFF1B\u70B9\u53F3\u8FB9\u300C\u5237\u65B0\u300D\u53EF\u91CD\u8BFB\u3002"
+        children: "\u5B89\u88C5\u5305\u5185\u6682\u65E0\u5185\u7F6E\u63D2\u4EF6\u6761\u76EE\u3002\u4E0B\u9762\u7684\u300C\u5B89\u88C5 MyGo \u63D2\u4EF6\u300D\u300C\u5B89\u88C5 MusicFree \u63D2\u4EF6\u300D\u4E24\u5F20\u5361\u5404\u81EA\u5BFC\u5165\u672C\u5730\u63D2\u4EF6\uFF1B\u70B9\u53F3\u8FB9\u300C\u5237\u65B0\u300D\u53EF\u91CD\u8BFB\u3002"
       }), /* @__PURE__ */ jsx("div", {
         className: "mk-grid",
         children: marketShown.map((it) => /* @__PURE__ */ jsxs("div", {
@@ -10085,23 +10091,64 @@ function PluginsPage({
       })]
     }), /* @__PURE__ */ jsxs("section", {
       className: "set-card",
-      children: [/* @__PURE__ */ jsx("h3", {
-        children: "\u5B89\u88C5\u63D2\u4EF6"
+      children: [/* @__PURE__ */ jsxs("h3", {
+        children: ["\u5B89\u88C5 MyGo \u63D2\u4EF6 ", /* @__PURE__ */ jsx("span", {
+          className: "plug-kind",
+          children: "MyGo"
+        })]
       }), /* @__PURE__ */ jsxs("p", {
         className: "hint",
-        children: ["\u652F\u6301\u4E24\u79CD\u63D2\u4EF6\uFF1A", /* @__PURE__ */ jsx("b", {
-          children: "MyGo"
-        }), "\uFF08\u63D2\u4EF6\u76EE\u5F55\uFF0C\u542B ", /* @__PURE__ */ jsx("code", {
+        children: ["MyGo \u662F\u300C\u76EE\u5F55 + ", /* @__PURE__ */ jsx("code", {
           children: "plugin.json"
         }), " + ", /* @__PURE__ */ jsx("code", {
           children: "index.js"
-        }), "\uFF0CESM \u5BFC\u51FA search / stream / lyrics\uFF09 \u548C ", /* @__PURE__ */ jsx("b", {
+        }), "\u300D\u7684\u89C4\u8303\uFF0C", /* @__PURE__ */ jsx("code", {
+          children: "index.js"
+        }), " \u7528 ESM \u5BFC\u51FA ", /* @__PURE__ */ jsx("code", {
+          children: "search"
+        }), " / ", /* @__PURE__ */ jsx("code", {
+          children: "stream"
+        }), " / ", /* @__PURE__ */ jsx("code", {
+          children: "lyrics"
+        }), "\u3002 \u6311\u63D2\u4EF6\u6587\u4EF6\u5939\u76F4\u63A5\u88C5\uFF0C\u6216\u8005\u88C5\u6253\u5305\u597D\u7684 ", /* @__PURE__ */ jsx("code", {
+          children: ".zip"
+        }), "\u3002"]
+      }), /* @__PURE__ */ jsxs("div", {
+        className: "plug-install",
+        children: [/* @__PURE__ */ jsx("input", {
+          value: url,
+          placeholder: "MyGo \u63D2\u4EF6\u76F4\u94FE\uFF08.zip\uFF09",
+          onChange: (e) => setUrl(e.target.value),
+          onKeyDown: (e) => e.key === "Enter" && installURL()
+        }), /* @__PURE__ */ jsx("button", {
+          className: "primary-btn",
+          onClick: () => installURL(),
+          disabled: busy,
+          children: busy ? "\u2026" : "\u5B89\u88C5"
+        }), /* @__PURE__ */ jsx("button", {
+          className: "ghost-btn",
+          onClick: () => pickLocal("zip"),
+          children: "\u9009 .zip"
+        }), /* @__PURE__ */ jsx("button", {
+          className: "ghost-btn",
+          onClick: () => pickLocal("dir"),
+          children: "\u9009\u6587\u4EF6\u5939"
+        })]
+      })]
+    }), /* @__PURE__ */ jsxs("section", {
+      className: "set-card",
+      children: [/* @__PURE__ */ jsxs("h3", {
+        children: ["\u5B89\u88C5 MusicFree \u63D2\u4EF6 ", /* @__PURE__ */ jsx("span", {
+          className: "plug-kind",
           children: "MusicFree"
-        }), "\uFF08\u5355\u6587\u4EF6 ", /* @__PURE__ */ jsx("code", {
+        })]
+      }), /* @__PURE__ */ jsxs("p", {
+        className: "hint",
+        children: ["MusicFree \u662F\u5355\u6587\u4EF6 ", /* @__PURE__ */ jsx("code", {
           children: ".js"
-        }), "\uFF0C", /* @__PURE__ */ jsxs("code", {
+        }), "\uFF1A", /* @__PURE__ */ jsxs("code", {
           children: ["module.exports = ", "{", " platform, search, getMediaSource, getLyric ", "}"]
-        }), "\uFF09\u3002 MusicFree \u63D2\u4EF6\u91CC\u7684 ", /* @__PURE__ */ jsx("code", {
+        }), "\u3002 \u63D2\u4EF6\u91CC\u7684 ", /* @__PURE__ */ jsx("code", {
           children: "require('axios')"
         }), " \u4F1A\u8D70\u684C\u9762\u7248\u7684\u53CD\u4EE3\uFF08\u4E0D\u649E CORS\uFF09\uFF0C", /* @__PURE__ */ jsx("code", {
           children: "cheerio"
@@ -10113,29 +10160,25 @@ function PluginsPage({
           children: "qs"
         }), " / ", /* @__PURE__ */ jsx("code", {
           children: "lodash"
-        }), " \u8FD9\u7C7B\u7EAF JS \u4F9D\u8D56\u81EA\u52A8\u4ECE CDN \u53D6\u3002 \u300C\u9009 zip / .js\u300D\u6311\u5305\u88C5\u597D\u7684\u63D2\u4EF6\uFF0C\u300C\u9009\u6587\u4EF6\u5939\u300D\u6311 MyGo \u63D2\u4EF6\u76EE\u5F55\uFF1B\u4E5F\u53EF\u4EE5\u586B\u76F4\u94FE\u5B89\u88C5\uFF0C", /* @__PURE__ */ jsx("b", {
-          children: "\u6216\u8005\u628A .zip / .js / \u63D2\u4EF6\u6587\u4EF6\u5939\u76F4\u63A5\u62D6\u8FDB\u7A97\u53E3"
-        }), "\uFF0C\u62D6\u8FDB\u6765\u5C31\u88C5\u597D\u3002"]
+        }), " \u7B49\u7EAF JS \u4F9D\u8D56\u81EA\u52A8\u4ECE CDN \u53D6\u3002 \u6311\u4E00\u4E2A ", /* @__PURE__ */ jsx("code", {
+          children: ".js"
+        }), " \u5C31\u88C5\u597D\uFF0C\u6587\u4EF6\u540D\u4F1A\u53D8\u6210\u63D2\u4EF6 id\uFF08\u4E2D\u6587\u4FDD\u7559\uFF0C\u7A7A\u683C\u62EC\u53F7\u81EA\u52A8\u53BB\u6389\uFF09\u3002"]
       }), /* @__PURE__ */ jsxs("div", {
         className: "plug-install",
         children: [/* @__PURE__ */ jsx("input", {
-          value: url,
-          placeholder: "\u63D2\u4EF6\u76F4\u94FE\uFF1AMyGo \u7684 .zip \u6216 MusicFree \u7684 .js",
-          onChange: (e) => setUrl(e.target.value),
-          onKeyDown: (e) => e.key === "Enter" && installURL()
+          value: mfUrl,
+          placeholder: "MusicFree \u63D2\u4EF6\u76F4\u94FE\uFF08.js\uFF09",
+          onChange: (e) => setMfUrl(e.target.value),
+          onKeyDown: (e) => e.key === "Enter" && installURL(mfUrl)
         }), /* @__PURE__ */ jsx("button", {
           className: "primary-btn",
-          onClick: installURL,
+          onClick: () => installURL(mfUrl),
           disabled: busy,
           children: busy ? "\u2026" : "\u5B89\u88C5"
         }), /* @__PURE__ */ jsx("button", {
           className: "ghost-btn",
-          onClick: () => pickLocal("zip"),
-          children: "\u9009 .zip / .js"
-        }), /* @__PURE__ */ jsx("button", {
-          className: "ghost-btn",
-          onClick: () => pickLocal("dir"),
-          children: "\u9009\u6587\u4EF6\u5939"
+          onClick: () => pickLocal("js"),
+          children: "\u9009 .js \u6587\u4EF6"
         })]
       }), msg && /* @__PURE__ */ jsx("div", {
         className: "ok-msg",
@@ -13627,7 +13670,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.60";
+const BUILD_TAG = "3.0.61";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -20013,17 +20056,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.60] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.61] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.60] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.61] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.60] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.61] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.60] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.61] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

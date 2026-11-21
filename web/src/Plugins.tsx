@@ -89,7 +89,8 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
   const [list, setList] = useState<Plugin[]>([])
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
-  const [url, setUrl] = useState('')
+  const [url, setUrl] = useState('')      // MyGo 插件直链（.zip）
+  const [mfUrl, setMfUrl] = useState('')  // MusicFree 插件直链（.js）
   const [busy, setBusy] = useState(false)
 
   // 插件市场（清单内嵌在 exe 里，点「安装」直接落盘）
@@ -188,15 +189,16 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
     setTimeout(() => setMsg(''), 2500)
   }
 
-  async function installURL() {
-    if (!url.trim() || busy) return
+  async function installURL(target?: string) {
+    const link = String(target == null ? url : target).trim()
+    if (!link || busy) return
     setBusy(true); setErr('')
     try {
-      const raw: any = await callM<any>('InstallPluginURL', url.trim())
+      const raw: any = await callM<any>('InstallPluginURL', link)
       const r = Array.isArray(raw) ? {plugins: raw[0], err: raw[1]} : raw || {}
       if (Array.isArray(r.plugins)) { setList(r.plugins); onChanged?.() }
       if (r.err) setErr(String(r.err))
-      else { flash('插件已安装'); setUrl('') }
+      else { flash('插件已安装'); if (target == null || target === url) setUrl(''); else setMfUrl('') }
     } catch (e: any) {
       setErr(String(e?.message || e))
     } finally {
@@ -208,11 +210,12 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
   }
 
   // 本地安装：直接弹系统的文件/文件夹对话框，不用手输路径
-  async function pickLocal(kind: 'zip' | 'dir') {
+  async function pickLocal(kind: 'zip' | 'dir' | 'js') {
     if (busy) return
     setBusy(true); setErr('')
     try {
-      const r: any = await callM<any>(kind === 'zip' ? 'PickPluginZip' : 'PickPluginDir')
+      const method = kind === 'zip' ? 'PickPluginZip' : kind === 'dir' ? 'PickPluginDir' : 'PickMusicFreePlugin'
+      const r: any = await callM<any>(method)
       if (r?.canceled) return
       if (Array.isArray(r?.plugins)) { setList(r.plugins); onChanged?.() }
       if (r?.err) { setErr(String(r.err)); return }
@@ -412,7 +415,7 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
         </p>
         {marketErr && <div className="err-msg">{marketErr}</div>}
         {market.length === 0 && !marketLoading && (
-          <div className="empty small">安装包内暂无内置插件条目，可用下方「选 zip / 选文件夹」导入本地插件；点右边「刷新」可重读。</div>
+          <div className="empty small">安装包内暂无内置插件条目。下面的「安装 MyGo 插件」「安装 MusicFree 插件」两张卡各自导入本地插件；点右边「刷新」可重读。</div>
         )}
         <div className="mk-grid">
           {marketShown.map((it) => (
@@ -441,25 +444,42 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
       </section>
 
       <section className="set-card">
-        <h3>安装插件</h3>
+        <h3>安装 MyGo 插件 <span className="plug-kind">MyGo</span></h3>
         <p className="hint">
-          支持两种插件：<b>MyGo</b>（插件目录，含 <code>plugin.json</code> + <code>index.js</code>，ESM 导出 search / stream / lyrics）
-          和 <b>MusicFree</b>（单文件 <code>.js</code>，<code>module.exports = {'{'} platform, search, getMediaSource, getLyric {'}'}</code>）。
-          MusicFree 插件里的 <code>require('axios')</code> 会走桌面版的反代（不撞 CORS），
-          <code>cheerio</code> / <code>crypto-js</code> / <code>he</code> / <code>qs</code> / <code>lodash</code> 这类纯 JS 依赖自动从 CDN 取。
-          「选 zip / .js」挑包装好的插件，「选文件夹」挑 MyGo 插件目录；也可以填直链安装，
-          <b>或者把 .zip / .js / 插件文件夹直接拖进窗口</b>，拖进来就装好。
+          MyGo 是「目录 + <code>plugin.json</code> + <code>index.js</code>」的规范，
+          <code>index.js</code> 用 ESM 导出 <code>search</code> / <code>stream</code> / <code>lyrics</code>。
+          挑插件文件夹直接装，或者装打包好的 <code>.zip</code>。
         </p>
         <div className="plug-install">
           <input
             value={url}
-            placeholder="插件直链：MyGo 的 .zip 或 MusicFree 的 .js"
+            placeholder="MyGo 插件直链（.zip）"
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && installURL()}
           />
-          <button className="primary-btn" onClick={installURL} disabled={busy}>{busy ? '…' : '安装'}</button>
-          <button className="ghost-btn" onClick={() => pickLocal('zip')}>选 .zip / .js</button>
+          <button className="primary-btn" onClick={() => installURL()} disabled={busy}>{busy ? '…' : '安装'}</button>
+          <button className="ghost-btn" onClick={() => pickLocal('zip')}>选 .zip</button>
           <button className="ghost-btn" onClick={() => pickLocal('dir')}>选文件夹</button>
+        </div>
+      </section>
+
+      <section className="set-card">
+        <h3>安装 MusicFree 插件 <span className="plug-kind">MusicFree</span></h3>
+        <p className="hint">
+          MusicFree 是单文件 <code>.js</code>：<code>module.exports = {'{'} platform, search, getMediaSource, getLyric {'}'}</code>。
+          插件里的 <code>require('axios')</code> 会走桌面版的反代（不撞 CORS），
+          <code>cheerio</code> / <code>crypto-js</code> / <code>he</code> / <code>qs</code> / <code>lodash</code> 等纯 JS 依赖自动从 CDN 取。
+          挑一个 <code>.js</code> 就装好，文件名会变成插件 id（中文保留，空格括号自动去掉）。
+        </p>
+        <div className="plug-install">
+          <input
+            value={mfUrl}
+            placeholder="MusicFree 插件直链（.js）"
+            onChange={(e) => setMfUrl(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && installURL(mfUrl)}
+          />
+          <button className="primary-btn" onClick={() => installURL(mfUrl)} disabled={busy}>{busy ? '…' : '安装'}</button>
+          <button className="ghost-btn" onClick={() => pickLocal('js')}>选 .js 文件</button>
         </div>
         {msg && <div className="ok-msg">{msg}</div>}
         {err && <div className="err-msg">{err}</div>}
