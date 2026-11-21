@@ -35,6 +35,8 @@ type Props = {
   onClearList: () => void
   onClearNext: () => void
   onExpand: () => void
+  /** 经典四窗：只画某一块面板（副窗用）；不传就是主窗 */
+  only?: 'main' | 'eq' | 'lyric' | 'playlist'
 }
 
 const fmt = (ms: number) => {
@@ -173,17 +175,35 @@ export default function SkinView(p: Props) {
   const sev = Object.values(open)
   const allOpen = sev.every(Boolean)
 
+  // 经典四窗：副窗里只画自己那一块，□ 卷起成一条标题栏、× 收起窗口。
+  const solo = p.only && p.only !== 'main' ? p.only : ''
+  const isMain = !solo
+  const bridge = (window as any).go?.main?.App
+  const winHide = (n: string) => { try { bridge?.HidePanel?.(n) } catch { /* 忽略 */ } }
+  const winShow = (n: string) => { try { bridge?.ShowPanel?.(n) } catch { /* 忽略 */ } }
+  const [rolled, setRolled] = useState(false)
+  const roll = () => {
+    const h = rolled ? ({eq: 126, lyric: 216} as any)[solo] || window.innerHeight : 26
+    try { bridge?.RollPanel?.(solo, h) } catch { /* 忽略 */ }
+    setRolled((v) => !v)
+  }
+  // 只要传了 only，就只画那一个面板（四窗各自独立，主窗也不再重复画另外三块）；
+  // 浏览器预览不带 only，才把四块都画出来。
+  const showEq = p.only ? p.only === 'eq' : open.eq
+  const showLyric = p.only ? p.only === 'lyric' : open.lyric
+  const showPl = p.only ? p.only === 'playlist' : open.pl
+
   const bar = (k?: 'eq' | 'lyric' | 'pl', icon = 'music', name = '', extra?: React.ReactNode) => (
     <div className="skin-win-bar" onMouseDown={onMouseDown}>
       <span className="skin-win-ico"><Fi n={icon} size={9} /></span>
       <span className="skin-win-t">{name}</span>
       {extra}
       <button className="skin-win-btn" title={k ? '折叠 / 展开' : '全部面板折叠 / 展开'}
-              onClick={() => (k ? flip(k) : setOpen({eq: !allOpen, lyric: !allOpen, pl: !allOpen}))}>
+              onClick={() => (solo ? roll() : k ? flip(k) : setOpen({eq: !allOpen, lyric: !allOpen, pl: !allOpen}))}>
         <Fi n="square" size={8} />
       </button>
       <button className="skin-win-btn close" title={k ? '收起该面板' : '切回桌面'}
-              onClick={() => (k ? setOpen((o) => ({...o, [k]: false})) : p.onExpand())}>
+              onClick={() => (solo ? winHide(solo) : k ? setOpen((o) => ({...o, [k]: false})) : p.onExpand())}>
         <Fi n="x" size={8} />
       </button>
     </div>
@@ -193,7 +213,8 @@ export default function SkinView(p: Props) {
   const presetName = presets[p.eqPreset] || presets[0]
 
   return (
-    <div className="skin-view" data-skin={skinName}>
+    <div className={'skin-view' + (solo ? ' skin-solo' : '')} data-skin={skinName}>
+      {isMain && (<>
       {/* 标题栏 */}
       <div className="skin-title" onMouseDown={onMouseDown}>
         <span className="skin-title-ico">♪</span>
@@ -216,14 +237,19 @@ export default function SkinView(p: Props) {
         ))}
         <span className="skin-swatch-lab">{SKINS.find((s) => s.id === skinName)?.label}</span>
       </div>
+      </>)}
 
+      {isMain && (<>
       {/* 主播放面板（对应经典主窗） */}
       <section className="skin-panel skin-player skin-win">
         {bar(undefined, 'music', '千千静听', (
           <span className="skin-win-tools">
-            <button className={'skin-mini-btn' + (open.pl ? ' on' : '')} onClick={() => flip('pl')} title="播放列表">PL</button>
-            <button className={'skin-mini-btn' + (open.eq ? ' on' : '')} onClick={() => flip('eq')} title="均衡器">EQ</button>
-            <button className={'skin-mini-btn' + (open.lyric ? ' on' : '')} onClick={() => flip('lyric')} title="歌词秀">LRC</button>
+            <button className={'skin-mini-btn' + (open.pl ? ' on' : '')} title="播放列表"
+                    onClick={() => { if (open.pl) winHide('playlist'); else winShow('playlist'); flip('pl') }}>PL</button>
+            <button className={'skin-mini-btn' + (open.eq ? ' on' : '')} title="均衡器"
+                    onClick={() => { if (open.eq) winHide('eq'); else winShow('eq'); flip('eq') }}>EQ</button>
+            <button className={'skin-mini-btn' + (open.lyric ? ' on' : '')} title="歌词秀"
+                    onClick={() => { if (open.lyric) winHide('lyric'); else winShow('lyric'); flip('lyric') }}>LRC</button>
           </span>
         ))}
         <div className="skin-win-body">
@@ -262,9 +288,10 @@ export default function SkinView(p: Props) {
           </div>
         </div>
       </section>
+      </>)}
 
       {/* 均衡器面板 */}
-      {open.eq && (
+      {showEq && (
         <section className="skin-panel skin-eq skin-win">
           {bar('eq', 'sliders', '均衡器', (
             <span className="skin-eq-ctl">
@@ -293,7 +320,7 @@ export default function SkinView(p: Props) {
       )}
 
       {/* 歌词秀面板 */}
-      {open.lyric && (
+      {showLyric && (
         <section className="skin-panel skin-lyric skin-win">
           {bar('lyric', 'document-text', '歌词秀', (
             <span className="skin-lyric-zoom">
@@ -319,7 +346,7 @@ export default function SkinView(p: Props) {
       )}
 
       {/* 播放列表面板 */}
-      {open.pl && (
+      {showPl && (
         <section className="skin-panel skin-playlist skin-win">
           {bar('pl', 'list', '播放列表', <span className="skin-pl-count">{p.queue.list.length} 首</span>)}
           <div className="skin-win-body skin-pl-body">

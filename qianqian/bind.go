@@ -284,6 +284,16 @@ func (x API) WinMoveBy(dx any, dy any) string {
 // DragWindow 皮肤窗标题栏按下时调用：交给 Go 端轮询光标、SetWindowPos 跟着鼠标走。
 func (x API) DragWindow() { x.App.dragWindow() }
 
+// SyncPush / CmdSend：经典四窗之间同步播放状态与操作。
+func (x API) SyncPush(json any) { x.App.SyncPush(as[string](json)) }
+
+func (x API) CmdSend(json any) { x.App.CmdSend(as[string](json)) }
+
+// HidePanel / RollPanel：副窗的 × 收起、□ 卷起。
+func (x API) HidePanel(name any) { x.App.HidePanel(as[string](name)) }
+
+func (x API) RollPanel(name any, h any) { x.App.RollPanel(as[string](name), as[float64](h)) }
+
 // Quit 迷你卡右上角 ×：直接退出进程。
 func (x API) WinMinimize() { x.App.WinMinimize() }
 

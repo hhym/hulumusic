@@ -6,6 +6,7 @@ import PluginsPage from './Plugins'
 import NowPlaying from './NowPlaying'
 import MiniPlayer from './MiniPlayer'
 import SkinView from './SkinView'
+import PanelApp from './PanelApp'
 import {NEXT_THEME, THEME_ICON, THEME_LABEL, type Theme} from './theme'
 import {Fi, FN} from './feather'
 import SignInModal, {type SignInRequest} from './SignInModal'
@@ -161,14 +162,21 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.34'
+const BUILD_TAG = '3.0.35'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
 
 type Tab = 'home' | 'search' | 'library' | 'local' | 'queue' | 'lyric' | 'plugins' | 'settings'
 
+// 经典四窗：四个窗口加载同一个页面，靠 ?panel= 区分画哪一块。
+// 主窗（panel=main）跑播放器并广播状态，副窗只画自己的面板、把操作转回主窗。
+const PANEL = (() => {
+  try { return new URLSearchParams(location.search).get('panel') || 'main' } catch { return 'main' }
+})()
+
 export default function App() {
+  if (PANEL !== 'main') return <PanelApp panel={PANEL} />
   // 主题：记住用户选择；没存过就用浅色（默认），四档循环是 浅 → 橘黄 → 深青 → 深色。
   // localStorage 在某些 WebView2 环境里会抛异常，全部包起来，绝不能因此白屏。
   const [theme, setTheme] = useState<Theme>(() => {
@@ -1310,6 +1318,48 @@ export default function App() {
       </main>
   )
 
+  // 经典四窗：主窗把播放状态推给三个副窗（180ms 合并一次），副窗操作在这里执行。
+  const syncTimer = useRef(0)
+  useEffect(() => {
+    if (!skin || syncTimer.current) return
+    syncTimer.current = window.setTimeout(() => {
+      syncTimer.current = 0
+      try {
+        ;(window as any).go?.main?.App?.SyncPush?.(JSON.stringify({
+          cur, playing, busy, pos, dur, lyric, curIndex, queue, volume,
+          eqGains, eqOn, eqPreset, eqPresets: EQ_PRESETS.map((x: any) => x.name),
+          shuffle, inLib: !!cur && lib.some((x) => x.id === cur.id),
+        }))
+      } catch { /* 忽略 */ }
+    }, 180)
+  }, [skin, cur, playing, busy, pos, dur, lyric, curIndex, queue, volume, eqGains, eqOn, eqPreset, shuffle])
+
+  useEffect(() => {
+    ;(window as any).__huluCmd = (json: string) => {
+      let c: any
+      try { c = JSON.parse(json) } catch { return }
+      switch (c.t) {
+        case 'toggle': toggle(); break
+        case 'prev': step(-1); break
+        case 'next': step(1); break
+        case 'seek': { const a = audio.current; if (a) a.currentTime = Math.max(0, Number(c.ms) || 0) / 1000; break }
+        case 'volume': setVolumeState(Math.min(1, Math.max(0, Number(c.v) || 0))); break
+        case 'fav': if (cur) fav(cur); break
+        case 'playAt': playAt(Number(c.i) || 0); break
+        case 'eqToggle': toggleEq(); break
+        case 'eqReset': resetEq(); break
+        case 'eqPreset': nextPreset(); break
+        case 'shuffle': setShuffle((v) => !v); break
+        case 'removeAt': queueRemove(Number(c.i) || 0); break
+        case 'clearList': queueClear(); break
+        case 'clearNext': queueClearNext(); break
+        case 'expand': toggleSkin(false); break
+      }
+    }
+    return () => { try { delete (window as any).__huluCmd } catch { /* 忽略 */ } }
+  })
+
+
   return (
     <div className={'app desk-mode' + (mini ? ' mini-mode' : '') + (skin ? ' skin-mode' : '')}>
       {!mini && !skin && (
@@ -1684,6 +1734,7 @@ export default function App() {
 
       {skin && (
         <SkinView
+          only="main"
           cur={cur}
           playing={playing}
           busy={busy}

@@ -10628,7 +10628,7 @@ function loadSkin() {
 }
 const HAS_GO_APP = typeof ((_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App) !== "undefined";
 function SkinView(p2) {
-  var _a2, _b2;
+  var _a2, _b2, _c, _d;
   const [skinName, setSkinName] = react.exports.useState(loadSkin);
   const [zoom, setZoom] = react.exports.useState(loadZoom);
   const selectSkin = (id2) => {
@@ -10684,7 +10684,7 @@ function SkinView(p2) {
     raf: 0
   });
   const flushMove = () => {
-    var _a3, _b3, _c;
+    var _a3, _b3, _c2;
     const st = drag.current;
     st.raf = 0;
     if (!st.dx && !st.dy)
@@ -10696,7 +10696,7 @@ function SkinView(p2) {
     st.dy = 0;
     const app = (_b3 = (_a3 = window.go) == null ? void 0 : _a3.main) == null ? void 0 : _b3.App;
     try {
-      (_c = app == null ? void 0 : app.WinMoveBy) == null ? void 0 : _c.call(app, dx, dy);
+      (_c2 = app == null ? void 0 : app.WinMoveBy) == null ? void 0 : _c2.call(app, dx, dy);
     } catch {
     }
   };
@@ -10748,6 +10748,39 @@ function SkinView(p2) {
   }));
   const sev = Object.values(open);
   const allOpen = sev.every(Boolean);
+  const solo = p2.only && p2.only !== "main" ? p2.only : "";
+  const isMain = !solo;
+  const bridge2 = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
+  const winHide = (n2) => {
+    var _a3;
+    try {
+      (_a3 = bridge2 == null ? void 0 : bridge2.HidePanel) == null ? void 0 : _a3.call(bridge2, n2);
+    } catch {
+    }
+  };
+  const winShow = (n2) => {
+    var _a3;
+    try {
+      (_a3 = bridge2 == null ? void 0 : bridge2.ShowPanel) == null ? void 0 : _a3.call(bridge2, n2);
+    } catch {
+    }
+  };
+  const [rolled, setRolled] = react.exports.useState(false);
+  const roll = () => {
+    var _a3;
+    const h = rolled ? {
+      eq: 126,
+      lyric: 216
+    }[solo] || window.innerHeight : 26;
+    try {
+      (_a3 = bridge2 == null ? void 0 : bridge2.RollPanel) == null ? void 0 : _a3.call(bridge2, solo, h);
+    } catch {
+    }
+    setRolled((v2) => !v2);
+  };
+  const showEq = p2.only ? p2.only === "eq" : open.eq;
+  const showLyric = p2.only ? p2.only === "lyric" : open.lyric;
+  const showPl = p2.only ? p2.only === "playlist" : open.pl;
   const bar = (k2, icon = "music", name = "", extra) => /* @__PURE__ */ jsxs("div", {
     className: "skin-win-bar",
     onMouseDown,
@@ -10763,7 +10796,7 @@ function SkinView(p2) {
     }), extra, /* @__PURE__ */ jsx("button", {
       className: "skin-win-btn",
       title: k2 ? "\u6298\u53E0 / \u5C55\u5F00" : "\u5168\u90E8\u9762\u677F\u6298\u53E0 / \u5C55\u5F00",
-      onClick: () => k2 ? flip(k2) : setOpen({
+      onClick: () => solo ? roll() : k2 ? flip(k2) : setOpen({
         eq: !allOpen,
         lyric: !allOpen,
         pl: !allOpen
@@ -10775,7 +10808,7 @@ function SkinView(p2) {
     }), /* @__PURE__ */ jsx("button", {
       className: "skin-win-btn close",
       title: k2 ? "\u6536\u8D77\u8BE5\u9762\u677F" : "\u5207\u56DE\u684C\u9762",
-      onClick: () => k2 ? setOpen((o) => ({
+      onClick: () => solo ? winHide(solo) : k2 ? setOpen((o) => ({
         ...o,
         [k2]: false
       })) : p2.onExpand(),
@@ -10788,159 +10821,181 @@ function SkinView(p2) {
   const presets = p2.eqPresets.length ? p2.eqPresets : ["\u9ED8\u8BA4"];
   const presetName = presets[p2.eqPreset] || presets[0];
   return /* @__PURE__ */ jsxs("div", {
-    className: "skin-view",
+    className: "skin-view" + (solo ? " skin-solo" : ""),
     "data-skin": skinName,
-    children: [/* @__PURE__ */ jsxs("div", {
-      className: "skin-title",
-      onMouseDown,
-      children: [/* @__PURE__ */ jsx("span", {
-        className: "skin-title-ico",
-        children: "\u266A"
-      }), /* @__PURE__ */ jsx("span", {
-        className: "skin-title-name",
-        children: "\u5343\u5343\u9759\u542C"
-      }), /* @__PURE__ */ jsxs("span", {
-        className: "skin-title-tools",
-        children: [/* @__PURE__ */ jsx("button", {
-          className: "skin-title-btn",
-          onClick: p2.onExpand,
-          title: "\u5207\u6362\u56DE\u684C\u9762",
-          children: /* @__PURE__ */ jsx(Fi, {
-            n: "shirt",
-            size: 12
-          })
-        }), /* @__PURE__ */ jsx("button", {
-          className: "skin-title-btn",
-          onClick: p2.onFav,
-          disabled: !p2.cur,
-          title: p2.inLib ? "\u53D6\u6D88\u6536\u85CF" : "\u6536\u85CF",
-          children: /* @__PURE__ */ jsx(Fi, {
-            n: "heart",
-            fill: true,
-            size: 12
-          })
+    children: [isMain && /* @__PURE__ */ jsxs(Fragment, {
+      children: [/* @__PURE__ */ jsxs("div", {
+        className: "skin-title",
+        onMouseDown,
+        children: [/* @__PURE__ */ jsx("span", {
+          className: "skin-title-ico",
+          children: "\u266A"
+        }), /* @__PURE__ */ jsx("span", {
+          className: "skin-title-name",
+          children: "\u5343\u5343\u9759\u542C"
+        }), /* @__PURE__ */ jsxs("span", {
+          className: "skin-title-tools",
+          children: [/* @__PURE__ */ jsx("button", {
+            className: "skin-title-btn",
+            onClick: p2.onExpand,
+            title: "\u5207\u6362\u56DE\u684C\u9762",
+            children: /* @__PURE__ */ jsx(Fi, {
+              n: "shirt",
+              size: 12
+            })
+          }), /* @__PURE__ */ jsx("button", {
+            className: "skin-title-btn",
+            onClick: p2.onFav,
+            disabled: !p2.cur,
+            title: p2.inLib ? "\u53D6\u6D88\u6536\u85CF" : "\u6536\u85CF",
+            children: /* @__PURE__ */ jsx(Fi, {
+              n: "heart",
+              fill: true,
+              size: 12
+            })
+          })]
+        })]
+      }), /* @__PURE__ */ jsxs("div", {
+        className: "skin-swatches",
+        children: [SKINS.map((s) => /* @__PURE__ */ jsx("button", {
+          className: "skin-swatch" + (s.id === skinName ? " on" : ""),
+          style: {
+            background: s.color
+          },
+          title: s.label,
+          onClick: () => selectSkin(s.id)
+        }, s.id)), /* @__PURE__ */ jsx("span", {
+          className: "skin-swatch-lab",
+          children: (_c = SKINS.find((s) => s.id === skinName)) == null ? void 0 : _c.label
         })]
       })]
-    }), /* @__PURE__ */ jsxs("div", {
-      className: "skin-swatches",
-      children: [SKINS.map((s) => /* @__PURE__ */ jsx("button", {
-        className: "skin-swatch" + (s.id === skinName ? " on" : ""),
-        style: {
-          background: s.color
-        },
-        title: s.label,
-        onClick: () => selectSkin(s.id)
-      }, s.id)), /* @__PURE__ */ jsx("span", {
-        className: "skin-swatch-lab",
-        children: (_a2 = SKINS.find((s) => s.id === skinName)) == null ? void 0 : _a2.label
-      })]
-    }), /* @__PURE__ */ jsxs("section", {
-      className: "skin-panel skin-player skin-win",
-      children: [bar(void 0, "music", "\u5343\u5343\u9759\u542C", /* @__PURE__ */ jsxs("span", {
-        className: "skin-win-tools",
-        children: [/* @__PURE__ */ jsx("button", {
-          className: "skin-mini-btn" + (open.pl ? " on" : ""),
-          onClick: () => flip("pl"),
-          title: "\u64AD\u653E\u5217\u8868",
-          children: "PL"
-        }), /* @__PURE__ */ jsx("button", {
-          className: "skin-mini-btn" + (open.eq ? " on" : ""),
-          onClick: () => flip("eq"),
-          title: "\u5747\u8861\u5668",
-          children: "EQ"
-        }), /* @__PURE__ */ jsx("button", {
-          className: "skin-mini-btn" + (open.lyric ? " on" : ""),
-          onClick: () => flip("lyric"),
-          title: "\u6B4C\u8BCD\u79C0",
-          children: "LRC"
-        })]
-      })), /* @__PURE__ */ jsxs("div", {
-        className: "skin-win-body",
-        children: [/* @__PURE__ */ jsxs("div", {
-          className: "skin-lcd",
+    }), isMain && /* @__PURE__ */ jsx(Fragment, {
+      children: /* @__PURE__ */ jsxs("section", {
+        className: "skin-panel skin-player skin-win",
+        children: [bar(void 0, "music", "\u5343\u5343\u9759\u542C", /* @__PURE__ */ jsxs("span", {
+          className: "skin-win-tools",
+          children: [/* @__PURE__ */ jsx("button", {
+            className: "skin-mini-btn" + (open.pl ? " on" : ""),
+            title: "\u64AD\u653E\u5217\u8868",
+            onClick: () => {
+              if (open.pl)
+                winHide("playlist");
+              else
+                winShow("playlist");
+              flip("pl");
+            },
+            children: "PL"
+          }), /* @__PURE__ */ jsx("button", {
+            className: "skin-mini-btn" + (open.eq ? " on" : ""),
+            title: "\u5747\u8861\u5668",
+            onClick: () => {
+              if (open.eq)
+                winHide("eq");
+              else
+                winShow("eq");
+              flip("eq");
+            },
+            children: "EQ"
+          }), /* @__PURE__ */ jsx("button", {
+            className: "skin-mini-btn" + (open.lyric ? " on" : ""),
+            title: "\u6B4C\u8BCD\u79C0",
+            onClick: () => {
+              if (open.lyric)
+                winHide("lyric");
+              else
+                winShow("lyric");
+              flip("lyric");
+            },
+            children: "LRC"
+          })]
+        })), /* @__PURE__ */ jsxs("div", {
+          className: "skin-win-body",
           children: [/* @__PURE__ */ jsxs("div", {
-            className: "skin-lcd-left",
-            children: [/* @__PURE__ */ jsx("div", {
-              className: "skin-lcd-album",
-              children: ((_b2 = p2.cur) == null ? void 0 : _b2.album) || (p2.cur ? p2.cur.name : "\u4E13\u8F91\uFF1A\u2014")
+            className: "skin-lcd",
+            children: [/* @__PURE__ */ jsxs("div", {
+              className: "skin-lcd-left",
+              children: [/* @__PURE__ */ jsx("div", {
+                className: "skin-lcd-album",
+                children: ((_d = p2.cur) == null ? void 0 : _d.album) || (p2.cur ? p2.cur.name : "\u4E13\u8F91\uFF1A\u2014")
+              }), /* @__PURE__ */ jsxs("div", {
+                className: "skin-lcd-meta",
+                children: [/* @__PURE__ */ jsx("span", {
+                  children: "\u7ACB\u4F53\u58F0"
+                }), /* @__PURE__ */ jsxs("span", {
+                  children: ["\u72B6\u6001\uFF1A", p2.busy ? "\u53D6\u6D41\u4E2D" : p2.playing ? "\u64AD\u653E" : "\u6682\u505C"]
+                })]
+              })]
             }), /* @__PURE__ */ jsxs("div", {
-              className: "skin-lcd-meta",
-              children: [/* @__PURE__ */ jsx("span", {
-                children: "\u7ACB\u4F53\u58F0"
-              }), /* @__PURE__ */ jsxs("span", {
-                children: ["\u72B6\u6001\uFF1A", p2.busy ? "\u53D6\u6D41\u4E2D" : p2.playing ? "\u64AD\u653E" : "\u6682\u505C"]
+              className: "skin-lcd-right",
+              children: [/* @__PURE__ */ jsx("div", {
+                className: "skin-lcd-time",
+                children: fmt$2(p2.pos)
+              }), /* @__PURE__ */ jsxs("div", {
+                className: "skin-lcd-dur",
+                children: ["/ ", fmt$2(p2.dur)]
               })]
             })]
-          }), /* @__PURE__ */ jsxs("div", {
-            className: "skin-lcd-right",
-            children: [/* @__PURE__ */ jsx("div", {
-              className: "skin-lcd-time",
-              children: fmt$2(p2.pos)
-            }), /* @__PURE__ */ jsxs("div", {
-              className: "skin-lcd-dur",
-              children: ["/ ", fmt$2(p2.dur)]
-            })]
-          })]
-        }), /* @__PURE__ */ jsx("div", {
-          className: "skin-progress",
-          children: /* @__PURE__ */ jsx("input", {
-            type: "range",
-            min: 0,
-            max: p2.dur || 0,
-            step: 100,
-            value: Math.min(p2.pos, p2.dur || 0),
-            onChange: (e) => p2.onSeek(Number(e.target.value))
-          })
-        }), /* @__PURE__ */ jsxs("div", {
-          className: "skin-transport",
-          children: [/* @__PURE__ */ jsx("button", {
-            onClick: p2.onPrev,
-            title: "\u4E0A\u4E00\u9996",
-            children: /* @__PURE__ */ jsx(Fi, {
-              n: "skip-back",
-              fill: true,
-              size: 18
-            })
-          }), /* @__PURE__ */ jsx("button", {
-            className: "skin-play",
-            onClick: p2.onToggle,
-            disabled: !p2.cur,
-            title: p2.busy ? "\u53D6\u6D41\u4E2D" : p2.playing ? "\u6682\u505C" : "\u64AD\u653E",
-            children: /* @__PURE__ */ jsx(Fi, {
-              n: FN(p2.playing ? "pause" : "play"),
-              fill: true,
-              size: 20
-            })
-          }), /* @__PURE__ */ jsx("button", {
-            onClick: p2.onNext,
-            title: "\u4E0B\u4E00\u9996",
-            children: /* @__PURE__ */ jsx(Fi, {
-              n: "skip-forward",
-              fill: true,
-              size: 18
-            })
-          }), /* @__PURE__ */ jsxs("div", {
-            className: "skin-volume",
-            children: [/* @__PURE__ */ jsx(Fi, {
-              n: p2.volume > 0 ? "volume-high" : "volume-mute",
-              size: 14
-            }), /* @__PURE__ */ jsx("input", {
+          }), /* @__PURE__ */ jsx("div", {
+            className: "skin-progress",
+            children: /* @__PURE__ */ jsx("input", {
               type: "range",
               min: 0,
-              max: 1,
-              step: 0.01,
-              value: p2.volume,
-              onChange: (e) => p2.onVolume(Number(e.target.value))
+              max: p2.dur || 0,
+              step: 100,
+              value: Math.min(p2.pos, p2.dur || 0),
+              onChange: (e) => p2.onSeek(Number(e.target.value))
+            })
+          }), /* @__PURE__ */ jsxs("div", {
+            className: "skin-transport",
+            children: [/* @__PURE__ */ jsx("button", {
+              onClick: p2.onPrev,
+              title: "\u4E0A\u4E00\u9996",
+              children: /* @__PURE__ */ jsx(Fi, {
+                n: "skip-back",
+                fill: true,
+                size: 18
+              })
+            }), /* @__PURE__ */ jsx("button", {
+              className: "skin-play",
+              onClick: p2.onToggle,
+              disabled: !p2.cur,
+              title: p2.busy ? "\u53D6\u6D41\u4E2D" : p2.playing ? "\u6682\u505C" : "\u64AD\u653E",
+              children: /* @__PURE__ */ jsx(Fi, {
+                n: FN(p2.playing ? "pause" : "play"),
+                fill: true,
+                size: 20
+              })
+            }), /* @__PURE__ */ jsx("button", {
+              onClick: p2.onNext,
+              title: "\u4E0B\u4E00\u9996",
+              children: /* @__PURE__ */ jsx(Fi, {
+                n: "skip-forward",
+                fill: true,
+                size: 18
+              })
+            }), /* @__PURE__ */ jsxs("div", {
+              className: "skin-volume",
+              children: [/* @__PURE__ */ jsx(Fi, {
+                n: p2.volume > 0 ? "volume-high" : "volume-mute",
+                size: 14
+              }), /* @__PURE__ */ jsx("input", {
+                type: "range",
+                min: 0,
+                max: 1,
+                step: 0.01,
+                value: p2.volume,
+                onChange: (e) => p2.onVolume(Number(e.target.value))
+              })]
+            }), /* @__PURE__ */ jsx("button", {
+              className: "skin-desk-btn",
+              onClick: p2.onExpand,
+              title: "\u56DE\u5230\u684C\u9762\u4E3B\u754C\u9762",
+              children: "\u97F3\u4E50\u7A97"
             })]
-          }), /* @__PURE__ */ jsx("button", {
-            className: "skin-desk-btn",
-            onClick: p2.onExpand,
-            title: "\u56DE\u5230\u684C\u9762\u4E3B\u754C\u9762",
-            children: "\u97F3\u4E50\u7A97"
           })]
         })]
-      })]
-    }), open.eq && /* @__PURE__ */ jsxs("section", {
+      })
+    }), showEq && /* @__PURE__ */ jsxs("section", {
       className: "skin-panel skin-eq skin-win",
       children: [bar("eq", "sliders", "\u5747\u8861\u5668", /* @__PURE__ */ jsxs("span", {
         className: "skin-eq-ctl",
@@ -10980,7 +11035,7 @@ function SkinView(p2) {
           }, i))
         })]
       })]
-    }), open.lyric && /* @__PURE__ */ jsxs("section", {
+    }), showLyric && /* @__PURE__ */ jsxs("section", {
       className: "skin-panel skin-lyric skin-win",
       children: [bar("lyric", "document-text", "\u6B4C\u8BCD\u79C0", /* @__PURE__ */ jsxs("span", {
         className: "skin-lyric-zoom",
@@ -11025,7 +11080,7 @@ function SkinView(p2) {
           })]
         })
       })]
-    }), open.pl && /* @__PURE__ */ jsxs("section", {
+    }), showPl && /* @__PURE__ */ jsxs("section", {
       className: "skin-panel skin-playlist skin-win",
       children: [bar("pl", "list", "\u64AD\u653E\u5217\u8868", /* @__PURE__ */ jsxs("span", {
         className: "skin-pl-count",
@@ -11095,6 +11150,126 @@ function SkinView(p2) {
         })]
       })]
     })]
+  });
+}
+const EMPTY = {
+  cur: null,
+  playing: false,
+  busy: false,
+  pos: 0,
+  dur: 0,
+  lyric: [],
+  curIndex: -1,
+  queue: {
+    list: [],
+    idx: 0
+  },
+  volume: 1,
+  eqGains: [],
+  eqOn: false,
+  eqPreset: 0,
+  eqPresets: [],
+  shuffle: false,
+  inLib: false
+};
+const send = (cmd) => {
+  var _a2, _b2, _c, _d;
+  try {
+    (_d = (_c = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App) == null ? void 0 : _c.CmdSend) == null ? void 0 : _d.call(_c, JSON.stringify(cmd));
+  } catch {
+  }
+};
+function PanelApp({
+  panel
+}) {
+  const [st, setSt] = react.exports.useState(EMPTY);
+  react.exports.useEffect(() => {
+    window.__huluRecv = (json) => {
+      try {
+        setSt({
+          ...EMPTY,
+          ...JSON.parse(json)
+        });
+      } catch {
+      }
+    };
+    return () => {
+      try {
+        delete window.__huluRecv;
+      } catch {
+      }
+    };
+  }, []);
+  return /* @__PURE__ */ jsx(SkinView, {
+    only: panel,
+    cur: st.cur,
+    playing: st.playing,
+    busy: st.busy,
+    pos: st.pos,
+    dur: st.dur,
+    lyric: st.lyric || [],
+    curIndex: st.curIndex,
+    queue: st.queue || {
+      list: [],
+      idx: 0
+    },
+    volume: st.volume,
+    eqGains: st.eqGains || [],
+    eqOn: st.eqOn,
+    eqPreset: st.eqPreset,
+    eqPresets: st.eqPresets || [],
+    shuffle: st.shuffle,
+    inLib: st.inLib,
+    onToggle: () => send({
+      t: "toggle"
+    }),
+    onPrev: () => send({
+      t: "prev"
+    }),
+    onNext: () => send({
+      t: "next"
+    }),
+    onSeek: (ms) => send({
+      t: "seek",
+      ms
+    }),
+    onVolume: (v2) => send({
+      t: "volume",
+      v: v2
+    }),
+    onFav: () => send({
+      t: "fav"
+    }),
+    onPlayAt: (i) => send({
+      t: "playAt",
+      i
+    }),
+    onEqToggle: () => send({
+      t: "eqToggle"
+    }),
+    onEqReset: () => send({
+      t: "eqReset"
+    }),
+    onEqPreset: (i) => send({
+      t: "eqPreset",
+      i
+    }),
+    onShuffle: () => send({
+      t: "shuffle"
+    }),
+    onRemoveAt: (i) => send({
+      t: "removeAt",
+      i
+    }),
+    onClearList: () => send({
+      t: "clearList"
+    }),
+    onClearNext: () => send({
+      t: "clearNext"
+    }),
+    onExpand: () => send({
+      t: "expand"
+    })
   });
 }
 const qrcode = function(typeNumber, errorCorrectionLevel) {
@@ -13464,8 +13639,19 @@ const fmt = (ms) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
+const PANEL = (() => {
+  try {
+    return new URLSearchParams(location.search).get("panel") || "main";
+  } catch {
+    return "main";
+  }
+})();
 function App() {
   var _a2, _b2;
+  if (PANEL !== "main")
+    return /* @__PURE__ */ jsx(PanelApp, {
+      panel: PANEL
+    });
   const [theme, setTheme] = react.exports.useState(() => {
     try {
       const saved = localStorage.getItem("hulu-theme");
@@ -14910,6 +15096,103 @@ function App() {
       }, t2.id + i))]
     })]
   });
+  const syncTimer = react.exports.useRef(0);
+  react.exports.useEffect(() => {
+    if (!skin || syncTimer.current)
+      return;
+    syncTimer.current = window.setTimeout(() => {
+      var _a22, _b22, _c, _d;
+      syncTimer.current = 0;
+      try {
+        ;
+        (_d = (_c = (_b22 = (_a22 = window.go) == null ? void 0 : _a22.main) == null ? void 0 : _b22.App) == null ? void 0 : _c.SyncPush) == null ? void 0 : _d.call(_c, JSON.stringify({
+          cur,
+          playing,
+          busy,
+          pos,
+          dur,
+          lyric,
+          curIndex,
+          queue,
+          volume,
+          eqGains,
+          eqOn,
+          eqPreset,
+          eqPresets: EQ_PRESETS.map((x2) => x2.name),
+          shuffle,
+          inLib: !!cur && lib.some((x2) => x2.id === cur.id)
+        }));
+      } catch {
+      }
+    }, 180);
+  }, [skin, cur, playing, busy, pos, dur, lyric, curIndex, queue, volume, eqGains, eqOn, eqPreset, shuffle]);
+  react.exports.useEffect(() => {
+    window.__huluCmd = (json) => {
+      let c;
+      try {
+        c = JSON.parse(json);
+      } catch {
+        return;
+      }
+      switch (c.t) {
+        case "toggle":
+          toggle();
+          break;
+        case "prev":
+          step(-1);
+          break;
+        case "next":
+          step(1);
+          break;
+        case "seek": {
+          const a = audio.current;
+          if (a)
+            a.currentTime = Math.max(0, Number(c.ms) || 0) / 1e3;
+          break;
+        }
+        case "volume":
+          setVolumeState(Math.min(1, Math.max(0, Number(c.v) || 0)));
+          break;
+        case "fav":
+          if (cur)
+            fav(cur);
+          break;
+        case "playAt":
+          playAt(Number(c.i) || 0);
+          break;
+        case "eqToggle":
+          toggleEq();
+          break;
+        case "eqReset":
+          resetEq();
+          break;
+        case "eqPreset":
+          nextPreset();
+          break;
+        case "shuffle":
+          setShuffle((v2) => !v2);
+          break;
+        case "removeAt":
+          queueRemove(Number(c.i) || 0);
+          break;
+        case "clearList":
+          queueClear();
+          break;
+        case "clearNext":
+          queueClearNext();
+          break;
+        case "expand":
+          toggleSkin(false);
+          break;
+      }
+    };
+    return () => {
+      try {
+        delete window.__huluCmd;
+      } catch {
+      }
+    };
+  });
   return /* @__PURE__ */ jsxs("div", {
     className: "app desk-mode" + (mini ? " mini-mode" : "") + (skin ? " skin-mode" : ""),
     children: [!mini && !skin && /* @__PURE__ */ jsxs(Fragment, {
@@ -15706,6 +15989,7 @@ function App() {
       theme,
       onTheme: () => pickTheme(NEXT_THEME[theme])
     }), skin && /* @__PURE__ */ jsx(SkinView, {
+      only: "main",
       cur,
       playing,
       busy,
@@ -16966,6 +17250,14 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 
 .skin-panel{background:linear-gradient(180deg,var(--panel1),var(--panel2));border:1px solid var(--line);border-radius:11px;padding:0;box-sizing:border-box;overflow:hidden}
 .skin-panel-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--accent);margin-bottom:8px}
+
+/* 副窗模式（?panel=eq / lyric / playlist）：只画自己那一块，铺满整个窗口 */
+.skin-view.skin-solo{padding:0;gap:0}
+.skin-view.skin-solo .skin-panel{flex:1 1 auto;min-height:0;border:none;border-radius:0;background:transparent}
+.skin-view.skin-solo .skin-win-bar{border-radius:0;height:24px;flex:0 0 auto}
+.skin-view.skin-solo .skin-win-body{flex:1 1 auto;min-height:0}
+.skin-view.skin-solo .skin-lyric-box{flex:1 1 auto;max-height:none;min-height:0}
+.skin-view.skin-solo .skin-pl-list{flex:1 1 auto;min-height:0}
 
 /* 经典四窗：每个面板自带一条小标题栏（图标 + 标题 + □ ×），中间是窗口体 */
 .skin-win{display:flex;flex-direction:column}

@@ -34,6 +34,10 @@ var (
 	procSetWindowPos     = syscall.NewLazyDLL("user32.dll").NewProc("SetWindowPos")
 	procGetAsyncKeyState = syscall.NewLazyDLL("user32.dll").NewProc("GetAsyncKeyState")
 	procGetForeground    = syscall.NewLazyDLL("user32.dll").NewProc("GetForegroundWindow")
+	procWindowFromPoint  = syscall.NewLazyDLL("user32.dll").NewProc("WindowFromPoint")
+	procGetAncestor      = syscall.NewLazyDLL("user32.dll").NewProc("GetAncestor")
+	procGetWindowPID     = syscall.NewLazyDLL("user32.dll").NewProc("GetWindowThreadProcessId")
+	procGetCurrentPID    = syscall.NewLazyDLL("kernel32.dll").NewProc("GetCurrentProcessId")
 )
 
 const (
@@ -41,6 +45,7 @@ const (
 	swpNoZOrder   = 0x0004
 	swpNoActivate = 0x0010
 	vkLButton     = 0x01
+	gaRoot        = 2
 	dragPoll      = 10 * time.Millisecond
 	// 标题条命中高度（物理像素）。125% 缩放下标题条约 50px，留点余量。
 	dragStrip = 60
@@ -142,6 +147,30 @@ func beginDrag(hwnd uintptr, cursor dragPoint, origin dragRect, why string) {
 	}()
 }
 
+// windowUnderCursor 取光标所在的本进程顶层窗口：四窗各自都能被拖。
+func windowUnderCursor() uintptr {
+	var p dragPoint
+	if !cursorAt(&p) {
+		return 0
+	}
+	h, _, _ := procWindowFromPoint.Call(uintptr(unsafe.Pointer(&p)))
+	if h == 0 {
+		return 0
+	}
+	root, _, _ := procGetAncestor.Call(h, gaRoot)
+	if root != 0 {
+		h = root
+	}
+	// 只认自己的窗口，别去拖别的程序的窗口。
+	var pid uint32
+	procGetWindowPID.Call(h, uintptr(unsafe.Pointer(&pid)))
+	me, _, _ := procGetCurrentPID.Call()
+	if uintptr(pid) != me {
+		return 0
+	}
+	return h
+}
+
 func (a *App) hwnd() uintptr {
 	if a.win != nil {
 		if h := a.win.NativeHandle(); h != 0 {
@@ -155,7 +184,10 @@ func (a *App) hwnd() uintptr {
 
 // dragWindow 前端标题栏 mousedown 调进来，以当前光标为锚点开始拖。
 func (a *App) dragWindow() {
-	hwnd := a.hwnd()
+	hwnd := windowUnderCursor()
+	if hwnd == 0 {
+		hwnd = a.hwnd()
+	}
 	if hwnd == 0 {
 		dragLog("调用到达，但拿不到窗口句柄")
 		return
@@ -196,12 +228,12 @@ func (a *App) autoDragLoop() {
 			continue
 		}
 		down = true
-		hwnd := a.hwnd()
+		hwnd := windowUnderCursor()
 		if hwnd == 0 {
-			continue
+			continue // 光标不在自己的窗口上
 		}
 		if fg, _, _ := procGetForeground.Call(); fg != hwnd {
-			continue // 不是自己的窗口，别抢别人的标题栏
+			continue // 不是前台窗口，别抢别人的标题栏
 		}
 		var cursor dragPoint
 		var r dragRect

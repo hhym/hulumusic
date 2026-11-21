@@ -51,24 +51,18 @@ func (a *App) skinOn() string {
 	if a.win == nil {
 		return "窗口还没准备好"
 	}
-	w, h := skinW, skinH
-	if d := mygo.Screen.PrimaryDisplay(); d.WorkArea.Width > 0 && d.WorkArea.Height > 0 {
-		if d.WorkArea.Width < w {
-			w = d.WorkArea.Width
-		}
-		if d.WorkArea.Height < h {
-			h = d.WorkArea.Height
-		}
-	}
-	a.win.SetMinimumSize(0, 0)
 	a.win.SetAlwaysOnTop(false)
 	// 最大化状态下改尺寸会被系统吞掉，先把窗口还原回普通状态。
 	if a.win.IsMaximized() {
 		a.win.Unmaximize()
 	}
-	a.win.SetSize(w, h)
-	// 打开顶部标题条的原生拖动兜底（只认皮肤模式）。
+	// 经典四窗：主窗收成主播放面板的高度，另外三个副窗（均衡器/歌词秀/播放列表）
+	// 由 Go 侧开成真正的独立小窗，各自能拖、能折叠。先放开最小尺寸，
+	// 免得 MinHeight 顶住后面的 SetSize。
+	a.win.SetMinimumSize(0, 0)
+	a.win.SetSize(skinW, panelMainH)
 	a.autoDragSwitch(true)
+	mygo.RunOnMain(func() { a.showPanels() })
 	return ""
 }
 
@@ -78,6 +72,7 @@ func (a *App) skinOff() string {
 		return "窗口还没准备好"
 	}
 	a.autoDragSwitch(false)
+	a.hidePanels()
 	a.win.SetAlwaysOnTop(false)
 	a.win.SetSize(deskW, deskH)
 	a.win.SetMinimumSize(minW, minH)

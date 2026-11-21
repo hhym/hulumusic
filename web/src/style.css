@@ -1112,6 +1112,14 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-panel{background:linear-gradient(180deg,var(--panel1),var(--panel2));border:1px solid var(--line);border-radius:11px;padding:0;box-sizing:border-box;overflow:hidden}
 .skin-panel-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--accent);margin-bottom:8px}
 
+/* 副窗模式（?panel=eq / lyric / playlist）：只画自己那一块，铺满整个窗口 */
+.skin-view.skin-solo{padding:0;gap:0}
+.skin-view.skin-solo .skin-panel{flex:1 1 auto;min-height:0;border:none;border-radius:0;background:transparent}
+.skin-view.skin-solo .skin-win-bar{border-radius:0;height:24px;flex:0 0 auto}
+.skin-view.skin-solo .skin-win-body{flex:1 1 auto;min-height:0}
+.skin-view.skin-solo .skin-lyric-box{flex:1 1 auto;max-height:none;min-height:0}
+.skin-view.skin-solo .skin-pl-list{flex:1 1 auto;min-height:0}
+
 /* 经典四窗：每个面板自带一条小标题栏（图标 + 标题 + □ ×），中间是窗口体 */
 .skin-win{display:flex;flex-direction:column}
 .skin-win-bar{display:flex;align-items:center;gap:5px;height:22px;padding:0 7px;flex:0 0 auto;
