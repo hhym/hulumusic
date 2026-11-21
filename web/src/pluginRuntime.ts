@@ -8,7 +8,7 @@
    页面代码不用跟着改。 */
 
 import {clearMyGoCache, mygoLyric, mygoSearch, mygoStream} from './mygoRuntime'
-import {clearMusicFreeCache, mfLyric, mfMediaSource, mfSearch} from './musicfreeRuntime'
+import {clearMusicFreeCache, mfLyric, mfMediaSource, mfSearch, mfSheetTags, mfSheets, mfSheetTracks} from './musicfreeRuntime'
 
 type AnyObj = Record<string, any>
 
@@ -121,4 +121,38 @@ export async function pluginLyric(
     return await mfLyric(pluginId, item)
   }
   return await mygoLyric(pluginId, item)
+}
+
+/* ---------- 推荐 / 歌单浏览的分派 ----------
+   现在只有 MusicFree 插件有这套浏览接口；MyGo 插件的内容走「首页」，
+   所以在推荐页里对 MyGo 直接给一句人话，而不是抛报错。 */
+
+export type RecoTag = {id: string; title: string}
+export type RecoTagGroup = {title: string; data: RecoTag[]}
+export type RecoSheet = {id: string; title: string; artwork: string; description: string; [k: string]: any}
+
+export async function pluginHasReco(pluginId: string): Promise<boolean> {
+  if (!pluginId) return false
+  if ((await pluginKindOf(pluginId)) !== 'musicfree') return false
+  try {
+    const {mfHasBrowse} = await import('./musicfreeRuntime')
+    return await mfHasBrowse(pluginId)
+  } catch {
+    return false
+  }
+}
+
+export async function pluginRecoTags(pluginId: string): Promise<{pinned: RecoTag[]; groups: RecoTagGroup[]}> {
+  if ((await pluginKindOf(pluginId)) === 'musicfree') return await mfSheetTags(pluginId)
+  throw new Error('这个音源没有推荐页，用「首页」浏览')
+}
+
+export async function pluginRecoSheets(pluginId: string, tag: RecoTag, page = 1) {
+  if ((await pluginKindOf(pluginId)) === 'musicfree') return await mfSheets(pluginId, tag, page)
+  throw new Error('这个音源没有推荐页，用「首页」浏览')
+}
+
+export async function pluginRecoTracks(pluginId: string, sheet: RecoSheet, page = 1) {
+  if ((await pluginKindOf(pluginId)) === 'musicfree') return await mfSheetTracks(pluginId, sheet, page)
+  throw new Error('这个音源没有推荐页，用「首页」浏览')
 }

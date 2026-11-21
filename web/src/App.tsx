@@ -17,6 +17,7 @@ import {
 } from './pluginRuntime'
 import {mygoAccount, mygoSignIn, mygoSignOut, type MyGoItem} from './mygoRuntime'
 import PluginHome from './PluginHome'
+import RecommendPage from './RecommendPage'
 import {Equalizer, EQ_FREQS, EQ_PRESETS} from './eq'
 import Visualizer from './Visualizer'
 
@@ -162,12 +163,12 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.64'
+const BUILD_TAG = '3.0.65'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
 
-type Tab = 'home' | 'search' | 'library' | 'radio' | 'podcast' | 'local' | 'queue' | 'lyric' | 'plugins' | 'settings'
+type Tab = 'home' | 'reco' | 'search' | 'library' | 'radio' | 'podcast' | 'local' | 'queue' | 'lyric' | 'plugins' | 'settings'
 
 export default function App() {
   // 主题：记住用户选择；没存过就用浅色（默认），循环是 浅 → 护眼绿 → 橘黄 → 深青 → 深色 → 霓虹紫。
@@ -810,7 +811,9 @@ export default function App() {
   }
 
   // 点首页某一张卡：把这一组曲目整个压进待播队列，从点的这首开始放
-  function playPluginList(pluginId: string, pluginName: string, items: MyGoItem[], index: number) {
+  // items 放宽成 any：推荐页的曲目来自 MusicFree 插件，字段和 MyGoItem 不完全一样，
+  // pluginTrack 只取 title/artist/album/artwork/duration，够用
+  function playPluginList(pluginId: string, pluginName: string, items: any[], index: number) {
     const tracks = items.map((it) => pluginTrack(pluginId, pluginName, it))
     if (!tracks.length) return
     const i = Math.max(0, Math.min(index, tracks.length - 1))
@@ -1386,8 +1389,8 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
     <main className="main">
       <header className={"head hd-" + tab}>
         <div>
-          <h1 className={'page-h1 ph-' + tab}>{tab === 'home' ? '首页' : tab === 'library' ? '我的收藏' : tab === 'radio' ? '电台' : tab === 'podcast' ? '听书' : tab === 'local' ? '乐库' : tab === 'queue' ? '播单' : tab === 'plugins' ? '插件' : tab === 'settings' ? '设置' : tab === 'lyric' ? '歌词' : '搜索结果'}</h1>
-          <p>{meta || (tab === 'home' ? '当前插件的首页，点卡片直接播' : tab === 'radio' ? '网络直播，点台即听' : tab === 'podcast' ? '搜有声书、播客节目' : tab === 'local' ? (localInfo || '选一个音乐文件夹，扫出来的歌直接播（同名 .lrc 会当歌词）') : tab === 'queue' ? '正在放的 + 接下来要放的，点一下就能跳过去' : tab === 'plugins' ? '导入 MyGo / MusicFree 插件，扩展音源' : tab === 'settings' ? '偏好设置，改完记得点保存' : tab === 'lyric' ? '跟着唱，可切卡拉OK 大行 / 整段滚动' : '输入关键词开始搜索')}</p>
+          <h1 className={'page-h1 ph-' + tab}>{tab === 'home' ? '首页' : tab === 'reco' ? '推荐' : tab === 'library' ? '我的收藏' : tab === 'radio' ? '电台' : tab === 'podcast' ? '听书' : tab === 'local' ? '乐库' : tab === 'queue' ? '播单' : tab === 'plugins' ? '插件' : tab === 'settings' ? '设置' : tab === 'lyric' ? '歌词' : '搜索结果'}</h1>
+          <p>{meta || (tab === 'home' ? '当前插件的首页，点卡片直接播' : tab === 'reco' ? '按插件的歌单分类逛，点歌单进去挑歌' : tab === 'radio' ? '网络直播，点台即听' : tab === 'podcast' ? '搜有声书、播客节目' : tab === 'local' ? (localInfo || '选一个音乐文件夹，扫出来的歌直接播（同名 .lrc 会当歌词）') : tab === 'queue' ? '正在放的 + 接下来要放的，点一下就能跳过去' : tab === 'plugins' ? '导入 MyGo / MusicFree 插件，扩展音源' : tab === 'settings' ? '偏好设置，改完记得点保存' : tab === 'lyric' ? '跟着唱，可切卡拉OK 大行 / 整段滚动' : '输入关键词开始搜索')}</p>
         </div>
         {err && <div className="err">{err}</div>}
         {needLogin.length > 0 && (
@@ -1401,7 +1404,14 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
         )}
       </header>
 
-      {tab === 'home' ? (
+      {tab === 'reco' ? (
+        <RecommendPage
+          plugins={plugins}
+          pluginId={homePid}
+          onPlayItem={(pid, pname, items, i) => playPluginList(pid, pname, items, i)}
+          onPlayAll={(pid, pname, items) => playPluginList(pid, pname, items, 0)}
+        />
+      ) : tab === 'home' ? (
         <PluginHome
           plugins={plugins}
           pluginId={homePid}
@@ -1818,6 +1828,9 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
               {/* 导航按电台形态收敛：首页/搜索/喜欢的入口收进电台页（插件首页仍走左上角音源下拉） */}
               <button className={tab === 'home' ? 'on' : ''} onClick={() => setTab('home')}>
                 <span className="dn-ico"><Fi n="home" size={14} /></span><span className="dn-lab">首页</span>
+              </button>
+              <button className={tab === 'reco' ? 'on' : ''} onClick={() => setTab('reco')}>
+                <span className="dn-ico"><Fi n="compass" size={14} /></span><span className="dn-lab">推荐</span>
               </button>
               <button className={tab === 'radio' ? 'on' : ''} onClick={() => setTab('radio')}>
                 <span className="dn-ico"><Fi n="radio" size={14} /></span><span className="dn-lab">电台</span><em>{stations.length}</em>
@@ -2255,6 +2268,7 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
 
           <div className="sk-tools">
             <button className={tab === 'home' ? 'on' : ''} onClick={() => setTab('home')}><Fi n="home" size={12} /><span>首页</span></button>
+            <button className={tab === 'reco' ? 'on' : ''} onClick={() => setTab('reco')}><Fi n="compass" size={12} /><span>推荐</span></button>
             <button className={tab === 'local' ? 'on' : ''}
                     onClick={() => { setTab('local'); G()?.LocalDirs?.().then((d: any) => setLocalDirs(Array.isArray(d) ? d.map(String) : [])).catch(() => {}) }}><Fi n="folder" size={12} /><span>乐库</span></button>
             <button className={tab === 'queue' ? 'on' : ''} onClick={() => setTab('queue')}><Fi n="list" size={12} /><span>播单</span></button>
