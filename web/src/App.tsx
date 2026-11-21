@@ -865,7 +865,11 @@ export default function App() {
       const a = audio.current!
       a.src = url
       a.load()
-      await a.play()
+      try {
+        await a.play()
+      } catch (pe: any) {
+        throw new Error(await explainPlayFail(url, pe))
+      }
       setPlaying(true)
       if (t.source === 'ne' || t.source === 'qq' || t.source === 'local') {
         callResult<LyricLine[]>('Lyric', t.id)
@@ -879,6 +883,25 @@ export default function App() {
       setErr(String(e?.message || e)); setPlaying(false)
     } finally { setBusy(false) }
   }
+
+// <audio> 报「no supported sources」时浏览器只给一句干巴巴的英文，
+// 这里回读一次代理响应头，把真实原因（HTTP 码 / Content-Type / 站点提示）带出来。
+async function explainPlayFail(url: string, e: any): Promise<string> {
+  const name = String(e?.name || '')
+  const base = String(e?.message || e || '播放失败')
+  if (name !== 'NotSupportedError' && !/supported sources/i.test(base)) return base
+  try {
+    const r = await fetch(url, {headers: {Range: 'bytes=0-1'}})
+    if (r.status === 404 || r.status === 403) {
+      const t = (await r.text()).trim()
+      if (t.length < 200) return t || `取流被拒（HTTP ${r.status}）`
+    }
+    const ct = r.headers.get('content-type') || '没给 Content-Type'
+    return `这段流播不了（HTTP ${r.status} · ${ct}）：可能是分片格式（m4s/flac）或地址失效，换一首或换个音源试试`
+  } catch {
+    return `播不了这段流：${base}`
+  }
+}
 
   function toggle() {
     const a = audio.current

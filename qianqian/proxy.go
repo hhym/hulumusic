@@ -1,6 +1,7 @@
 package qianqian
 
 import (
+	"bufio"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -181,17 +182,52 @@ func handleAudioProxy(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set(h, v)
 		}
 	}
-	if res.Header.Get("Content-Type") == "" {
+	// 有的站点（B 站 m4s、部分网盘直链）不给 Content-Type 或只给
+	// application/octet-stream。这时别一律当 mp3——mp4/flac 被标成 audio/mpeg
+	// 会让 WebView2 直接报「The element has no supported sources」。
+	br := bufio.NewReader(res.Body)
+	if c := strings.ToLower(strings.TrimSpace(ct)); c == "" || strings.Contains(c, "octet-stream") {
+		if b, err := br.Peek(16); err == nil {
+			if s2 := sniffAudioCT(b); s2 != "" {
+				w.Header().Set("Content-Type", s2)
+			}
+		}
+	}
+	if w.Header().Get("Content-Type") == "" {
 		w.Header().Set("Content-Type", "audio/mpeg")
 	}
 	w.WriteHeader(res.StatusCode)
 
 	// 电台直播流：剥掉 junk 头与 ICY 元数据，输出干净 MP3
 	if liveMP3 {
-		copyMP3Clean(w, res.Body, w.(flusher))
+		copyMP3Clean(w, br, w.(flusher))
 		return
 	}
-	io.Copy(w, res.Body)
+	io.Copy(w, br)
+}
+
+// sniffAudioCT 按文件头猜音频类型，猜不出返回空串。
+func sniffAudioCT(b []byte) string {
+	if len(b) >= 12 && string(b[4:8]) == "ftyp" {
+		return "audio/mp4"
+	}
+	switch {
+	case len(b) >= 3 && string(b[:3]) == "ID3":
+		return "audio/mpeg"
+	case len(b) >= 4 && b[0] == 0xFF && b[1]&0xF6 == 0xF0:
+		return "audio/aac"
+	case len(b) >= 4 && b[0] == 0xFF && b[1]&0xE0 == 0xE0:
+		return "audio/mpeg"
+	case len(b) >= 4 && string(b[:4]) == "fLaC":
+		return "audio/flac"
+	case len(b) >= 4 && string(b[:4]) == "OggS":
+		return "audio/ogg"
+	case len(b) >= 12 && string(b[:4]) == "RIFF" && string(b[8:12]) == "WAVE":
+		return "audio/wav"
+	case len(b) >= 4 && string(b[:4]) == "FORM":
+		return "audio/aiff"
+	}
+	return ""
 }
 
 // ---------------- 歌词 ----------------

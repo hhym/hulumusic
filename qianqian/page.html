@@ -15791,7 +15791,11 @@ function App() {
       const a = audio.current;
       a.src = url;
       a.load();
-      await a.play();
+      try {
+        await a.play();
+      } catch (pe2) {
+        throw new Error(await explainPlayFail(url, pe2));
+      }
       setPlaying(true);
       if (t2.source === "ne" || t2.source === "qq" || t2.source === "local") {
         callResult("Lyric", t2.id).then(({
@@ -15809,6 +15813,28 @@ function App() {
       setPlaying(false);
     } finally {
       setBusy(false);
+    }
+  }
+  async function explainPlayFail(url, e) {
+    const name = String((e == null ? void 0 : e.name) || "");
+    const base = String((e == null ? void 0 : e.message) || e || "\u64AD\u653E\u5931\u8D25");
+    if (name !== "NotSupportedError" && !/supported sources/i.test(base))
+      return base;
+    try {
+      const r2 = await fetch(url, {
+        headers: {
+          Range: "bytes=0-1"
+        }
+      });
+      if (r2.status === 404 || r2.status === 403) {
+        const t2 = (await r2.text()).trim();
+        if (t2.length < 200)
+          return t2 || `\u53D6\u6D41\u88AB\u62D2\uFF08HTTP ${r2.status}\uFF09`;
+      }
+      const ct = r2.headers.get("content-type") || "\u6CA1\u7ED9 Content-Type";
+      return `\u8FD9\u6BB5\u6D41\u64AD\u4E0D\u4E86\uFF08HTTP ${r2.status} \xB7 ${ct}\uFF09\uFF1A\u53EF\u80FD\u662F\u5206\u7247\u683C\u5F0F\uFF08m4s/flac\uFF09\u6216\u5730\u5740\u5931\u6548\uFF0C\u6362\u4E00\u9996\u6216\u6362\u4E2A\u97F3\u6E90\u8BD5\u8BD5`;
+    } catch {
+      return `\u64AD\u4E0D\u4E86\u8FD9\u6BB5\u6D41\uFF1A${base}`;
     }
   }
   function toggle() {
