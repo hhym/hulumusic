@@ -9186,6 +9186,8 @@ function makeAxios() {
       }
     }
     const r2 = await app.HttpRequest(target, method, headers, body, false);
+    if (!r2 || typeof r2 !== "object")
+      throw new Error("\u7F51\u7EDC\u8BF7\u6C42\u6CA1\u6709\u8FD4\u56DE\uFF1A" + target);
     if (r2 == null ? void 0 : r2.err)
       throw new Error(String(r2.err));
     const status = Number(r2 == null ? void 0 : r2.status) || 0;
@@ -9342,7 +9344,21 @@ async function loadMusicFree(pluginId) {
   if (!exp || typeof exp !== "object" && typeof exp !== "function") {
     throw new Error("\u63D2\u4EF6\u6CA1\u6709\u5BFC\u51FA\u4EFB\u4F55\u4E1C\u897F\uFF08\u8981 module.exports = { \u2026 }\uFF09");
   }
-  moduleCache.set(pluginId, exp);
+  const real = unwrapPluginExport(exp);
+  moduleCache.set(pluginId, real);
+  return real;
+}
+function looksLikePlugin(o) {
+  if (!o || typeof o !== "object" && typeof o !== "function")
+    return false;
+  return !!(o.search || o.getMediaSource || o.getLyric || o.getTopLists || o.getRecommendSheetTags || o.getMusicSheetInfo);
+}
+function unwrapPluginExport(exp) {
+  if (looksLikePlugin(exp))
+    return exp;
+  const d = exp.default;
+  if (looksLikePlugin(d))
+    return d;
   return exp;
 }
 function clearMusicFreeCache(pluginId) {
@@ -13741,7 +13757,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.64";
+const BUILD_TAG = "3.0.66";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -20130,17 +20146,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.64] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.66] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.64] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.66] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.64] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.66] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.64] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.66] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

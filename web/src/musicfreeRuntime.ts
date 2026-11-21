@@ -78,6 +78,9 @@ function makeAxios(): AnyObj {
     }
 
     const r: any = await app.HttpRequest(target, method, headers, body, false)
+    // 后端没回东西（绑没绑上、或隧道断了）时别把 undefined 往下传，
+    // 不然插件里 .data.list.map 之类会报一句莫名其妙的「reading 'map'」
+    if (!r || typeof r !== 'object') throw new Error('网络请求没有返回：' + target)
     if (r?.err) throw new Error(String(r.err))
     const status = Number(r?.status) || 0
     if (status >= 400) {
@@ -231,7 +234,23 @@ export async function loadMusicFree(pluginId: string): Promise<AnyObj> {
   if (!exp || typeof exp !== 'object' && typeof exp !== 'function') {
     throw new Error('插件没有导出任何东西（要 module.exports = { … }）')
   }
-  moduleCache.set(pluginId, exp)
+  const real = unwrapPluginExport(exp)
+  moduleCache.set(pluginId, real)
+  return real
+}
+
+/** 认一下这个对象像不像一个插件：有 search / getMediaSource 之类的方法就算。 */
+function looksLikePlugin(o: AnyObj): boolean {
+  if (!o || typeof o !== 'object' && typeof o !== 'function') return false
+  return !!(o.search || o.getMediaSource || o.getLyric || o.getTopLists || o.getRecommendSheetTags || o.getMusicSheetInfo)
+}
+
+/** 不少插件是 parcel/webpack 打包出来的：module.exports 上只有 {pageSize, headers, default}，
+    真正的平台对象挂在 default 上（还带 __esModule 标志）。这里统一解开。 */
+function unwrapPluginExport(exp: AnyObj): AnyObj {
+  if (looksLikePlugin(exp)) return exp
+  const d = (exp as AnyObj).default
+  if (looksLikePlugin(d)) return d
   return exp
 }
 
