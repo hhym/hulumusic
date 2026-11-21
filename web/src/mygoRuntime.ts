@@ -965,7 +965,8 @@ function artistsOf(t: AnyObj): string {
 function toCard(x: AnyObj, kind: CardKind): HomeCard {
   const name = String(x?.name ?? x?.title ?? x?.label ?? '')
   return {
-    id: String(x?.id ?? ''),
+    // 链接卡没有 id，翻页用的 page 才是它真正能打开的东西
+    id: String(x?.id ?? x?.page ?? x?.url ?? ''),
     name,
     cover: String(x?.imageUrl ?? x?.image ?? x?.cover ?? x?.artwork ?? x?.logo ?? ''),
     sub: String(x?.artists ? artistsOf(x) : x?.artist ?? x?.author ?? x?.description ?? x?.url ?? ''),
@@ -1030,8 +1031,14 @@ export async function mygoPlaylistTracks(id: string, pid: string): Promise<{name
 }
 
 /* 节目 / 电台这类卡片：MyGo 没有统一接口，各家插件自己实现（show / station / album 都可能）。
-   这里按顺序试，哪个先给出曲目就用哪个 —— 小宇宙的「热搜吃瓜专家」节目卡就是这么打开的。 */
-export async function mygoShowTracks(id: string, sid: string, kind: string): Promise<{name: string; tracks: MyGoItem[]}> {
+   小宇宙最典型：show({id}) 返回的是 {show:{name}, episodes:[…], more}，字段既不叫 tracks 也不叫 data，
+   所以这里把 episodes 也认了。哪个接口先给出内容就用哪个。 */
+export async function mygoShowTracks(
+  id: string,
+  sid: string,
+  kind: string,
+  offset = 0
+): Promise<{name: string; tracks: MyGoItem[]; more: boolean}> {
   const mod = await loadMyGoPlugin(id)
   const tries: string[] = []
   if (kind === 'show') tries.push('show', 'album', 'playlist', 'station')
@@ -1043,16 +1050,31 @@ export async function mygoShowTracks(id: string, sid: string, kind: string): Pro
     const f = (mod as AnyObj)[fn]
     if (typeof f !== 'function') continue
     try {
-      const r: any = await f.call(mod, {id: sid})
-      const list: any[] = Array.isArray(r?.tracks) ? r.tracks : Array.isArray(r?.data) ? r.data : Array.isArray(r?.items) ? r.items : []
+      const r: any = await f.call(mod, offset ? {id: sid, offset} : {id: sid})
+      const list: any[] = Array.isArray(r?.tracks)
+        ? r.tracks
+        : Array.isArray(r?.episodes)
+          ? r.episodes
+          : Array.isArray(r?.data)
+            ? r.data
+            : Array.isArray(r?.items)
+              ? r.items
+              : []
       if (list.length) {
-        return {name: String(r?.name ?? r?.title ?? (kind === 'show' ? '节目' : '列表')), tracks: list.map(mapTrack)}
+        return {
+          name: String(r?.show?.name ?? r?.name ?? r?.title ?? (kind === 'show' ? '节目' : '列表')),
+          tracks: list.map(mapTrack),
+          more: !!r?.more,
+        }
       }
+      // 接口通了但这一页空了：offset>0 说明就是到底了，offset=0 说明这档确实没内容
+      if (offset > 0) return {name: '', tracks: [], more: false}
     } catch (e: any) {
       errs.push(fn + ': ' + String(e?.message || e))
     }
   }
-  throw new Error(errs.length ? errs.join('；') : '这个插件没有开放打开这张卡片的接口')
+  if (offset > 0) return {name: '', tracks: [], more: false}
+  throw new Error((errs.length ? errs.join('；') : '这个插件没有开放打开这张卡片的接口') + '〔导出：' + Object.keys(mod).join(',') + '〕')
 }
 
 export async function mygoAlbumTracks(id: string, aid: string): Promise<{name: string; tracks: MyGoItem[]}> {

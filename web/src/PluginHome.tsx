@@ -57,7 +57,7 @@ export default function PluginHome({
 }) {
   const [view, setView] = useState<HomeView | null>(null)
   const [page, setPage] = useState<string>(() => localStorage.getItem(PAGE_KEY) || '')
-  const [detail, setDetail] = useState<{name: string; tracks: MyGoItem[]; kind: CardKind; id: string} | null>(null)
+  const [detail, setDetail] = useState<{name: string; tracks: MyGoItem[]; kind: CardKind; id: string; more: boolean} | null>(null)
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
 
@@ -112,21 +112,25 @@ export default function PluginHome({
 
   async function openCard(kind: CardKind, id: string) {
     if (!cur || !id) return
-    // 只有「链接」是纯跳转，这里不管；其余（节目 / 电台 / 艺人 / 专辑 / 歌单）
-    // 都按插件实际实现了哪个接口去试，别再一刀切说「没有开放」——
-    // 小宇宙的节目卡就是这么一直点不开的。
+    // 链接卡（小宇宙的「按分类浏览 / 收听历史」）不是打开内容，而是切到插件的另一页
     if (kind === 'link') {
-      setErr('这张是「链接」卡，插件没有给出可打开的地址')
+      if (/^https?:/.test(id)) {
+        setErr('这张是外链（' + id + '），暂时只能在插件里点开')
+        return
+      }
+      setErr('')
+      setPage(id)
+      localStorage.setItem(PAGE_KEY, id)
       return
     }
     setLoading(true)
     setErr('')
     try {
-      let r: {name: string; tracks: MyGoItem[]}
+      let r: {name: string; tracks: MyGoItem[]; more?: boolean}
       if (kind === 'playlist') {
-        r = await mygoPlaylistTracks(cur.id, id).catch(() => mygoShowTracks(cur.id, id, kind))
+        r = {...(await mygoPlaylistTracks(cur.id, id).catch(() => mygoShowTracks(cur.id, id, kind))), more: false}
       } else if (kind === 'album') {
-        r = await mygoAlbumTracks(cur.id, id).catch(() => mygoShowTracks(cur.id, id, kind))
+        r = {...(await mygoAlbumTracks(cur.id, id).catch(() => mygoShowTracks(cur.id, id, kind))), more: false}
       } else {
         r = await mygoShowTracks(cur.id, id, kind)
       }
@@ -134,9 +138,26 @@ export default function PluginHome({
         setErr('这张「' + (KIND_LABEL[kind] || kind) + '」打开后是空的，插件没给曲目')
         return
       }
-      setDetail({...r, kind, id})
+      setDetail({name: r.name, tracks: r.tracks, kind, id, more: !!r.more})
     } catch (e: any) {
       setErr('打不开这张「' + (KIND_LABEL[kind] || kind) + '」：' + String(e?.message || e))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 小宇宙的一档播客往往几十上百集，插件按 offset 分页，这里接着往下拉
+  async function loadMore() {
+    if (!detail || !cur || loading) return
+    setLoading(true)
+    setErr('')
+    try {
+      const r = await mygoShowTracks(cur.id, detail.id, detail.kind, detail.tracks.length)
+      const seen = new Set(detail.tracks.map((t) => t.id))
+      const add = r.tracks.filter((t) => !seen.has(t.id))
+      setDetail({...detail, tracks: [...detail.tracks, ...add], more: !!r.more && !!add.length})
+    } catch (e: any) {
+      setErr('加载更多失败：' + String(e?.message || e))
     } finally {
       setLoading(false)
     }
@@ -179,6 +200,12 @@ export default function PluginHome({
               </button>
             ))}
             {!detail.tracks.length && !loading && <div className="home-empty"><p>这个列表是空的</p></div>}
+            {detail.more && (
+              <button className="home-btn" style={{margin: '10px auto', display: 'block'}}
+                      onClick={loadMore} disabled={loading}>
+                {loading ? '加载中…' : '加载更多'}
+              </button>
+            )}
           </div>
         </>
       ) : (

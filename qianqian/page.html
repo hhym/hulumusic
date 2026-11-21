@@ -8945,7 +8945,7 @@ function artistsOf(t2) {
 function toCard(x2, kind) {
   const name = String((x2 == null ? void 0 : x2.name) ?? (x2 == null ? void 0 : x2.title) ?? (x2 == null ? void 0 : x2.label) ?? "");
   return {
-    id: String((x2 == null ? void 0 : x2.id) ?? ""),
+    id: String((x2 == null ? void 0 : x2.id) ?? (x2 == null ? void 0 : x2.page) ?? (x2 == null ? void 0 : x2.url) ?? ""),
     name,
     cover: String((x2 == null ? void 0 : x2.imageUrl) ?? (x2 == null ? void 0 : x2.image) ?? (x2 == null ? void 0 : x2.cover) ?? (x2 == null ? void 0 : x2.artwork) ?? (x2 == null ? void 0 : x2.logo) ?? ""),
     sub: String((x2 == null ? void 0 : x2.artists) ? artistsOf(x2) : (x2 == null ? void 0 : x2.artist) ?? (x2 == null ? void 0 : x2.author) ?? (x2 == null ? void 0 : x2.description) ?? (x2 == null ? void 0 : x2.url) ?? ""),
@@ -9010,7 +9010,8 @@ async function mygoPlaylistTracks(id2, pid) {
   const r2 = await mod.playlist({ id: pid });
   return { name: String((r2 == null ? void 0 : r2.name) ?? "\u6B4C\u5355"), tracks: (Array.isArray(r2 == null ? void 0 : r2.tracks) ? r2.tracks : []).map(mapTrack) };
 }
-async function mygoShowTracks(id2, sid, kind) {
+async function mygoShowTracks(id2, sid, kind, offset = 0) {
+  var _a;
   const mod = await loadMyGoPlugin(id2);
   const tries = [];
   if (kind === "show")
@@ -9027,16 +9028,24 @@ async function mygoShowTracks(id2, sid, kind) {
     if (typeof f2 !== "function")
       continue;
     try {
-      const r2 = await f2.call(mod, { id: sid });
-      const list = Array.isArray(r2 == null ? void 0 : r2.tracks) ? r2.tracks : Array.isArray(r2 == null ? void 0 : r2.data) ? r2.data : Array.isArray(r2 == null ? void 0 : r2.items) ? r2.items : [];
+      const r2 = await f2.call(mod, offset ? { id: sid, offset } : { id: sid });
+      const list = Array.isArray(r2 == null ? void 0 : r2.tracks) ? r2.tracks : Array.isArray(r2 == null ? void 0 : r2.episodes) ? r2.episodes : Array.isArray(r2 == null ? void 0 : r2.data) ? r2.data : Array.isArray(r2 == null ? void 0 : r2.items) ? r2.items : [];
       if (list.length) {
-        return { name: String((r2 == null ? void 0 : r2.name) ?? (r2 == null ? void 0 : r2.title) ?? (kind === "show" ? "\u8282\u76EE" : "\u5217\u8868")), tracks: list.map(mapTrack) };
+        return {
+          name: String(((_a = r2 == null ? void 0 : r2.show) == null ? void 0 : _a.name) ?? (r2 == null ? void 0 : r2.name) ?? (r2 == null ? void 0 : r2.title) ?? (kind === "show" ? "\u8282\u76EE" : "\u5217\u8868")),
+          tracks: list.map(mapTrack),
+          more: !!(r2 == null ? void 0 : r2.more)
+        };
       }
+      if (offset > 0)
+        return { name: "", tracks: [], more: false };
     } catch (e) {
       errs.push(fn + ": " + String((e == null ? void 0 : e.message) || e));
     }
   }
-  throw new Error(errs.length ? errs.join("\uFF1B") : "\u8FD9\u4E2A\u63D2\u4EF6\u6CA1\u6709\u5F00\u653E\u6253\u5F00\u8FD9\u5F20\u5361\u7247\u7684\u63A5\u53E3");
+  if (offset > 0)
+    return { name: "", tracks: [], more: false };
+  throw new Error((errs.length ? errs.join("\uFF1B") : "\u8FD9\u4E2A\u63D2\u4EF6\u6CA1\u6709\u5F00\u653E\u6253\u5F00\u8FD9\u5F20\u5361\u7247\u7684\u63A5\u53E3") + "\u3014\u5BFC\u51FA\uFF1A" + Object.keys(mod).join(",") + "\u3015");
 }
 async function mygoAlbumTracks(id2, aid) {
   const mod = await loadMyGoPlugin(id2);
@@ -12873,7 +12882,13 @@ function PluginHome({
     if (!cur || !id2)
       return;
     if (kind === "link") {
-      setErr("\u8FD9\u5F20\u662F\u300C\u94FE\u63A5\u300D\u5361\uFF0C\u63D2\u4EF6\u6CA1\u6709\u7ED9\u51FA\u53EF\u6253\u5F00\u7684\u5730\u5740");
+      if (/^https?:/.test(id2)) {
+        setErr("\u8FD9\u5F20\u662F\u5916\u94FE\uFF08" + id2 + "\uFF09\uFF0C\u6682\u65F6\u53EA\u80FD\u5728\u63D2\u4EF6\u91CC\u70B9\u5F00");
+        return;
+      }
+      setErr("");
+      setPage(id2);
+      localStorage.setItem(PAGE_KEY, id2);
       return;
     }
     setLoading(true);
@@ -12881,9 +12896,15 @@ function PluginHome({
     try {
       let r2;
       if (kind === "playlist") {
-        r2 = await mygoPlaylistTracks(cur.id, id2).catch(() => mygoShowTracks(cur.id, id2, kind));
+        r2 = {
+          ...await mygoPlaylistTracks(cur.id, id2).catch(() => mygoShowTracks(cur.id, id2, kind)),
+          more: false
+        };
       } else if (kind === "album") {
-        r2 = await mygoAlbumTracks(cur.id, id2).catch(() => mygoShowTracks(cur.id, id2, kind));
+        r2 = {
+          ...await mygoAlbumTracks(cur.id, id2).catch(() => mygoShowTracks(cur.id, id2, kind)),
+          more: false
+        };
       } else {
         r2 = await mygoShowTracks(cur.id, id2, kind);
       }
@@ -12892,12 +12913,34 @@ function PluginHome({
         return;
       }
       setDetail({
-        ...r2,
+        name: r2.name,
+        tracks: r2.tracks,
         kind,
-        id: id2
+        id: id2,
+        more: !!r2.more
       });
     } catch (e) {
       setErr("\u6253\u4E0D\u5F00\u8FD9\u5F20\u300C" + (KIND_LABEL[kind] || kind) + "\u300D\uFF1A" + String((e == null ? void 0 : e.message) || e));
+    } finally {
+      setLoading(false);
+    }
+  }
+  async function loadMore() {
+    if (!detail || !cur || loading)
+      return;
+    setLoading(true);
+    setErr("");
+    try {
+      const r2 = await mygoShowTracks(cur.id, detail.id, detail.kind, detail.tracks.length);
+      const seen2 = new Set(detail.tracks.map((t2) => t2.id));
+      const add = r2.tracks.filter((t2) => !seen2.has(t2.id));
+      setDetail({
+        ...detail,
+        tracks: [...detail.tracks, ...add],
+        more: !!r2.more && !!add.length
+      });
+    } catch (e) {
+      setErr("\u52A0\u8F7D\u66F4\u591A\u5931\u8D25\uFF1A" + String((e == null ? void 0 : e.message) || e));
     } finally {
       setLoading(false);
     }
@@ -12965,6 +13008,15 @@ function PluginHome({
           children: /* @__PURE__ */ jsx("p", {
             children: "\u8FD9\u4E2A\u5217\u8868\u662F\u7A7A\u7684"
           })
+        }), detail.more && /* @__PURE__ */ jsx("button", {
+          className: "home-btn",
+          style: {
+            margin: "10px auto",
+            display: "block"
+          },
+          onClick: loadMore,
+          disabled: loading,
+          children: loading ? "\u52A0\u8F7D\u4E2D\u2026" : "\u52A0\u8F7D\u66F4\u591A"
         })]
       })]
     }) : /* @__PURE__ */ jsxs(Fragment, {
@@ -13796,7 +13848,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.69";
+const BUILD_TAG = "3.0.70";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -20218,17 +20270,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.69] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.70] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.69] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.70] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.69] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.70] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.69] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.70] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>
