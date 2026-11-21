@@ -26,6 +26,9 @@ const (
 
 var panelMu sync.Mutex
 var panelWins map[string]*mygo.Window
+// panelPlaced 记录这一轮皮肤界面是否已经排过位置，免得重新打开副窗时
+// 又把用户拖走的窗口拽回原位。
+var panelPlaced bool
 
 func newWinSafe(opts mygo.WindowOptions) (win *mygo.Window, err error) {
 	defer func() {
@@ -125,6 +128,7 @@ func (a *App) panelLayout() {
 func (a *App) showPanels() {
 	a.buildPanels()
 	a.panelLayout()
+	panelPlaced = true
 	panelMu.Lock()
 	wins := panelWins
 	panelMu.Unlock()
@@ -135,6 +139,7 @@ func (a *App) showPanels() {
 
 // hidePanels 回桌面界面时把副窗收起来。
 func (a *App) hidePanels() {
+	panelPlaced = false
 	panelMu.Lock()
 	wins := panelWins
 	panelMu.Unlock()
@@ -185,6 +190,22 @@ func (a *App) CmdSend(json string) {
 		time.Sleep(time.Millisecond) // 让调用方那一帧先画完，命令再进页面
 		_, _ = page.Eval("window.__huluCmd && window.__huluCmd(" + quoteJS(json) + ")")
 	}(p)
+}
+
+// ShowPanel 主窗 PL/EQ/LRC 按钮把对应副窗重新显示出来。窗口早就建好，
+// 只有第一次显示时才跟着主窗重新排一遍位置，之后保持用户自己拖过的地方。
+func (a *App) ShowPanel(name string) {
+	if name == "" || name == "main" {
+		return
+	}
+	a.buildPanels()
+	if !panelPlaced {
+		a.panelLayout()
+		panelPlaced = true
+	}
+	if w := a.panelByName(name); w != nil {
+		w.ShowInactive()
+	}
 }
 
 // HidePanel 副窗的 ×：把自己的窗口收起来。

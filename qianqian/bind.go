@@ -281,6 +281,22 @@ func (x API) WinMoveBy(dx any, dy any) string {
 	return x.App.WinMoveBy(as[int](dx), as[int](dy))
 }
 
+// ToggleMax 无边框窗口自绘的最大化按钮：切一次，返回切换后的状态。
+func (x API) ToggleMax() bool {
+	if x.App.win == nil {
+		return false
+	}
+	if x.App.win.IsMaximized() {
+		x.App.win.Unmaximize()
+	} else {
+		x.App.win.Maximize()
+	}
+	return !x.App.win.IsMaximized()
+}
+
+// ShowPanel 主窗 PL/EQ/LRC 三个开关：把对应副窗重新显示出来。
+func (x API) ShowPanel(name string) { x.App.ShowPanel(name) }
+
 // DragWindow 皮肤窗标题栏按下时调用：交给 Go 端轮询光标、SetWindowPos 跟着鼠标走。
 func (x API) DragWindow(panel string) { x.App.dragWindowFor(panel) }
 

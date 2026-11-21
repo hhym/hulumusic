@@ -10757,31 +10757,22 @@ function SkinView(p2) {
   const solo = p2.only && p2.only !== "main" ? p2.only : "";
   const isMain = !solo;
   const bridge2 = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App;
-  const winHide = (n2) => {
-    var _a3;
+  const call2 = (fn, ...a) => {
     try {
-      (_a3 = bridge2 == null ? void 0 : bridge2.HidePanel) == null ? void 0 : _a3.call(bridge2, n2);
+      Promise.resolve(fn == null ? void 0 : fn(...a)).catch(() => {
+      });
     } catch {
     }
   };
-  const winShow = (n2) => {
-    var _a3;
-    try {
-      (_a3 = bridge2 == null ? void 0 : bridge2.ShowPanel) == null ? void 0 : _a3.call(bridge2, n2);
-    } catch {
-    }
-  };
+  const winHide = (n2) => call2(bridge2 == null ? void 0 : bridge2.HidePanel, n2);
+  const winShow = (n2) => call2(bridge2 == null ? void 0 : bridge2.ShowPanel, n2);
   const [rolled, setRolled] = react.exports.useState(false);
   const roll = () => {
-    var _a3;
     const h = rolled ? {
       eq: 126,
       lyric: 216
     }[solo] || window.innerHeight : 26;
-    try {
-      (_a3 = bridge2 == null ? void 0 : bridge2.RollPanel) == null ? void 0 : _a3.call(bridge2, solo, h);
-    } catch {
-    }
+    call2(bridge2 == null ? void 0 : bridge2.RollPanel, solo, h);
     setRolled((v2) => !v2);
   };
   const showEq = p2.only ? p2.only === "eq" : open.eq;

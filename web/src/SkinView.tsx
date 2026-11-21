@@ -188,12 +188,17 @@ export default function SkinView(p: Props) {
   const solo = p.only && p.only !== 'main' ? p.only : ''
   const isMain = !solo
   const bridge = (window as any).go?.main?.App
-  const winHide = (n: string) => { try { bridge?.HidePanel?.(n) } catch { /* 忽略 */ } }
-  const winShow = (n: string) => { try { bridge?.ShowPanel?.(n) } catch { /* 忽略 */ } }
+  // 这几个调用返回的是 Promise，用 try/catch 接不住异步失败，必须挂 catch，
+  // 否则老版本里方法不存在时会在窗口底部弹一条 [reject] 红字。
+  const call = (fn: any, ...a: any[]) => {
+    try { Promise.resolve(fn?.(...a)).catch(() => {}) } catch { /* 忽略 */ }
+  }
+  const winHide = (n: string) => call(bridge?.HidePanel, n)
+  const winShow = (n: string) => call(bridge?.ShowPanel, n)
   const [rolled, setRolled] = useState(false)
   const roll = () => {
     const h = rolled ? ({eq: 126, lyric: 216} as any)[solo] || window.innerHeight : 26
-    try { bridge?.RollPanel?.(solo, h) } catch { /* 忽略 */ }
+    call(bridge?.RollPanel, solo, h)
     setRolled((v) => !v)
   }
   // 只要传了 only，就只画那一个面板（四窗各自独立，主窗也不再重复画另外三块）；
