@@ -13788,7 +13788,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.72";
+const BUILD_TAG = "3.0.73";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 const POD_KEYWORDS = ["\u6709\u58F0\u4E66", "\u90ED\u5FB7\u7EB2", "\u4E09\u56FD\u6F14\u4E49", "\u7761\u524D\u6545\u4E8B", "\u76F8\u58F0", "\u82F1\u8BED\u64AD\u5BA2", "\u513F\u7AE5\u6545\u4E8B", "\u5386\u53F2"];
 const POD_PLATFORMS = [{
@@ -14076,6 +14076,13 @@ function App() {
     window.addEventListener("resize", upd);
     return () => window.removeEventListener("resize", upd);
   }, []);
+  const [lyrHidden, setLyrHidden] = react.exports.useState(() => {
+    try {
+      return localStorage.getItem("qqjt-lyr-hidden") === "1";
+    } catch {
+      return false;
+    }
+  });
   const [lyrMax, setLyrMax] = react.exports.useState(false);
   const [lrcK, setLrcK] = react.exports.useState(() => {
     const v2 = Number(localStorage.getItem("qqjt-lrc-k"));
@@ -16695,6 +16702,20 @@ function App() {
                 n: "layout",
                 size: 11
               })
+            }), lyrHidden && /* @__PURE__ */ jsx("button", {
+              className: "sk-wb",
+              title: "\u663E\u793A\u6B4C\u8BCD\u79C0",
+              onClick: () => {
+                setLyrHidden(false);
+                try {
+                  localStorage.setItem("qqjt-lyr-hidden", "0");
+                } catch {
+                }
+              },
+              children: /* @__PURE__ */ jsx(Fi, {
+                n: "type",
+                size: 11
+              })
             }), /* @__PURE__ */ jsx("button", {
               className: "sk-wb sk-win-mini",
               title: "\u5C0F\u7A97\u53E3\u6A21\u5F0F\uFF08\u7F29\u6210\u8FF7\u4F60\u6761\u5E76\u7F6E\u9876\uFF0C\u6309 Esc \u6216\u6761\u4E0A\u6309\u94AE\u8FD8\u539F\uFF09",
@@ -16985,7 +17006,7 @@ function App() {
               })]
             })]
           })]
-        }), !showLrc && /* @__PURE__ */ jsxs("section", {
+        }), !showLrc && !lyrHidden && /* @__PURE__ */ jsxs("section", {
           className: "sk-panel sk-lyr sk-lyr-inline",
           children: [/* @__PURE__ */ jsxs("div", {
             className: "sk-title",
@@ -16998,9 +17019,9 @@ function App() {
                 color: "#b7bff0"
               },
               children: isLive ? "\u7535\u53F0\u65E0\u6B4C\u8BCD" : ""
-            }), /* @__PURE__ */ jsx("div", {
+            }), /* @__PURE__ */ jsxs("div", {
               className: "sk-win-btns",
-              children: /* @__PURE__ */ jsx("button", {
+              children: [/* @__PURE__ */ jsx("button", {
                 className: "sk-wb",
                 title: "\u5C55\u5F00\u5927\u6B4C\u8BCD\u79C0\uFF08\u5360\u7528\u53F3\u4FA7\u4E00\u6574\u5217\uFF09",
                 onClick: toggleLrc,
@@ -17008,7 +17029,21 @@ function App() {
                   n: "maximize-2",
                   size: 11
                 })
-              })
+              }), /* @__PURE__ */ jsx("button", {
+                className: "sk-wb",
+                title: "\u6536\u8D77\u6B4C\u8BCD\u79C0\uFF08\u6574\u5757\u6536\u8D77\uFF0C\u64AD\u653E\u5217\u8868\u81EA\u52A8\u4E0A\u79FB\uFF1B\u4E3B\u7A97\u53E3\u6807\u9898\u680F\u53EF\u518D\u6253\u5F00\uFF09",
+                onClick: () => {
+                  setLyrHidden(true);
+                  try {
+                    localStorage.setItem("qqjt-lyr-hidden", "1");
+                  } catch {
+                  }
+                },
+                children: /* @__PURE__ */ jsx(Fi, {
+                  n: "x",
+                  size: 12
+                })
+              })]
             })]
           }), /* @__PURE__ */ jsx("div", {
             className: "sk-lyr-body sk-lyr-inline-body",
@@ -20273,17 +20308,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.72] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.73] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.72] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.73] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.72] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.73] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.72] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.73] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

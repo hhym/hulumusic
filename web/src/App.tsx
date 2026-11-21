@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.72'
+const BUILD_TAG = '3.0.73'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -445,6 +445,10 @@ export default function App() {
     return () => window.removeEventListener('resize', upd)
   }, [])
 
+  /* 皮肤界面里把歌词秀整块收起来（不是收成小面板，而是让播放列表上移占满） */
+  const [lyrHidden, setLyrHidden] = useState<boolean>(() => {
+    try { return localStorage.getItem('qqjt-lyr-hidden') === '1' } catch { return false }
+  })
   const [lyrMax, setLyrMax] = useState(false)
   // 歌词字号倍数：1 = 100%。标题栏 A−/A+、Ctrl+滚轮改它，值存 localStorage，下次进来还是这个号。
   const [lrcK, setLrcK] = useState(() => {
@@ -2174,6 +2178,12 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
             <span className="sk-time" style={{ marginLeft: 'auto' }}>{isLive ? 'LIVE' : fmt(pos)}</span>
             <button className="sk-wb" title="切换到桌面界面（左侧竖排导航 + 底部播放条）"
                     onClick={() => switchLayout('desk')}><Fi n="layout" size={11} /></button>
+            {lyrHidden && (
+              <button className="sk-wb" title="显示歌词秀"
+                      onClick={() => { setLyrHidden(false); try { localStorage.setItem('qqjt-lyr-hidden','0') } catch { /* 忽略 */ } }}>
+                <Fi n="type" size={11} />
+              </button>
+            )}
             <button className="sk-wb sk-win-mini" title="小窗口模式（缩成迷你条并置顶，按 Esc 或条上按钮还原）"
                     onClick={() => toggleMini(true)}>
               <Fi n="minimize-2" size={11} />
@@ -2277,8 +2287,8 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
           </section>
         )}
 
-        {/* ── 歌词秀（右侧大面板收起时的单列小面板，点击展开大面板） ── */}
-        {!showLrc && (
+        {/* ── 歌词秀（右侧大面板收起时的单列小面板，点击展开大面板，右上 ✕ 整块收起） ── */}
+        {!showLrc && !lyrHidden && (
           <section className="sk-panel sk-lyr sk-lyr-inline">
             <div className="sk-title">
               <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' || skinTheme === 'neon' ? 'LYRIC 歌词秀' : '歌词秀'}</span>
@@ -2286,6 +2296,10 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
               <div className="sk-win-btns">
                 <button className="sk-wb" title="展开大歌词秀（占用右侧一整列）"
                         onClick={toggleLrc}><Fi n="maximize-2" size={11} /></button>
+                <button className="sk-wb" title="收起歌词秀（整块收起，播放列表自动上移；主窗口标题栏可再打开）"
+                        onClick={() => { setLyrHidden(true); try { localStorage.setItem('qqjt-lyr-hidden','1') } catch { /* 忽略 */ } }}>
+                  <Fi n="x" size={12} />
+                </button>
               </div>
             </div>
             <div className="sk-lyr-body sk-lyr-inline-body"
