@@ -15012,7 +15012,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.42";
+const BUILD_TAG = "3.0.55";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -15295,6 +15295,18 @@ function App() {
     return () => window.removeEventListener("resize", upd);
   }, []);
   const [lyrMax, setLyrMax] = react.exports.useState(false);
+  const [lrcK, setLrcK] = react.exports.useState(() => {
+    const v2 = Number(localStorage.getItem("qqjt-lrc-k"));
+    return v2 >= 0.6 && v2 <= 2.5 ? v2 : 1;
+  });
+  function bumpLrcK(by) {
+    const next = Math.min(2.5, Math.max(0.6, Math.round((lrcK + by) * 10) / 10));
+    setLrcK(next);
+    try {
+      localStorage.setItem("qqjt-lrc-k", String(next));
+    } catch {
+    }
+  }
   const [showLrc, setShowLrc] = react.exports.useState(() => {
     try {
       return localStorage.getItem("qqjt-showlrc") !== "0";
@@ -16513,6 +16525,9 @@ function App() {
       onPlayAll: (pid, pname, items) => playPluginList(pid, pname, items, 0)
     }) : tab === "lyric" ? /* @__PURE__ */ jsxs("div", {
       className: "dlp",
+      style: {
+        "--lrc-k": lrcK
+      },
       children: [/* @__PURE__ */ jsxs("div", {
         className: "dlp-head",
         children: [/* @__PURE__ */ jsxs("div", {
@@ -16538,10 +16553,38 @@ function App() {
                 switchLyricMode();
             },
             children: "\u6574\u6BB5\u6EDA\u52A8"
+          }), /* @__PURE__ */ jsx("button", {
+            onClick: () => bumpLrcK(-0.1),
+            title: "\u6B4C\u8BCD\u5B57\u53F7\u7F29\u5C0F\uFF08\u4E5F\u53EF Ctrl+\u6EDA\u8F6E\uFF09",
+            children: "A\u2212"
+          }), /* @__PURE__ */ jsxs("span", {
+            className: "dlp-ksize",
+            title: "\u6B4C\u8BCD\u5B57\u53F7\uFF08\u53CC\u51FB\u6062\u590D 100%\uFF09",
+            onDoubleClick: () => {
+              setLrcK(1);
+              try {
+                localStorage.setItem("qqjt-lrc-k", "1");
+              } catch {
+              }
+            },
+            children: [Math.round(lrcK * 100), "%"]
+          }), /* @__PURE__ */ jsx("button", {
+            onClick: () => bumpLrcK(0.1),
+            title: "\u6B4C\u8BCD\u5B57\u53F7\u653E\u5927\uFF08\u4E5F\u53EF Ctrl+\u6EDA\u8F6E\uFF09",
+            children: "A+"
           })]
         })]
       }), /* @__PURE__ */ jsx("div", {
         className: "dlp-body",
+        style: {
+          "--lrc-k": lrcK
+        },
+        onWheel: (e) => {
+          if (e.ctrlKey) {
+            e.preventDefault();
+            bumpLrcK(e.deltaY < 0 ? 0.1 : -0.1);
+          }
+        },
         children: lyric.length > 0 ? lyricMode === "karaoke" ? /* @__PURE__ */ jsxs("div", {
           className: "dlp-kara",
           children: [/* @__PURE__ */ jsx("div", {
@@ -18406,6 +18449,33 @@ function App() {
             }), /* @__PURE__ */ jsxs("div", {
               className: "sk-win-btns",
               children: [/* @__PURE__ */ jsx("button", {
+                className: "sk-wb",
+                title: "\u6B4C\u8BCD\u5B57\u53F7\u7F29\u5C0F\uFF08\u4E5F\u53EF Ctrl+\u6EDA\u8F6E\uFF09",
+                onClick: () => bumpLrcK(-0.1),
+                children: /* @__PURE__ */ jsx(Fi, {
+                  n: "minus",
+                  size: 11
+                })
+              }), /* @__PURE__ */ jsxs("span", {
+                className: "sk-wb sk-lrc-k",
+                title: "\u6B4C\u8BCD\u5B57\u53F7\uFF08\u53CC\u51FB\u6062\u590D 100%\uFF09",
+                onDoubleClick: () => {
+                  setLrcK(1);
+                  try {
+                    localStorage.setItem("qqjt-lrc-k", "1");
+                  } catch {
+                  }
+                },
+                children: [Math.round(lrcK * 100), "%"]
+              }), /* @__PURE__ */ jsx("button", {
+                className: "sk-wb",
+                title: "\u6B4C\u8BCD\u5B57\u53F7\u653E\u5927\uFF08\u4E5F\u53EF Ctrl+\u6EDA\u8F6E\uFF09",
+                onClick: () => bumpLrcK(0.1),
+                children: /* @__PURE__ */ jsx(Fi, {
+                  n: "plus",
+                  size: 11
+                })
+              }), /* @__PURE__ */ jsx("button", {
                 className: "sk-wb sk-lrc-mode",
                 title: lyricMode === "karaoke" ? "\u5F53\u524D\uFF1A\u5361\u62C9OK \u4E24\u884C\uFF08\u70B9\u51FB\u5207\u6574\u6BB5\u6EDA\u52A8\uFF09" : "\u5F53\u524D\uFF1A\u6574\u6BB5\u6EDA\u52A8\uFF08\u70B9\u51FB\u5207\u5361\u62C9OK \u4E24\u884C\uFF09",
                 onClick: switchLyricMode,
@@ -18431,7 +18501,16 @@ function App() {
             })]
           }), /* @__PURE__ */ jsx("div", {
             className: "sk-lyr-body",
-            title: "\u53CC\u51FB\u653E\u5927 / \u8FD8\u539F\u6B4C\u8BCD\u79C0",
+            title: "\u53CC\u51FB\u653E\u5927 / \u8FD8\u539F\u6B4C\u8BCD\u79C0\uFF08Ctrl+\u6EDA\u8F6E\u8C03\u5B57\u53F7\uFF09",
+            style: {
+              "--lrc-k": lrcK
+            },
+            onWheel: (e) => {
+              if (e.ctrlKey) {
+                e.preventDefault();
+                bumpLrcK(e.deltaY < 0 ? 0.1 : -0.1);
+              }
+            },
             onDoubleClick: () => setLyrMax((v2) => !v2),
             children: lyric.length > 0 ? /* @__PURE__ */ jsxs(Fragment, {
               children: [/* @__PURE__ */ jsx("div", {
@@ -19514,8 +19593,8 @@ html[data-theme='dark'] .plug-kind {
   background:linear-gradient(180deg,#0d1030,#0a0c24);display:flex;flex-direction:column;justify-content:center}
 .sk-lyr-body .song{font-size:13px;color:#eef0ff;margin-bottom:2px}
 .sk-lyr-body .meta{font-size:10.5px;color:#7d86cf;margin-bottom:10px}
-.sk-lyr-body .ln{font-size:12px;line-height:2.05;color:#8b93d8}
-.sk-lyr-body .ln.on{color:#fff;font-size:13.5px;text-shadow:0 0 10px rgba(150,160,255,.55)}
+.sk-lyr-body .ln{font-size:calc(12px * var(--lrc-k,1));line-height:2.05;color:#8b93d8}
+.sk-lyr-body .ln.on{color:#fff;font-size:calc(13.5px * var(--lrc-k,1));text-shadow:0 0 10px rgba(150,160,255,.55)}
 .sk-lyr-body .none{font-size:12px;color:#6f78bd}
 
 /* 皮肤里的列表与卡片：跟着深蓝底走 */
@@ -19905,9 +19984,9 @@ html[data-theme='dark'] .plug-kind {
 /* 卡拉OK 两行模式 */
 .kara{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;padding:6px 0}
 .kara .krow{max-width:100%;overflow:hidden}
-.kara .krow.now{font-size:19px;line-height:1.5;color:#7d86cf}
+.kara .krow.now{font-size:calc(19px * var(--lrc-k,1));line-height:1.5;color:#7d86cf}
 .kara .krow.now .kfill{color:#ffffff;text-shadow:0 0 12px rgba(150,160,255,.7)}
-.kara .krow.next{font-size:13px;line-height:1.5;color:#5d669f}
+.kara .krow.next{font-size:calc(13px * var(--lrc-k,1));line-height:1.5;color:#5d669f}
 .skin[data-skin="tt"] .kara .krow.now{color:#a1662e}
 .skin[data-skin="tt"] .kara .krow.now .kfill{color:#ffd68a;text-shadow:0 0 12px rgba(255,170,60,.7)}
 .skin[data-skin="tt"] .kara .krow.next{color:#9c6329}
@@ -19917,8 +19996,8 @@ html[data-theme='dark'] .plug-kind {
 .sk-title .sk-lrc-mode{width:22px;font-size:10px;font-weight:600}
 @media (max-height: 330px){
   .kara{gap:8px}
-  .kara .krow.now{font-size:15px}
-  .kara .krow.next{font-size:11px}
+  .kara .krow.now{font-size:calc(15px * var(--lrc-k,1))}
+  .kara .krow.next{font-size:calc(11px * var(--lrc-k,1))}
 }
 
 /* 卡拉OK 未唱部分的可读性：比"已唱"暗，但要看得清 */
@@ -20511,11 +20590,11 @@ html[data-theme='dark'] .plug-kind {
 .dlp-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:8px;padding:24px 12px}
 .dlp-kara{display:flex;flex-direction:column;align-items:center;gap:26px;width:100%}
-.dlp-prev,.dlp-next{font-size:16px;line-height:1.6;color:var(--dim);opacity:.62;text-align:center;max-width:1000px}
-.dlp-now{font-size:30px;line-height:1.45;font-weight:600;text-align:center;max-width:1040px;color:var(--txt)}
+.dlp-prev,.dlp-next{font-size:calc(16px * var(--lrc-k,1));line-height:1.6;color:var(--dim);opacity:.62;text-align:center;max-width:1000px}
+.dlp-now{font-size:calc(30px * var(--lrc-k,1));line-height:1.45;font-weight:600;text-align:center;max-width:1040px;color:var(--txt)}
 .dlp-none{font-size:13px;color:var(--dim)}
-.dlp .ln{font-size:15px;line-height:1.95;color:var(--dim);text-align:center;width:100%;max-width:1000px}
-.dlp .ln.on{font-size:19px;font-weight:600;color:var(--txt)}
+.dlp .ln{font-size:calc(15px * var(--lrc-k,1));line-height:1.95;color:var(--dim);text-align:center;width:100%;max-width:1000px}
+.dlp .ln.on{font-size:calc(19px * var(--lrc-k,1));font-weight:600;color:var(--txt)}
 .dlp .kowrap{position:relative;display:inline-block;max-width:100%}
 .dlp .kbase{color:inherit}
 .dlp .kfill{position:absolute;left:0;top:0;white-space:nowrap;overflow:hidden;color:var(--acc);pointer-events:none}
@@ -21402,6 +21481,11 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
   text-shadow:0 0 6px rgba(0,0,0,.95),0 2px 3px rgba(0,0,0,.9)}
 .dl-line.dim{color:rgba(190,210,230,.55);font-weight:400;font-size:22px}
 
+/* 歌词字号倍数（--lrc-k，1 = 100%）：标题栏上的 A−/百分比/A+ 与 Ctrl+滚轮都改它 */
+.sk-lrc-k{min-width:38px;font-size:10.5px;color:#9aa3e8;letter-spacing:.3px}
+.dlp-tools .dlp-ksize{padding:5px 6px;border:1px solid transparent;border-radius:7px;
+  font-size:12px;color:var(--dim);min-width:44px;text-align:center;cursor:default;user-select:none}
+
 </style>
 </head>
 <body>
@@ -21434,17 +21518,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.42] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.55] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.42] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.55] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.42] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.55] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.42] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.55] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

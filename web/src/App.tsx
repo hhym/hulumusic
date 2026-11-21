@@ -163,7 +163,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.42'
+const BUILD_TAG = '3.0.55'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -436,6 +436,16 @@ export default function App() {
   }, [])
 
   const [lyrMax, setLyrMax] = useState(false)
+  // 歌词字号倍数：1 = 100%。标题栏 A−/A+、Ctrl+滚轮改它，值存 localStorage，下次进来还是这个号。
+  const [lrcK, setLrcK] = useState(() => {
+    const v = Number(localStorage.getItem('qqjt-lrc-k'))
+    return v >= 0.6 && v <= 2.5 ? v : 1
+  })
+  function bumpLrcK(by: number) {
+    const next = Math.min(2.5, Math.max(0.6, Math.round((lrcK + by) * 10) / 10))
+    setLrcK(next)
+    try { localStorage.setItem('qqjt-lrc-k', String(next)) } catch { /* 忽略 */ }
+  }
   const [showLrc, setShowLrc] = useState(() => {
     try { return localStorage.getItem('qqjt-showlrc') !== '0' } catch { return true }
   })
@@ -1429,7 +1439,7 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
           onPlayAll={(pid, pname, items) => playPluginList(pid, pname, items, 0)}
         />
       ) : tab === 'lyric' ? (
-        <div className="dlp">
+        <div className="dlp" style={{ '--lrc-k': lrcK } as any}>
           <div className="dlp-head">
             <div className="dlp-song">
               <b>{cur ? cur.name : '未在播放'}</b>
@@ -1438,9 +1448,16 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
             <div className="dlp-tools">
               <button className={lyricMode === 'karaoke' ? 'on' : ''} onClick={() => { if (lyricMode !== 'karaoke') switchLyricMode() }}>卡拉OK</button>
               <button className={lyricMode === 'scroll' ? 'on' : ''} onClick={() => { if (lyricMode !== 'scroll') switchLyricMode() }}>整段滚动</button>
+              <button onClick={() => bumpLrcK(-0.1)} title="歌词字号缩小（也可 Ctrl+滚轮）">A−</button>
+              <span className="dlp-ksize" title="歌词字号（双击恢复 100%）"
+                    onDoubleClick={() => { setLrcK(1); try { localStorage.setItem('qqjt-lrc-k','1') } catch { /* 忽略 */ } }}>
+                {Math.round(lrcK * 100)}%
+              </span>
+              <button onClick={() => bumpLrcK(0.1)} title="歌词字号放大（也可 Ctrl+滚轮）">A+</button>
             </div>
           </div>
-          <div className="dlp-body">
+          <div className="dlp-body" style={{ '--lrc-k': lrcK } as any}
+               onWheel={(e) => { if (e.ctrlKey) { e.preventDefault(); bumpLrcK(e.deltaY < 0 ? 0.1 : -0.1) } }}>
             {lyric.length > 0 ? (
               lyricMode === 'karaoke' ? (
                 <div className="dlp-kara">
@@ -2355,6 +2372,14 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
               <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' || skinTheme === 'neon' ? 'LYRIC 歌词秀' : '歌词秀'}</span>
               <span style={{ fontSize: 10.5, color: '#b7bff0' }}>{isLive ? '电台无歌词' : ''}</span>
               <div className="sk-win-btns">
+                <button className="sk-wb" title="歌词字号缩小（也可 Ctrl+滚轮）"
+                        onClick={() => bumpLrcK(-0.1)}><Fi n="minus" size={11} /></button>
+                <span className="sk-wb sk-lrc-k" title="歌词字号（双击恢复 100%）"
+                      onDoubleClick={() => { setLrcK(1); try { localStorage.setItem('qqjt-lrc-k','1') } catch { /* 忽略 */ } }}>
+                  {Math.round(lrcK * 100)}%
+                </span>
+                <button className="sk-wb" title="歌词字号放大（也可 Ctrl+滚轮）"
+                        onClick={() => bumpLrcK(0.1)}><Fi n="plus" size={11} /></button>
                 <button className="sk-wb sk-lrc-mode"
                         title={lyricMode === 'karaoke' ? '当前：卡拉OK 两行（点击切整段滚动）' : '当前：整段滚动（点击切卡拉OK 两行）'}
                         onClick={switchLyricMode}>{lyricMode === 'karaoke' ? 'K' : '≡'}</button>
@@ -2364,7 +2389,9 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
                         onClick={() => { setShowLrc(false); setLyrMax(false); fitLrcWidth(false) }}>×</button>
               </div>
             </div>
-            <div className="sk-lyr-body" title="双击放大 / 还原歌词秀"
+            <div className="sk-lyr-body" title="双击放大 / 还原歌词秀（Ctrl+滚轮调字号）"
+                 style={{ '--lrc-k': lrcK } as any}
+                 onWheel={(e) => { if (e.ctrlKey) { e.preventDefault(); bumpLrcK(e.deltaY < 0 ? 0.1 : -0.1) } }}
                  onDoubleClick={() => setLyrMax(v => !v)}>
               {lyric.length > 0 ? (
                 <>
