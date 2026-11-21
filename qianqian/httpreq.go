@@ -1,7 +1,12 @@
 package qianqian
 
 import (
+	"bytes"
+	"compress/flate"
+	"compress/gzip"
+	"compress/zlib"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -52,6 +57,18 @@ func (a *App) HttpRequest(rawURL, method string, headers map[string]string, body
 		if k == "" || v == "" {
 			continue
 		}
+		// Host 只能通过 req.Host 设，塞进 Header 是无效的（5sing 插件就带了 Host）
+		if strings.EqualFold(k, "Host") {
+			req.Host = v
+			continue
+		}
+		// Accept-Encoding 不能透传：一旦显式写了这个头，net/http 会认为调用方自己解压，
+		// 于是把 gzip 字节原样交回来。插件拿到压缩包以后 JSON.parse 失败，
+		// 就在 res.list.map 上报「Cannot read properties of undefined (reading 'map')」。
+		// 这里丢掉它，让 Go 自己协商 gzip 并透明解压。
+		if strings.EqualFold(k, "Accept-Encoding") {
+			continue
+		}
 		req.Header.Set(k, v)
 	}
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -70,6 +87,11 @@ func (a *App) HttpRequest(rawURL, method string, headers map[string]string, body
 	b, err := io.ReadAll(io.LimitReader(res.Body, 12<<20))
 	if err != nil {
 		return HttpResult{Status: res.StatusCode, Err: "读取响应失败：" + err.Error()}
+	}
+	// 兜底：万一服务端无视协商、或者我们哪天又透传了 Accept-Encoding，
+	// 这里把 gzip/deflate 的包体解回来，别把二进制当文本交给插件
+	if b, err = decodeContentEncoding(b, res.Header.Get("Content-Encoding")); err != nil {
+		return HttpResult{Status: res.StatusCode, Err: "解压响应失败：" + err.Error()}
 	}
 	// 文本类响应给原文；图片/音频这类二进制响应额外给 base64，
 	// 否则插件里 `(await fetch(...)).arrayBuffer()` 拿到的字节是错的
@@ -123,3 +145,41 @@ func (a *App) PluginPlayURL(rawURL, referer string) (string, string) {
 	}
 	return out, ""
 }
+
+// decodeContentEncoding 把 gzip / deflate 包体解成原文；其它编码原样返回。
+// deflate 两种流派都试：zlib 包装的和裸 deflate 的，站点两种都有。
+func decodeContentEncoding(b []byte, enc string) ([]byte, error) {
+	switch strings.ToLower(strings.TrimSpace(enc)) {
+	case "gzip", "x-gzip":
+		if len(b) < 2 || b[0] != 0x1f || b[1] != 0x8b {
+			return b, nil // 头里写了 gzip 但包体没压缩，说明已经解过了
+		}
+		zr, err := gzip.NewReader(bytesReader(b))
+		if err != nil {
+			return nil, err
+		}
+		defer zr.Close()
+		out, err := io.ReadAll(io.LimitReader(zr, 24<<20))
+		if err != nil {
+			return nil, err
+		}
+		return out, nil
+	case "deflate":
+		if zr, err := zlib.NewReader(bytesReader(b)); err == nil {
+			defer zr.Close()
+			if out, rerr := io.ReadAll(io.LimitReader(zr, 24<<20)); rerr == nil {
+				return out, nil
+			}
+		}
+		fr := flate.NewReader(bytesReader(b))
+		defer fr.Close()
+		out, err := io.ReadAll(io.LimitReader(fr, 24<<20))
+		if err != nil {
+			return nil, fmt.Errorf("deflate: %w", err)
+		}
+		return out, nil
+	}
+	return b, nil
+}
+
+func bytesReader(b []byte) io.Reader { return bytes.NewReader(b) }
