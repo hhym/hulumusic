@@ -67,6 +67,10 @@ type MarketItem = {
   tags?: string[]
   size: number
   installed: boolean
+  // 市场目录里的本地条目：kind 决定装成目录型还是单文件，path 只用于展示
+  kind?: string
+  path?: string
+  source?: string
 }
 
 // 市场清单同样是 (数组, 错误串) 两个返回值，包一层拆出来
@@ -99,6 +103,7 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
   const [marketKw, setMarketKw] = useState('')
   const [installing, setInstalling] = useState('')
   const [marketLoading, setMarketLoading] = useState(false)
+  const [marketDir, setMarketDir] = useState('')
 
 
   // 当前音源：跟主界面共用 localStorage 的 qqqt-home-plugin，改完发事件让左侧下拉同步
@@ -142,12 +147,56 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
   useEffect(() => {
     reload()
     loadMarket()
+    refreshMarketDir()
     // 把 .zip / 插件文件夹直接拖进窗口，后端会当场装好，装完发这个事件
     // 让列表重新拉一遍（不依赖系统文件对话框）。
     const h = () => { reload(); loadMarket() }
     window.addEventListener('hulu-plugin-installed', h)
     return () => window.removeEventListener('hulu-plugin-installed', h)
   }, [])
+
+  // 市场目录是用户自己往里丢插件的地方，路径要在界面上露出来
+  async function refreshMarketDir() {
+    try {
+      const raw: any = await callM<any>('MarketDir')
+      const v = Array.isArray(raw) ? raw[0] : raw
+      if (typeof v === 'string') setMarketDir(v)
+    } catch {
+      /* 拿不到就不显示这一行 */
+    }
+  }
+
+  async function openMarketDir() {
+    try {
+      const raw: any = await callM<any>('OpenMarketDir')
+      // 双返回值形态是 [路径, 错误串]；只给单值时不猜，按成功处理
+      const err = Array.isArray(raw) ? raw[1] || '' : ''
+      if (err) setMarketErr(String(err))
+      else flash('已打开插件市场目录')
+      await refreshMarketDir()
+    } catch (e: any) {
+      setMarketErr(String(e?.message || e))
+    }
+  }
+
+  async function addMarketDir() {
+    setMarketLoading(true)
+    try {
+      const raw: any = await callM<any>('AddMarketDir')
+      // PickResult 是结构体；万一桥接把它包成 [结构体, 错误] 也要认
+      const r: any = Array.isArray(raw) ? raw[0] || {} : raw || {}
+      const err = String(r.err || '')
+      const canceled = !!r.canceled
+      if (err) setMarketErr(err)
+      await loadMarket()
+      await refreshMarketDir()
+      if (!err && !canceled) flash('已添加市场目录')
+    } catch (e: any) {
+      setMarketErr(String(e?.message || e))
+    } finally {
+      setMarketLoading(false)
+    }
+  }
 
   async function loadMarket() {
     setMarketLoading(true)
@@ -404,18 +453,28 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
               placeholder="搜插件名 / 标签，如 电台、QQ"
               onChange={(e) => setMarketKw(e.target.value)}
             />
+            <button className="ghost-btn" title="在资源管理器里打开插件市场目录" onClick={() => openMarketDir()}>
+              打开目录
+            </button>
+            <button className="ghost-btn" title="挑一个文件夹当作插件市场目录" onClick={() => addMarketDir()} disabled={marketLoading}>
+              添加目录
+            </button>
             <button className="ghost-btn" onClick={loadMarket} disabled={marketLoading}>
               {marketLoading ? '…' : '刷新'}
             </button>
           </div>
         </div>
         <p className="hint">
-          这里列的是已经打包进安装包的插件，<b>点「安装」就装好</b>，不用填地址、不用选文件，离线也能装。
-          装好之后在下面「已安装」里开关和试搜。
+          <b>点「安装」就装好</b>，不用填地址、不用选文件。清单有两个来源：打包进安装包的内置插件，
+          以及<b>插件市场目录</b>——把 MyGo 插件文件夹或 MusicFree 的 <code>.js</code> 丢进那个目录里，
+          点「刷新」就会列出来。点「打开目录」直接打开它，「添加目录」可以把别的文件夹也挂进来。
         </p>
+        {marketDir && <div className="hint mk-dir">市场目录：<code>{marketDir}</code></div>}
         {marketErr && <div className="err-msg">{marketErr}</div>}
         {market.length === 0 && !marketLoading && (
-          <div className="empty small">安装包内暂无内置插件条目。下面的「安装 MyGo 插件」「安装 MusicFree 插件」两张卡各自导入本地插件；点右边「刷新」可重读。</div>
+          <div className="empty small">
+            清单是空的。点「打开目录」把 MyGo 插件文件夹或 MusicFree 的 <code>.js</code> 放进去，再点「刷新」就会出现在这里。
+          </div>
         )}
         <div className="mk-grid">
           {marketShown.map((it) => (
@@ -426,7 +485,8 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
               </div>
               <div className="mk-desc">{it.description || '—'}</div>
               <div className="mk-tags">
-                {(it.tags || []).map((t) => (
+                <span className="tag">{it.source === 'local' ? (it.kind === 'musicfree' ? '目录·MusicFree' : '目录·MyGo') : '内置'}</span>
+                {(it.tags || []).filter((t) => t !== '本地').map((t) => (
                   <span className="tag" key={t}>{t}</span>
                 ))}
                 <span className="mk-size">{fmtSize(it.size)}</span>

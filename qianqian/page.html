@@ -9695,6 +9695,7 @@ function PluginsPage({
   const [marketKw, setMarketKw] = react.exports.useState("");
   const [installing, setInstalling] = react.exports.useState("");
   const [marketLoading, setMarketLoading] = react.exports.useState(false);
+  const [marketDir, setMarketDir] = react.exports.useState("");
   const [srcId, setSrcId] = react.exports.useState(() => {
     try {
       return localStorage.getItem("qqqt-home-plugin") || "";
@@ -9745,6 +9746,7 @@ function PluginsPage({
   react.exports.useEffect(() => {
     reload();
     loadMarket();
+    refreshMarketDir();
     const h = () => {
       reload();
       loadMarket();
@@ -9752,6 +9754,47 @@ function PluginsPage({
     window.addEventListener("hulu-plugin-installed", h);
     return () => window.removeEventListener("hulu-plugin-installed", h);
   }, []);
+  async function refreshMarketDir() {
+    try {
+      const raw = await callM("MarketDir");
+      const v2 = Array.isArray(raw) ? raw[0] : raw;
+      if (typeof v2 === "string")
+        setMarketDir(v2);
+    } catch {
+    }
+  }
+  async function openMarketDir() {
+    try {
+      const raw = await callM("OpenMarketDir");
+      const err2 = Array.isArray(raw) ? raw[1] || "" : "";
+      if (err2)
+        setMarketErr(String(err2));
+      else
+        flash("\u5DF2\u6253\u5F00\u63D2\u4EF6\u5E02\u573A\u76EE\u5F55");
+      await refreshMarketDir();
+    } catch (e) {
+      setMarketErr(String((e == null ? void 0 : e.message) || e));
+    }
+  }
+  async function addMarketDir() {
+    setMarketLoading(true);
+    try {
+      const raw = await callM("AddMarketDir");
+      const r2 = Array.isArray(raw) ? raw[0] || {} : raw || {};
+      const err2 = String(r2.err || "");
+      const canceled = !!r2.canceled;
+      if (err2)
+        setMarketErr(err2);
+      await loadMarket();
+      await refreshMarketDir();
+      if (!err2 && !canceled)
+        flash("\u5DF2\u6DFB\u52A0\u5E02\u573A\u76EE\u5F55");
+    } catch (e) {
+      setMarketErr(String((e == null ? void 0 : e.message) || e));
+    } finally {
+      setMarketLoading(false);
+    }
+  }
   async function loadMarket() {
     setMarketLoading(true);
     try {
@@ -10044,6 +10087,17 @@ function PluginsPage({
             onChange: (e) => setMarketKw(e.target.value)
           }), /* @__PURE__ */ jsx("button", {
             className: "ghost-btn",
+            title: "\u5728\u8D44\u6E90\u7BA1\u7406\u5668\u91CC\u6253\u5F00\u63D2\u4EF6\u5E02\u573A\u76EE\u5F55",
+            onClick: () => openMarketDir(),
+            children: "\u6253\u5F00\u76EE\u5F55"
+          }), /* @__PURE__ */ jsx("button", {
+            className: "ghost-btn",
+            title: "\u6311\u4E00\u4E2A\u6587\u4EF6\u5939\u5F53\u4F5C\u63D2\u4EF6\u5E02\u573A\u76EE\u5F55",
+            onClick: () => addMarketDir(),
+            disabled: marketLoading,
+            children: "\u6DFB\u52A0\u76EE\u5F55"
+          }), /* @__PURE__ */ jsx("button", {
+            className: "ghost-btn",
             onClick: loadMarket,
             disabled: marketLoading,
             children: marketLoading ? "\u2026" : "\u5237\u65B0"
@@ -10051,15 +10105,26 @@ function PluginsPage({
         })]
       }), /* @__PURE__ */ jsxs("p", {
         className: "hint",
-        children: ["\u8FD9\u91CC\u5217\u7684\u662F\u5DF2\u7ECF\u6253\u5305\u8FDB\u5B89\u88C5\u5305\u7684\u63D2\u4EF6\uFF0C", /* @__PURE__ */ jsx("b", {
+        children: [/* @__PURE__ */ jsx("b", {
           children: "\u70B9\u300C\u5B89\u88C5\u300D\u5C31\u88C5\u597D"
-        }), "\uFF0C\u4E0D\u7528\u586B\u5730\u5740\u3001\u4E0D\u7528\u9009\u6587\u4EF6\uFF0C\u79BB\u7EBF\u4E5F\u80FD\u88C5\u3002 \u88C5\u597D\u4E4B\u540E\u5728\u4E0B\u9762\u300C\u5DF2\u5B89\u88C5\u300D\u91CC\u5F00\u5173\u548C\u8BD5\u641C\u3002"]
+        }), "\uFF0C\u4E0D\u7528\u586B\u5730\u5740\u3001\u4E0D\u7528\u9009\u6587\u4EF6\u3002\u6E05\u5355\u6709\u4E24\u4E2A\u6765\u6E90\uFF1A\u6253\u5305\u8FDB\u5B89\u88C5\u5305\u7684\u5185\u7F6E\u63D2\u4EF6\uFF0C \u4EE5\u53CA", /* @__PURE__ */ jsx("b", {
+          children: "\u63D2\u4EF6\u5E02\u573A\u76EE\u5F55"
+        }), "\u2014\u2014\u628A MyGo \u63D2\u4EF6\u6587\u4EF6\u5939\u6216 MusicFree \u7684 ", /* @__PURE__ */ jsx("code", {
+          children: ".js"
+        }), " \u4E22\u8FDB\u90A3\u4E2A\u76EE\u5F55\u91CC\uFF0C \u70B9\u300C\u5237\u65B0\u300D\u5C31\u4F1A\u5217\u51FA\u6765\u3002\u70B9\u300C\u6253\u5F00\u76EE\u5F55\u300D\u76F4\u63A5\u6253\u5F00\u5B83\uFF0C\u300C\u6DFB\u52A0\u76EE\u5F55\u300D\u53EF\u4EE5\u628A\u522B\u7684\u6587\u4EF6\u5939\u4E5F\u6302\u8FDB\u6765\u3002"]
+      }), marketDir && /* @__PURE__ */ jsxs("div", {
+        className: "hint mk-dir",
+        children: ["\u5E02\u573A\u76EE\u5F55\uFF1A", /* @__PURE__ */ jsx("code", {
+          children: marketDir
+        })]
       }), marketErr && /* @__PURE__ */ jsx("div", {
         className: "err-msg",
         children: marketErr
-      }), market.length === 0 && !marketLoading && /* @__PURE__ */ jsx("div", {
+      }), market.length === 0 && !marketLoading && /* @__PURE__ */ jsxs("div", {
         className: "empty small",
-        children: "\u5B89\u88C5\u5305\u5185\u6682\u65E0\u5185\u7F6E\u63D2\u4EF6\u6761\u76EE\u3002\u4E0B\u9762\u7684\u300C\u5B89\u88C5 MyGo \u63D2\u4EF6\u300D\u300C\u5B89\u88C5 MusicFree \u63D2\u4EF6\u300D\u4E24\u5F20\u5361\u5404\u81EA\u5BFC\u5165\u672C\u5730\u63D2\u4EF6\uFF1B\u70B9\u53F3\u8FB9\u300C\u5237\u65B0\u300D\u53EF\u91CD\u8BFB\u3002"
+        children: ["\u6E05\u5355\u662F\u7A7A\u7684\u3002\u70B9\u300C\u6253\u5F00\u76EE\u5F55\u300D\u628A MyGo \u63D2\u4EF6\u6587\u4EF6\u5939\u6216 MusicFree \u7684 ", /* @__PURE__ */ jsx("code", {
+          children: ".js"
+        }), " \u653E\u8FDB\u53BB\uFF0C\u518D\u70B9\u300C\u5237\u65B0\u300D\u5C31\u4F1A\u51FA\u73B0\u5728\u8FD9\u91CC\u3002"]
       }), /* @__PURE__ */ jsx("div", {
         className: "mk-grid",
         children: marketShown.map((it) => /* @__PURE__ */ jsxs("div", {
@@ -10077,7 +10142,10 @@ function PluginsPage({
             children: it.description || "\u2014"
           }), /* @__PURE__ */ jsxs("div", {
             className: "mk-tags",
-            children: [(it.tags || []).map((t2) => /* @__PURE__ */ jsx("span", {
+            children: [/* @__PURE__ */ jsx("span", {
+              className: "tag",
+              children: it.source === "local" ? it.kind === "musicfree" ? "\u76EE\u5F55\xB7MusicFree" : "\u76EE\u5F55\xB7MyGo" : "\u5185\u7F6E"
+            }), (it.tags || []).filter((t2) => t2 !== "\u672C\u5730").map((t2) => /* @__PURE__ */ jsx("span", {
               className: "tag",
               children: t2
             }, t2)), /* @__PURE__ */ jsx("span", {
@@ -13673,7 +13741,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.62";
+const BUILD_TAG = "3.0.63";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -17729,6 +17797,9 @@ select{background:var(--input);border:1px solid var(--line);border-radius:8px;co
 .mk-desc{font-size:12px;color:var(--dim);line-height:1.55;min-height:34px}
 .mk-tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .mk-size{font-size:11px;color:var(--dim);margin-left:auto}
+/* 市场目录路径：长路径要能折行，别把卡片撑宽 */
+.mk-dir{margin-top:-2px;font-size:11.5px;color:var(--dim);word-break:break-all}
+.mk-dir code{font-size:11.5px}
 .mk-btn{margin-top:2px;align-self:flex-start;border:0;border-radius:8px;padding:6px 16px;font-size:12.5px;cursor:pointer;background:var(--acc);color:#fff}
 .mk-btn:hover{filter:brightness(1.06)}
 .mk-btn.done{background:transparent;color:var(--dim);border:1px solid var(--line);cursor:default}
@@ -20059,17 +20130,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.62] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.63] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.62] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.63] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.62] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.63] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.62] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.63] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

@@ -36,7 +36,7 @@ type Settings struct {
 	Version   string `json:"version"`
 }
 
-const appVersion = "3.0.62"
+const appVersion = "3.0.63"
 
 func defaultSettings() Settings {
 	return Settings{
@@ -137,9 +137,8 @@ func (a *App) ResetSettings() (Settings, string) {
 	return a.fillRuntime(a.loadSettings()), ""
 }
 
-// OpenDataDir 在资源管理器里打开数据目录，方便用户自己看配置和插件。
-func (a *App) OpenDataDir() (string, string) {
-	dir := dataDir()
+// openInExplorer 用系统文件管理器打开一个目录（Windows 是资源管理器）。
+func openInExplorer(dir string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "windows":
@@ -149,7 +148,13 @@ func (a *App) OpenDataDir() (string, string) {
 	default:
 		cmd = exec.Command("xdg-open", dir)
 	}
-	if err := cmd.Start(); err != nil {
+	return cmd.Start()
+}
+
+// OpenDataDir 在资源管理器里打开数据目录，方便用户自己看配置和插件。
+func (a *App) OpenDataDir() (string, string) {
+	dir := dataDir()
+	if err := openInExplorer(dir); err != nil {
 		return dir, err.Error()
 	}
 	return dir, ""
