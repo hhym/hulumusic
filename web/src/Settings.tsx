@@ -54,16 +54,6 @@ export default function SettingsPage({ theme, onTheme, accounts, onSignOut, onRe
   const [loading, setLoading] = useState(true)
   const [activePlugins, setActivePlugins] = useState<any[]>([])
 
-  async function openHome(url: string) {
-    try {
-      const r = await callM<string>('OpenExternal', url)
-      if (r) setErr(r)
-    } catch {
-      // 浏览器预览没有这个桥接方法，退回新标签页打开
-      window.open(url, '_blank', 'noopener')
-    }
-  }
-
   async function reload() {
     setLoading(true)
     try {
@@ -173,31 +163,6 @@ export default function SettingsPage({ theme, onTheme, accounts, onSignOut, onRe
         </div>
       </section>
 
-      <section className="set-card">
-        <h3>内容平台主页</h3>
-        <p className="set-hint">点「打开主页」会用系统默认浏览器打开对应平台官网，登录、收藏、听书都在网页里操作。</p>
-        <div className="set-row">
-          <label>喜马拉雅</label>
-          <div className="home-row">
-            <span className="home-url">www.ximalaya.com</span>
-            <button className="ghost-btn" onClick={() => openHome('https://www.ximalaya.com')}>打开主页</button>
-          </div>
-        </div>
-        <div className="set-row">
-          <label>QQ 音乐听书</label>
-          <div className="home-row">
-            <span className="home-url">y.qq.com/musicroom/voice</span>
-            <button className="ghost-btn" onClick={() => openHome('https://y.qq.com/wk_v17/#/musicroom/voice')}>打开主页</button>
-          </div>
-        </div>
-        <div className="set-row">
-          <label>　</label>
-          <div className="home-row">
-            <span className="home-url">听书频道分类</span>
-            <button className="ghost-btn" onClick={() => openHome('https://c.y.qq.com/node/pc/wk_v15/audio.html')}>有声节目页</button>
-          </div>
-        </div>
-      </section>
 
       <section className="set-card">
         <h3>外观</h3>

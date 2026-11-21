@@ -25,18 +25,20 @@ type Show struct {
 	Desc    string `json:"desc"`
 }
 
+type itunesResultT = struct {
+	CollectionID   int64  `json:"collectionId"`
+	CollectionName string `json:"collectionName"`
+	ArtistName     string `json:"artistName"`
+	ArtworkURL600  string `json:"artworkUrl600"`
+	ArtworkURL100  string `json:"artworkUrl100"`
+	FeedURL        string `json:"feedUrl"`
+	TrackCount     int    `json:"trackCount"`
+	Genre          string `json:"primaryGenreName"`
+}
+
 type itunesResp struct {
-	ResultCount int `json:"resultCount"`
-	Results     []struct {
-		CollectionID   int64  `json:"collectionId"`
-		CollectionName string `json:"collectionName"`
-		ArtistName     string `json:"artistName"`
-		ArtworkURL600  string `json:"artworkUrl600"`
-		ArtworkURL100  string `json:"artworkUrl100"`
-		FeedURL        string `json:"feedUrl"`
-		TrackCount     int    `json:"trackCount"`
-		Genre          string `json:"primaryGenreName"`
-	} `json:"results"`
+	ResultCount int             `json:"resultCount"`
+	Results     []itunesResultT `json:"results"`
 }
 
 const applePodcastAPI = "https://itunes.apple.com/search"
@@ -46,23 +48,43 @@ func (a *App) PodcastSearch(term string) ([]Show, string) {
 	if strings.TrimSpace(term) == "" {
 		return []Show{}, ""
 	}
-	u := applePodcastAPI + "?" + url.Values{
-		"term":    {term},
-		"entity":  {"podcast"},
-		"limit":   {"20"},
-		"country": {"cn"},
-	}.Encode()
-
-	txt, err := getText(u, map[string]string{"User-Agent": uaDesktop})
-	if err != nil {
-		return []Show{}, "连不上 Apple 播客目录：" + err.Error()
+	// cn 区的中文节目收录不全（「有声书」「相声」这种泛词经常只回个位数），
+	// 空了就再用美国区搜一次，两边合起来去重
+	var res []itunesResultT
+	firstErr := ""
+	for _, country := range []string{"cn", "us"} {
+		u := applePodcastAPI + "?" + url.Values{
+			"term":    {term},
+			"entity":  {"podcast"},
+			"limit":   {"20"},
+			"country": {country},
+		}.Encode()
+		txt, err := getText(u, map[string]string{"User-Agent": uaDesktop})
+		if err != nil {
+			if firstErr == "" {
+				firstErr = "连不上 Apple 播客目录：" + err.Error()
+			}
+			continue
+		}
+		var j itunesResp
+		if json.Unmarshal([]byte(txt), &j) != nil {
+			continue
+		}
+		res = append(res, j.Results...)
+		if country == "cn" && len(res) >= 12 {
+			break // 中文区已经够多了，不必再混英文区的同名节目
+		}
 	}
-	var j itunesResp
-	if err := json.Unmarshal([]byte(txt), &j); err != nil {
-		return []Show{}, "播客目录返回格式异常"
+	if len(res) == 0 && firstErr != "" {
+		return []Show{}, firstErr
 	}
-	out := make([]Show, 0, len(j.Results))
-	for _, x := range j.Results {
+	out := make([]Show, 0, len(res))
+	seen := map[string]bool{}
+	for _, x := range res {
+		if seen[x.FeedURL] {
+			continue
+		}
+		seen[x.FeedURL] = true
 		if x.FeedURL == "" {
 			continue
 		}

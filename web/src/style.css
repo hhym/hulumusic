@@ -311,6 +311,14 @@ nav button.on{background:var(--sel);color:var(--txt)}
 .pod-bar button{background:var(--acc2);border:0;color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px}
 .pod-bar button:disabled{opacity:.5}
 .pod-bar .back{background:var(--hover);color:var(--txt);padding:8px 12px}
+
+.pod-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:820px}
+.pod-chip{background:var(--hover);border:1px solid var(--line);color:var(--txt);border-radius:999px;
+  padding:5px 12px;font-size:12px;cursor:pointer;line-height:1.4}
+.pod-chip:hover{border-color:var(--acc);color:var(--acc)}
+.pod-chip.link{color:var(--dim);font-size:12px}
+.pod-chip.link:hover{color:var(--acc2);border-color:var(--acc2)}
+.pod-chips-gap{width:6px}
 .card.show{align-items:flex-start;gap:10px}
 .show-cover{width:52px;height:52px;flex:0 0 52px;border-radius:9px;background-color:var(--cover);background-position:center;background-size:cover;background-repeat:no-repeat}
 .show-body{flex:1;min-width:0}

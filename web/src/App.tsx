@@ -162,10 +162,27 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.71'
+const BUILD_TAG = '3.0.72'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
+
+ // 听书页的常用词与平台入口，都收在这一处
+const POD_KEYWORDS = ['有声书', '郭德纲', '三国演义', '睡前故事', '相声', '英语播客', '儿童故事', '历史']
+const POD_PLATFORMS = [
+  {name: '喜马拉雅', url: 'https://www.ximalaya.com'},
+  {name: 'QQ 音乐听书', url: 'https://y.qq.com/wk_v17/#/musicroom/voice'},
+  {name: '有声节目页', url: 'https://c.y.qq.com/node/pc/wk_v15/audio.html'},
+]
+
+/** 用系统浏览器打开外部页面；没有桥接（浏览器里预览）就退回新标签页 */
+async function openExternal(url: string) {
+  try {
+    await call<string>('OpenExternal', url)
+  } catch {
+    window.open(url, '_blank', 'noopener')
+  }
+}
 
 type Tab = 'home' | 'search' | 'library' | 'radio' | 'podcast' | 'local' | 'queue' | 'lyric' | 'plugins' | 'settings'
 
@@ -279,6 +296,7 @@ export default function App() {
   const [shows, setShows] = useState<Show[]>([])
   const [curShow, setCurShow] = useState<Show | null>(null)
   const [podLoading, setPodLoading] = useState(false)
+  const [podSearched, setPodSearched] = useState(false)
 
   // 播放器
   const [cur, setCur] = useState<Track | null>(null)
@@ -740,11 +758,13 @@ export default function App() {
 
 
 
-  async function doPodSearch() {
-    if (!podQ.trim() || podLoading) return
-    setPodLoading(true); setErr(''); setCurShow(null); setList([])
+  async function doPodSearch(term?: string) {
+    const q = (term ?? podQ).trim()
+    if (!q || podLoading) return
+    if (term !== undefined) setPodQ(term)
+    setPodLoading(true); setErr(''); setCurShow(null); setList([]); setPodSearched(true)
     try {
-      const {data: res, err: e} = await callResult<Show[]>('PodcastSearch', podQ)
+      const {data: res, err: e} = await callResult<Show[]>('PodcastSearch', q)
       setShows(toArr<Show>(res))
       setMeta(`${toArr<Show>(res).length} 个节目`)
       if (e) setErr(e)
@@ -1663,8 +1683,26 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
             {curShow && <button className="back" onClick={() => { setCurShow(null); setList([]); setMeta('') }}>←</button>}
             <input value={podQ} placeholder="搜有声书 / 播客节目" onChange={(e) => setPodQ(e.target.value)}
                    onKeyDown={(e) => e.key === 'Enter' && doPodSearch()} />
-            <button onClick={doPodSearch} disabled={podLoading}>{podLoading ? '…' : '搜节目'}</button>
+            <button onClick={() => doPodSearch()} disabled={podLoading}>{podLoading ? '…' : '搜节目'}</button>
           </div>
+
+          {/* 听书这边的东西都收在这一个页里：搜节目、几个常用词、平台官网入口。
+              以前平台入口散在「设置」里，找起来费劲。 */}
+          {!curShow && (
+            <div className="pod-chips">
+              {POD_KEYWORDS.map((k) => (
+                <button key={k} className="pod-chip" onClick={() => doPodSearch(k)} title={'按「' + k + '」搜节目'}>
+                  {k}
+                </button>
+              ))}
+              <span className="pod-chips-gap" />
+              {POD_PLATFORMS.map((pl) => (
+                <button key={pl.url} className="pod-chip link" onClick={() => openExternal(pl.url)} title={pl.url}>
+                  {pl.name} ↗
+                </button>
+              ))}
+            </div>
+          )}
 
           {!curShow && (
             <div className="grid">
@@ -1677,7 +1715,11 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
                   </div>
                 </button>
               ))}
-              {shows.length === 0 && <div className="empty">输入关键词，搜有声书或有声节目</div>}
+              {shows.length === 0 && (
+                <div className="empty">
+                  {podLoading ? '正在搜…' : podSearched ? '没搜到节目，换个关键词试试（点上面的词也行）' : '输入关键词，搜有声书或有声节目'}
+                </div>
+              )}
             </div>
           )}
 

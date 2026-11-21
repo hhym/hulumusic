@@ -7671,15 +7671,6 @@ function SettingsPage({
   const [err, setErr] = react.exports.useState("");
   const [loading, setLoading] = react.exports.useState(true);
   const [activePlugins, setActivePlugins] = react.exports.useState([]);
-  async function openHome(url) {
-    try {
-      const r2 = await callM$1("OpenExternal", url);
-      if (r2)
-        setErr(r2);
-    } catch {
-      window.open(url, "_blank", "noopener");
-    }
-  }
   async function reload() {
     setLoading(true);
     try {
@@ -7809,59 +7800,6 @@ function SettingsPage({
           className: "ghost-btn",
           onClick: onRefreshAccounts,
           children: "\u91CD\u65B0\u8BFB\u53D6\u8D26\u53F7"
-        })]
-      })]
-    }), /* @__PURE__ */ jsxs("section", {
-      className: "set-card",
-      children: [/* @__PURE__ */ jsx("h3", {
-        children: "\u5185\u5BB9\u5E73\u53F0\u4E3B\u9875"
-      }), /* @__PURE__ */ jsx("p", {
-        className: "set-hint",
-        children: "\u70B9\u300C\u6253\u5F00\u4E3B\u9875\u300D\u4F1A\u7528\u7CFB\u7EDF\u9ED8\u8BA4\u6D4F\u89C8\u5668\u6253\u5F00\u5BF9\u5E94\u5E73\u53F0\u5B98\u7F51\uFF0C\u767B\u5F55\u3001\u6536\u85CF\u3001\u542C\u4E66\u90FD\u5728\u7F51\u9875\u91CC\u64CD\u4F5C\u3002"
-      }), /* @__PURE__ */ jsxs("div", {
-        className: "set-row",
-        children: [/* @__PURE__ */ jsx("label", {
-          children: "\u559C\u9A6C\u62C9\u96C5"
-        }), /* @__PURE__ */ jsxs("div", {
-          className: "home-row",
-          children: [/* @__PURE__ */ jsx("span", {
-            className: "home-url",
-            children: "www.ximalaya.com"
-          }), /* @__PURE__ */ jsx("button", {
-            className: "ghost-btn",
-            onClick: () => openHome("https://www.ximalaya.com"),
-            children: "\u6253\u5F00\u4E3B\u9875"
-          })]
-        })]
-      }), /* @__PURE__ */ jsxs("div", {
-        className: "set-row",
-        children: [/* @__PURE__ */ jsx("label", {
-          children: "QQ \u97F3\u4E50\u542C\u4E66"
-        }), /* @__PURE__ */ jsxs("div", {
-          className: "home-row",
-          children: [/* @__PURE__ */ jsx("span", {
-            className: "home-url",
-            children: "y.qq.com/musicroom/voice"
-          }), /* @__PURE__ */ jsx("button", {
-            className: "ghost-btn",
-            onClick: () => openHome("https://y.qq.com/wk_v17/#/musicroom/voice"),
-            children: "\u6253\u5F00\u4E3B\u9875"
-          })]
-        })]
-      }), /* @__PURE__ */ jsxs("div", {
-        className: "set-row",
-        children: [/* @__PURE__ */ jsx("label", {
-          children: "\u3000"
-        }), /* @__PURE__ */ jsxs("div", {
-          className: "home-row",
-          children: [/* @__PURE__ */ jsx("span", {
-            className: "home-url",
-            children: "\u542C\u4E66\u9891\u9053\u5206\u7C7B"
-          }), /* @__PURE__ */ jsx("button", {
-            className: "ghost-btn",
-            onClick: () => openHome("https://c.y.qq.com/node/pc/wk_v15/audio.html"),
-            children: "\u6709\u58F0\u8282\u76EE\u9875"
-          })]
         })]
       })]
     }), /* @__PURE__ */ jsxs("section", {
@@ -13850,8 +13788,26 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.71";
+const BUILD_TAG = "3.0.72";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
+const POD_KEYWORDS = ["\u6709\u58F0\u4E66", "\u90ED\u5FB7\u7EB2", "\u4E09\u56FD\u6F14\u4E49", "\u7761\u524D\u6545\u4E8B", "\u76F8\u58F0", "\u82F1\u8BED\u64AD\u5BA2", "\u513F\u7AE5\u6545\u4E8B", "\u5386\u53F2"];
+const POD_PLATFORMS = [{
+  name: "\u559C\u9A6C\u62C9\u96C5",
+  url: "https://www.ximalaya.com"
+}, {
+  name: "QQ \u97F3\u4E50\u542C\u4E66",
+  url: "https://y.qq.com/wk_v17/#/musicroom/voice"
+}, {
+  name: "\u6709\u58F0\u8282\u76EE\u9875",
+  url: "https://c.y.qq.com/node/pc/wk_v15/audio.html"
+}];
+async function openExternal(url) {
+  try {
+    await call("OpenExternal", url);
+  } catch {
+    window.open(url, "_blank", "noopener");
+  }
+}
 function App() {
   var _a, _b;
   const [theme, setTheme] = react.exports.useState(() => {
@@ -13960,6 +13916,7 @@ function App() {
   const [shows, setShows] = react.exports.useState([]);
   const [curShow, setCurShow] = react.exports.useState(null);
   const [podLoading, setPodLoading] = react.exports.useState(false);
+  const [podSearched, setPodSearched] = react.exports.useState(false);
   const [cur, setCur] = react.exports.useState(null);
   const [playing, setPlaying] = react.exports.useState(false);
   const [pos, setPos] = react.exports.useState(0);
@@ -14470,18 +14427,22 @@ function App() {
       setLoading(false);
     }
   }
-  async function doPodSearch() {
-    if (!podQ.trim() || podLoading)
+  async function doPodSearch(term) {
+    const q22 = (term ?? podQ).trim();
+    if (!q22 || podLoading)
       return;
+    if (term !== void 0)
+      setPodQ(term);
     setPodLoading(true);
     setErr("");
     setCurShow(null);
     setList([]);
+    setPodSearched(true);
     try {
       const {
         data: res,
         err: e
-      } = await callResult("PodcastSearch", podQ);
+      } = await callResult("PodcastSearch", q22);
       setShows(toArr(res));
       setMeta(`${toArr(res).length} \u4E2A\u8282\u76EE`);
       if (e)
@@ -15700,10 +15661,25 @@ function App() {
           onChange: (e) => setPodQ(e.target.value),
           onKeyDown: (e) => e.key === "Enter" && doPodSearch()
         }), /* @__PURE__ */ jsx("button", {
-          onClick: doPodSearch,
+          onClick: () => doPodSearch(),
           disabled: podLoading,
           children: podLoading ? "\u2026" : "\u641C\u8282\u76EE"
         })]
+      }), !curShow && /* @__PURE__ */ jsxs("div", {
+        className: "pod-chips",
+        children: [POD_KEYWORDS.map((k2) => /* @__PURE__ */ jsx("button", {
+          className: "pod-chip",
+          onClick: () => doPodSearch(k2),
+          title: "\u6309\u300C" + k2 + "\u300D\u641C\u8282\u76EE",
+          children: k2
+        }, k2)), /* @__PURE__ */ jsx("span", {
+          className: "pod-chips-gap"
+        }), POD_PLATFORMS.map((pl2) => /* @__PURE__ */ jsxs("button", {
+          className: "pod-chip link",
+          onClick: () => openExternal(pl2.url),
+          title: pl2.url,
+          children: [pl2.name, " \u2197"]
+        }, pl2.url))]
       }), !curShow && /* @__PURE__ */ jsxs("div", {
         className: "grid",
         children: [shows.map((s) => /* @__PURE__ */ jsxs("button", {
@@ -15726,7 +15702,7 @@ function App() {
           })]
         }, s.id)), shows.length === 0 && /* @__PURE__ */ jsx("div", {
           className: "empty",
-          children: "\u8F93\u5165\u5173\u952E\u8BCD\uFF0C\u641C\u6709\u58F0\u4E66\u6216\u6709\u58F0\u8282\u76EE"
+          children: podLoading ? "\u6B63\u5728\u641C\u2026" : podSearched ? "\u6CA1\u641C\u5230\u8282\u76EE\uFF0C\u6362\u4E2A\u5173\u952E\u8BCD\u8BD5\u8BD5\uFF08\u70B9\u4E0A\u9762\u7684\u8BCD\u4E5F\u884C\uFF09" : "\u8F93\u5165\u5173\u952E\u8BCD\uFF0C\u641C\u6709\u58F0\u4E66\u6216\u6709\u58F0\u8282\u76EE"
         })]
       }), curShow && /* @__PURE__ */ jsxs("div", {
         className: "list",
@@ -17872,6 +17848,14 @@ nav button.on{background:var(--sel);color:var(--txt)}
 .pod-bar button{background:var(--acc2);border:0;color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px}
 .pod-bar button:disabled{opacity:.5}
 .pod-bar .back{background:var(--hover);color:var(--txt);padding:8px 12px}
+
+.pod-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:820px}
+.pod-chip{background:var(--hover);border:1px solid var(--line);color:var(--txt);border-radius:999px;
+  padding:5px 12px;font-size:12px;cursor:pointer;line-height:1.4}
+.pod-chip:hover{border-color:var(--acc);color:var(--acc)}
+.pod-chip.link{color:var(--dim);font-size:12px}
+.pod-chip.link:hover{color:var(--acc2);border-color:var(--acc2)}
+.pod-chips-gap{width:6px}
 .card.show{align-items:flex-start;gap:10px}
 .show-cover{width:52px;height:52px;flex:0 0 52px;border-radius:9px;background-color:var(--cover);background-position:center;background-size:cover;background-repeat:no-repeat}
 .show-body{flex:1;min-width:0}
@@ -20289,17 +20273,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.71] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.72] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.71] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.72] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.71] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.72] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.71] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.72] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>
