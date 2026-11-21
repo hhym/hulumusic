@@ -3,6 +3,7 @@ package qianqian
 import (
 	"embed"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -89,21 +90,22 @@ func allMarketDirs() []string {
 }
 
 // MarketDir 把默认市场目录告诉前端，界面上能显示路径。
-func (a *App) MarketDir() (string, string) { return defaultMarketDir(), "" }
+// 注意 mygo 的绑定规则：两个返回值时第二个必须是 error，否则启动时就崩。
+func (a *App) MarketDir() (string, error) { return defaultMarketDir(), nil }
 
 // OpenMarketDir 在资源管理器里打开默认市场目录，用户直接把插件丢进去。
-func (a *App) OpenMarketDir() (string, string) {
+func (a *App) OpenMarketDir() (string, error) {
 	dir := defaultMarketDir()
 	if err := openInExplorer(dir); err != nil {
-		return dir, "打不开目录：" + err.Error()
+		return dir, fmt.Errorf("打不开目录：%w", err)
 	}
-	return dir, ""
+	return dir, nil
 }
 
 // AddMarketDir 弹目录选择，把用户挑的目录加进市场来源。
-func (a *App) AddMarketDir() PickResult {
+func (a *App) AddMarketDir() (PickResult, error) {
 	if a.ctx == nil {
-		return PickResult{Plugins: a.scanPlugins(), Err: "窗口还没就绪"}
+		return PickResult{Plugins: a.scanPlugins(), Err: "窗口还没就绪"}, nil
 	}
 	paths, err := mygo.Dialog.Open(mygo.OpenDialogOptions{
 		Parent:    a.win,
@@ -111,23 +113,23 @@ func (a *App) AddMarketDir() PickResult {
 		Directory: true,
 	})
 	if err != nil {
-		return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}
+		return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}, nil
 	}
 	if len(paths) == 0 || paths[0] == "" {
-		return PickResult{Plugins: a.scanPlugins(), Canceled: true}
+		return PickResult{Plugins: a.scanPlugins(), Canceled: true}, nil
 	}
 	dir := filepath.Clean(paths[0])
 	dirs := loadExtraMarketDirs()
 	for _, d := range dirs {
 		if filepath.Clean(d) == dir {
-			return PickResult{Plugins: a.scanPlugins(), InstalledID: ""}
+			return PickResult{Plugins: a.scanPlugins(), InstalledID: ""}, nil
 		}
 	}
 	dirs = append(dirs, dir)
 	if err := saveExtraMarketDirs(dirs); err != nil {
-		return PickResult{Plugins: a.scanPlugins(), Err: "记不住这个目录：" + err.Error()}
+		return PickResult{Plugins: a.scanPlugins(), Err: "记不住这个目录：" + err.Error()}, nil
 	}
-	return PickResult{Plugins: a.scanPlugins()}
+	return PickResult{Plugins: a.scanPlugins()}, nil
 }
 
 // scanLocalMarket 扫市场目录：子文件夹按 MyGo 目录型插件算，.js 文件按 MusicFree 算。

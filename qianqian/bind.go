@@ -242,11 +242,11 @@ func (x API) PickPluginZip() PickResult {
 
 func (x API) PluginKind(id string) (string, error) { return x.App.PluginKind(id) }
 
-func (x API) MarketDir() (string, string) { return x.App.MarketDir() }
+func (x API) MarketDir() (string, error) { return x.App.MarketDir() }
 
-func (x API) OpenMarketDir() (string, string) { return x.App.OpenMarketDir() }
+func (x API) OpenMarketDir() (string, error) { return x.App.OpenMarketDir() }
 
-func (x API) AddMarketDir() PickResult { return x.App.AddMarketDir() }
+func (x API) AddMarketDir() (PickResult, error) { return x.App.AddMarketDir() }
 
 func (x API) PickMusicFreePlugin() PickResult {
 	return x.App.PickMusicFreePlugin()
