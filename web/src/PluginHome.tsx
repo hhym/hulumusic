@@ -9,6 +9,7 @@ import {
   mygoBrowseView,
   mygoHomeView,
   mygoPlaylistTracks,
+  mygoShowTracks,
   type CardKind,
   type HomeCard,
   type HomeSection,
@@ -111,19 +112,31 @@ export default function PluginHome({
 
   async function openCard(kind: CardKind, id: string) {
     if (!cur || !id) return
-    if (kind !== 'album' && kind !== 'playlist') {
-      // 电台 / 艺人 / 节目 / 链接这几组，MyGo 的插件接口里没有统一的「打开」，
-      // 各家自己实现，这里不去猜，直接说明白。
-      setErr('这一组是「' + (KIND_LABEL[kind] || kind) + '」，这个插件没有开放打开它的接口')
+    // 只有「链接」是纯跳转，这里不管；其余（节目 / 电台 / 艺人 / 专辑 / 歌单）
+    // 都按插件实际实现了哪个接口去试，别再一刀切说「没有开放」——
+    // 小宇宙的节目卡就是这么一直点不开的。
+    if (kind === 'link') {
+      setErr('这张是「链接」卡，插件没有给出可打开的地址')
       return
     }
     setLoading(true)
     setErr('')
     try {
-      const r = kind === 'playlist' ? await mygoPlaylistTracks(cur.id, id) : await mygoAlbumTracks(cur.id, id)
+      let r: {name: string; tracks: MyGoItem[]}
+      if (kind === 'playlist') {
+        r = await mygoPlaylistTracks(cur.id, id).catch(() => mygoShowTracks(cur.id, id, kind))
+      } else if (kind === 'album') {
+        r = await mygoAlbumTracks(cur.id, id).catch(() => mygoShowTracks(cur.id, id, kind))
+      } else {
+        r = await mygoShowTracks(cur.id, id, kind)
+      }
+      if (!r.tracks.length) {
+        setErr('这张「' + (KIND_LABEL[kind] || kind) + '」打开后是空的，插件没给曲目')
+        return
+      }
       setDetail({...r, kind, id})
     } catch (e: any) {
-      setErr(String(e?.message || e))
+      setErr('打不开这张「' + (KIND_LABEL[kind] || kind) + '」：' + String(e?.message || e))
     } finally {
       setLoading(false)
     }

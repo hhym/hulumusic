@@ -9010,6 +9010,34 @@ async function mygoPlaylistTracks(id2, pid) {
   const r2 = await mod.playlist({ id: pid });
   return { name: String((r2 == null ? void 0 : r2.name) ?? "\u6B4C\u5355"), tracks: (Array.isArray(r2 == null ? void 0 : r2.tracks) ? r2.tracks : []).map(mapTrack) };
 }
+async function mygoShowTracks(id2, sid, kind) {
+  const mod = await loadMyGoPlugin(id2);
+  const tries = [];
+  if (kind === "show")
+    tries.push("show", "album", "playlist", "station");
+  else if (kind === "station")
+    tries.push("station", "album", "playlist");
+  else if (kind === "artist")
+    tries.push("artist", "album");
+  else
+    tries.push("album", "playlist", "show", "station");
+  const errs = [];
+  for (const fn of tries) {
+    const f2 = mod[fn];
+    if (typeof f2 !== "function")
+      continue;
+    try {
+      const r2 = await f2.call(mod, { id: sid });
+      const list = Array.isArray(r2 == null ? void 0 : r2.tracks) ? r2.tracks : Array.isArray(r2 == null ? void 0 : r2.data) ? r2.data : Array.isArray(r2 == null ? void 0 : r2.items) ? r2.items : [];
+      if (list.length) {
+        return { name: String((r2 == null ? void 0 : r2.name) ?? (r2 == null ? void 0 : r2.title) ?? (kind === "show" ? "\u8282\u76EE" : "\u5217\u8868")), tracks: list.map(mapTrack) };
+      }
+    } catch (e) {
+      errs.push(fn + ": " + String((e == null ? void 0 : e.message) || e));
+    }
+  }
+  throw new Error(errs.length ? errs.join("\uFF1B") : "\u8FD9\u4E2A\u63D2\u4EF6\u6CA1\u6709\u5F00\u653E\u6253\u5F00\u8FD9\u5F20\u5361\u7247\u7684\u63A5\u53E3");
+}
 async function mygoAlbumTracks(id2, aid) {
   const mod = await loadMyGoPlugin(id2);
   if (typeof mod.album !== "function")
@@ -12844,21 +12872,32 @@ function PluginHome({
   async function openCard(kind, id2) {
     if (!cur || !id2)
       return;
-    if (kind !== "album" && kind !== "playlist") {
-      setErr("\u8FD9\u4E00\u7EC4\u662F\u300C" + (KIND_LABEL[kind] || kind) + "\u300D\uFF0C\u8FD9\u4E2A\u63D2\u4EF6\u6CA1\u6709\u5F00\u653E\u6253\u5F00\u5B83\u7684\u63A5\u53E3");
+    if (kind === "link") {
+      setErr("\u8FD9\u5F20\u662F\u300C\u94FE\u63A5\u300D\u5361\uFF0C\u63D2\u4EF6\u6CA1\u6709\u7ED9\u51FA\u53EF\u6253\u5F00\u7684\u5730\u5740");
       return;
     }
     setLoading(true);
     setErr("");
     try {
-      const r2 = kind === "playlist" ? await mygoPlaylistTracks(cur.id, id2) : await mygoAlbumTracks(cur.id, id2);
+      let r2;
+      if (kind === "playlist") {
+        r2 = await mygoPlaylistTracks(cur.id, id2).catch(() => mygoShowTracks(cur.id, id2, kind));
+      } else if (kind === "album") {
+        r2 = await mygoAlbumTracks(cur.id, id2).catch(() => mygoShowTracks(cur.id, id2, kind));
+      } else {
+        r2 = await mygoShowTracks(cur.id, id2, kind);
+      }
+      if (!r2.tracks.length) {
+        setErr("\u8FD9\u5F20\u300C" + (KIND_LABEL[kind] || kind) + "\u300D\u6253\u5F00\u540E\u662F\u7A7A\u7684\uFF0C\u63D2\u4EF6\u6CA1\u7ED9\u66F2\u76EE");
+        return;
+      }
       setDetail({
         ...r2,
         kind,
         id: id2
       });
     } catch (e) {
-      setErr(String((e == null ? void 0 : e.message) || e));
+      setErr("\u6253\u4E0D\u5F00\u8FD9\u5F20\u300C" + (KIND_LABEL[kind] || kind) + "\u300D\uFF1A" + String((e == null ? void 0 : e.message) || e));
     } finally {
       setLoading(false);
     }
@@ -13757,7 +13796,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.68";
+const BUILD_TAG = "3.0.69";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -20179,17 +20218,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.68] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.69] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.68] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.69] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.68] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.69] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.68] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.69] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>
