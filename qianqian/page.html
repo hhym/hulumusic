@@ -13788,7 +13788,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.73";
+const BUILD_TAG = "3.0.74";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 const POD_KEYWORDS = ["\u6709\u58F0\u4E66", "\u90ED\u5FB7\u7EB2", "\u4E09\u56FD\u6F14\u4E49", "\u7761\u524D\u6545\u4E8B", "\u76F8\u58F0", "\u82F1\u8BED\u64AD\u5BA2", "\u513F\u7AE5\u6545\u4E8B", "\u5386\u53F2"];
 const POD_PLATFORMS = [{
@@ -13851,6 +13851,9 @@ function App() {
   const [bulkPl, setBulkPl] = react.exports.useState(null);
   const [bulkDel, setBulkDel] = react.exports.useState(false);
   const [plNewBulk, setPlNewBulk] = react.exports.useState(null);
+  const [qSel, setQSel] = react.exports.useState([]);
+  const [qPlOpen, setQPlOpen] = react.exports.useState(false);
+  const [qPlNew, setQPlNew] = react.exports.useState(null);
   const [plRename, setPlRename] = react.exports.useState(null);
   const [loading, setLoading] = react.exports.useState(false);
   const [err, setErrState] = react.exports.useState("");
@@ -14734,11 +14737,66 @@ function App() {
       idx: q22.idx
     }));
   }
+  function qPicked() {
+    const ids = new Set(qSel);
+    return queue.list.filter((t2) => ids.has(t2.id));
+  }
+  function qSelectAll() {
+    setQSel((a) => a.length >= queue.list.length && queue.list.length > 0 ? [] : queue.list.map((t2) => t2.id));
+    setQPlOpen(false);
+    setQPlNew(null);
+  }
+  function qAddToPl(pid) {
+    const picked = qPicked();
+    const pl2 = pls.find((p2) => p2.id === pid);
+    if (!pl2 || !picked.length)
+      return;
+    const add = picked.filter((t2) => !pl2.tracks.some((x2) => x2.id === t2.id));
+    setQSel([]);
+    setQPlOpen(false);
+    if (!add.length) {
+      setToast("\u8FD9\u4E9B\u6B4C\u5DF2\u7ECF\u5728\u300C" + pl2.name + "\u300D\u91CC\u4E86");
+      return;
+    }
+    setPls((list2) => list2.map((p2) => {
+      if (p2.id !== pid)
+        return p2;
+      const at = {
+        ...p2.at || {}
+      };
+      add.forEach((t2) => {
+        at[t2.id] = Date.now();
+      });
+      return {
+        ...p2,
+        tracks: [...p2.tracks, ...add],
+        at
+      };
+    }));
+    setToast("\u5DF2\u52A0\u5165\u6B4C\u5355\u300C" + pl2.name + "\u300D\xB7 " + add.length + " \u9996");
+  }
+  function qSaveAsPl() {
+    const picked = qPicked();
+    if (!picked.length)
+      return;
+    const nm = (qPlNew || "").trim() || "\u64AD\u5355 " + new Date().toLocaleDateString("zh-CN");
+    newPlaylist(nm, void 0, picked);
+    setToast("\u5DF2\u5B58\u6210\u6B4C\u5355\u300C" + nm + "\u300D\xB7 " + picked.length + " \u9996");
+    setQSel([]);
+    setQPlOpen(false);
+    setQPlNew(null);
+  }
   function qRow(t2, i, isCurrent) {
     const on = i === queue.idx;
+    const sel = qSel.includes(t2.id);
     return /* @__PURE__ */ jsxs("div", {
-      className: "row" + (on ? " on" : ""),
+      className: "row" + (on ? " on" : "") + (sel ? " sel" : ""),
       children: [/* @__PURE__ */ jsx("button", {
+        className: "selchk" + (sel ? " on" : ""),
+        title: sel ? "\u53D6\u6D88\u9009\u4E2D" : "\u9009\u4E2D\u8FD9\u9996",
+        onClick: () => setQSel((a) => a.includes(t2.id) ? a.filter((x2) => x2 !== t2.id) : [...a, t2.id]),
+        children: sel ? "\u2713" : ""
+      }), /* @__PURE__ */ jsx("button", {
         className: "idx",
         onClick: () => playAt(i),
         children: on && playing ? /* @__PURE__ */ jsx(Fi, {
@@ -15522,7 +15580,30 @@ function App() {
           children: queue.list.length === 0 ? "\u8FD8\u6CA1\u6392\u6B4C" : `\u5F85\u64AD ${Math.max(0, queue.list.length - queue.idx - 1)} \u9996` + (queue.list[queue.idx] ? ` \xB7 \u6B63\u5728\u653E ${queue.list[queue.idx].name}` : "")
         }), /* @__PURE__ */ jsxs("span", {
           className: "q-ops",
-          children: [/* @__PURE__ */ jsx("button", {
+          children: [queue.list.length > 0 && /* @__PURE__ */ jsxs(Fragment, {
+            children: [/* @__PURE__ */ jsx("button", {
+              className: "ghost-btn" + (qSel.length >= queue.list.length && qSel.length > 0 ? " on" : ""),
+              onClick: qSelectAll,
+              title: "\u9009\u4E2D\u64AD\u5355\u91CC\u7684\u5168\u90E8\u6B4C\uFF08\u542B\u6B63\u5728\u653E\u7684\u548C\u5DF2\u64AD\u653E\u7684\uFF09",
+              children: qSel.length >= queue.list.length && qSel.length > 0 ? "\u53D6\u6D88\u5168\u9009" : "\u5168\u9009"
+            }), /* @__PURE__ */ jsxs("button", {
+              className: "ghost-btn",
+              disabled: !qSel.length,
+              onClick: () => {
+                setQPlOpen((v2) => !v2);
+                setQPlNew(null);
+              },
+              children: ["\u6DFB\u52A0\u5230\u6B4C\u5355", qSel.length ? " \xB7 " + qSel.length : ""]
+            }), /* @__PURE__ */ jsx("button", {
+              className: "ghost-btn",
+              disabled: !qSel.length,
+              onClick: () => {
+                setQPlNew((v2) => v2 === null ? "" : null);
+                setQPlOpen(false);
+              },
+              children: "\u4FDD\u5B58\u6B4C\u5355"
+            })]
+          }), /* @__PURE__ */ jsx("button", {
             className: "ghost-btn",
             onClick: queueClearNext,
             disabled: queue.list.length - queue.idx - 1 <= 0,
@@ -15533,6 +15614,64 @@ function App() {
             disabled: !queue.list.length,
             children: "\u5168\u90E8\u6E05\u7A7A"
           })]
+        })]
+      }), (qSel.length > 0 || qPlNew !== null) && /* @__PURE__ */ jsxs("div", {
+        className: "q-bulk",
+        children: [/* @__PURE__ */ jsxs("span", {
+          className: "q-bulk-n",
+          children: ["\u5DF2\u9009 ", qSel.length, " \u9996"]
+        }), qPlOpen && (pls.length ? /* @__PURE__ */ jsxs(Fragment, {
+          children: [pls.map((pl2) => /* @__PURE__ */ jsxs("button", {
+            className: "q-pl",
+            onClick: () => qAddToPl(pl2.id),
+            children: [pl2.name, /* @__PURE__ */ jsx("em", {
+              children: pl2.tracks.length
+            })]
+          }, pl2.id)), /* @__PURE__ */ jsx("button", {
+            className: "q-pl new",
+            onClick: () => {
+              setQPlNew("");
+              setQPlOpen(false);
+            },
+            children: "\uFF0B \u65B0\u5EFA\u6B4C\u5355"
+          })]
+        }) : /* @__PURE__ */ jsx("button", {
+          className: "q-pl new",
+          onClick: () => {
+            setQPlNew("");
+            setQPlOpen(false);
+          },
+          children: "\u8FD8\u6CA1\u6709\u6B4C\u5355\uFF0C\u65B0\u5EFA\u4E00\u4E2A"
+        })), qPlNew !== null && /* @__PURE__ */ jsxs(Fragment, {
+          children: [/* @__PURE__ */ jsx("input", {
+            className: "q-pl-name",
+            autoFocus: true,
+            value: qPlNew,
+            placeholder: "\u7ED9\u6B4C\u5355\u8D77\u4E2A\u540D\u5B57",
+            onChange: (e) => setQPlNew(e.target.value),
+            onKeyDown: (e) => {
+              if (e.key === "Enter")
+                qSaveAsPl();
+              if (e.key === "Escape")
+                setQPlNew(null);
+            }
+          }), /* @__PURE__ */ jsx("button", {
+            className: "q-pl",
+            onClick: qSaveAsPl,
+            children: "\u4FDD\u5B58"
+          }), /* @__PURE__ */ jsx("button", {
+            className: "q-pl",
+            onClick: () => setQPlNew(null),
+            children: "\u53D6\u6D88"
+          })]
+        }), /* @__PURE__ */ jsx("button", {
+          className: "q-pl",
+          onClick: () => {
+            setQSel([]);
+            setQPlOpen(false);
+            setQPlNew(null);
+          },
+          children: "\u6E05\u7A7A\u9009\u62E9"
         })]
       }), queue.list.length === 0 ? /* @__PURE__ */ jsx("div", {
         className: "empty",
@@ -18273,6 +18412,24 @@ html[data-theme='dark'] .plug-kind {
 /* 待播清单分组 */
 .q-ops{display:flex;gap:8px;align-items:center}
 .q-ops .ghost-btn{font-size:12px;padding:5px 10px}
+.q-ops .ghost-btn.on{color:var(--acc2);border-color:var(--acc2)}
+/* 播单批量条：全选后出现，点歌单名就加进去 */
+.q-bulk{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 2px;padding:10px 12px;
+  border:1px solid var(--line);border-radius:10px;background:var(--hover)}
+.q-bulk-n{font-size:12px;color:var(--dim);flex:0 0 auto}
+.q-pl{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);
+  color:var(--txt);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;max-width:190px}
+.q-pl:hover{border-color:var(--acc2);color:var(--acc2)}
+.q-pl em{font-style:normal;font-size:10.5px;color:var(--dim)}
+.q-pl.new{color:var(--acc2);border-style:dashed}
+.q-pl-name{background:var(--input);border:1px solid var(--line);border-radius:8px;color:var(--txt);
+  padding:4px 9px;font-size:12px;min-width:160px;outline:none}
+.q-pl-name:focus{border-color:var(--acc2)}
+.row.sel{background:var(--sel)}
+/* 播单行的勾选框淡边框在浅色主题里看不见，这里单独加深一档 */
+.queue-page .selchk{border-color:var(--dim);opacity:.72}
+.queue-page .selchk:hover{opacity:1}
+.queue-page .selchk.on{opacity:1}
 .q-group{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.4px;
   color:var(--dim);text-transform:none;margin:16px 0 8px}
 .q-group em{font-style:normal;font-size:11px;padding:1px 7px;border-radius:999px;
@@ -20308,17 +20465,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.73] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.74] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.73] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.74] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.73] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.74] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.73] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.74] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

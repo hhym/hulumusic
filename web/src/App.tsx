@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.73'
+const BUILD_TAG = '3.0.74'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -228,6 +228,10 @@ export default function App() {
   const [bulkPl, setBulkPl] = useState<{x: number; y: number} | null>(null)
   const [bulkDel, setBulkDel] = useState(false)
   const [plNewBulk, setPlNewBulk] = useState<Track[] | null>(null)
+  /* 播单页的批量操作：勾选、加入歌单、存成新歌单 */
+  const [qSel, setQSel] = useState<string[]>([])
+  const [qPlOpen, setQPlOpen] = useState(false)
+  const [qPlNew, setQPlNew] = useState<string | null>(null)
   // 歌单重命名：正在改名的歌单 id + 输入框里的临时名字
   const [plRename, setPlRename] = useState<{id: string, name: string} | null>(null)
   const [loading, setLoading] = useState(false)
@@ -1005,11 +1009,50 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
     setQueue((q) => ({list: q.list.slice(0, Math.min(q.idx + 1, q.list.length)), idx: q.idx}))
   }
 
+  // ── 播单批量：全选 / 加入歌单 / 存成新歌单 ──
+  function qPicked(): Track[] {
+    const ids = new Set(qSel)
+    return queue.list.filter((t) => ids.has(t.id))
+  }
+  function qSelectAll() {
+    setQSel((a) => (a.length >= queue.list.length && queue.list.length > 0 ? [] : queue.list.map((t) => t.id)))
+    setQPlOpen(false); setQPlNew(null)
+  }
+  function qAddToPl(pid: string) {
+    const picked = qPicked()
+    const pl = pls.find((p) => p.id === pid)
+    if (!pl || !picked.length) return
+    // 已经在歌单里的不重复加，提示按真正新增的数量算
+    const add = picked.filter((t) => !pl.tracks.some((x) => x.id === t.id))
+    setQSel([]); setQPlOpen(false)
+    if (!add.length) { setToast('这些歌已经在「' + pl.name + '」里了'); return }
+    setPls((list) => list.map((p) => {
+      if (p.id !== pid) return p
+      const at = {...(p.at || {})}
+      add.forEach((t) => { at[t.id] = Date.now() })
+      return {...p, tracks: [...p.tracks, ...add], at}
+    }))
+    setToast('已加入歌单「' + pl.name + '」· ' + add.length + ' 首')
+  }
+  function qSaveAsPl() {
+    const picked = qPicked()
+    if (!picked.length) return
+    const nm = (qPlNew || '').trim() || ('播单 ' + new Date().toLocaleDateString('zh-CN'))
+    newPlaylist(nm, undefined, picked)
+    setToast('已存成歌单「' + nm + '」· ' + picked.length + ' 首')
+    setQSel([]); setQPlOpen(false); setQPlNew(null)
+  }
+
   // 待播/播放列表里的一行
   function qRow(t: Track, i: number, isCurrent: boolean) {
     const on = i === queue.idx
+    const sel = qSel.includes(t.id)
     return (
-      <div key={t.id + i} className={'row' + (on ? ' on' : '')}>
+      <div key={t.id + i} className={'row' + (on ? ' on' : '') + (sel ? ' sel' : '')}>
+        <button className={'selchk' + (sel ? ' on' : '')} title={sel ? '取消选中' : '选中这首'}
+                onClick={() => setQSel((a) => (a.includes(t.id) ? a.filter((x) => x !== t.id) : [...a, t.id]))}>
+          {sel ? '✓' : ''}
+        </button>
         <button className="idx" onClick={() => playAt(i)}>{on && playing ? <Fi n="pause" size={12} /> : <Fi n="play" size={12} />}</button>
         <div className="cover" style={t.cover ? {backgroundImage: `url(${t.cover})`} : undefined} />
         <div className="info">
@@ -1592,12 +1635,56 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
                   (queue.list[queue.idx] ? ` · 正在放 ${queue.list[queue.idx].name}` : '')}
             </span>
             <span className="q-ops">
+              {queue.list.length > 0 && (
+                <>
+                  <button className={'ghost-btn' + (qSel.length >= queue.list.length && qSel.length > 0 ? ' on' : '')}
+                          onClick={qSelectAll} title="选中播单里的全部歌（含正在放的和已播放的）">
+                    {qSel.length >= queue.list.length && qSel.length > 0 ? '取消全选' : '全选'}
+                  </button>
+                  <button className="ghost-btn" disabled={!qSel.length}
+                          onClick={() => { setQPlOpen((v) => !v); setQPlNew(null) }}>
+                    添加到歌单{qSel.length ? ' · ' + qSel.length : ''}
+                  </button>
+                  <button className="ghost-btn" disabled={!qSel.length}
+                          onClick={() => { setQPlNew((v) => (v === null ? '' : null)); setQPlOpen(false) }}>
+                    保存歌单
+                  </button>
+                </>
+              )}
               <button className="ghost-btn" onClick={queueClearNext} disabled={queue.list.length - queue.idx - 1 <= 0}>
                 清空待播
               </button>
               <button className="ghost-btn" onClick={queueClear} disabled={!queue.list.length}>全部清空</button>
             </span>
           </div>
+
+          {(qSel.length > 0 || qPlNew !== null) && (
+            <div className="q-bulk">
+              <span className="q-bulk-n">已选 {qSel.length} 首</span>
+              {qPlOpen && (pls.length ? (
+                <>
+                  {pls.map((pl) => (
+                    <button key={pl.id} className="q-pl" onClick={() => qAddToPl(pl.id)}>
+                      {pl.name}<em>{pl.tracks.length}</em>
+                    </button>
+                  ))}
+                  <button className="q-pl new" onClick={() => { setQPlNew(''); setQPlOpen(false) }}>＋ 新建歌单</button>
+                </>
+              ) : (
+                <button className="q-pl new" onClick={() => { setQPlNew(''); setQPlOpen(false) }}>还没有歌单，新建一个</button>
+              ))}
+              {qPlNew !== null && (
+                <>
+                  <input className="q-pl-name" autoFocus value={qPlNew} placeholder="给歌单起个名字"
+                         onChange={(e) => setQPlNew(e.target.value)}
+                         onKeyDown={(e) => { if (e.key === 'Enter') qSaveAsPl(); if (e.key === 'Escape') setQPlNew(null) }} />
+                  <button className="q-pl" onClick={qSaveAsPl}>保存</button>
+                  <button className="q-pl" onClick={() => setQPlNew(null)}>取消</button>
+                </>
+              )}
+              <button className="q-pl" onClick={() => { setQSel([]); setQPlOpen(false); setQPlNew(null) }}>清空选择</button>
+            </div>
+          )}
 
           {queue.list.length === 0 ? (
             <div className="empty">
