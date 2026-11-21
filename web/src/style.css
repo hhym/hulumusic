@@ -2690,3 +2690,8 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .sk-lrc-k{min-width:38px;font-size:10.5px;color:#9aa3e8;letter-spacing:.3px}
 .dlp-tools .dlp-ksize{padding:5px 6px;border:1px solid transparent;border-radius:7px;
   font-size:12px;color:var(--dim);min-width:44px;text-align:center;cursor:default;user-select:none}
+
+/* 正在播放那一行的圆形按钮：给个实心底色，图标用实心白色，
+   小尺寸下也不会像之前那样被两条描边糊成一个方块（皮肤里也统一走这个观感） */
+.row.on .idx, .row.on .idx:hover{border-color:var(--acc);background:var(--acc);color:#fff}
+.row.on .idx svg{opacity:1}

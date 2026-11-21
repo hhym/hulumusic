@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.70'
+const BUILD_TAG = '3.0.71'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -1525,7 +1525,7 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
               </div>
               {localTracks.map((t, i) => (
                 <div key={t.id + i} className={'row' + (cur?.id === t.id ? ' on' : '')}>
-                  <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Fi n="pause" size={12} /> : <Fi n="play" size={12} />}</button>
+                  <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Fi n="pause-solid" size={13} fill sw={0} /> : <Fi n="play-solid" size={13} fill sw={0} />}</button>
                   <div className="cover" />
                   <div className="info">
                     <div className="name">{t.name}</div>
@@ -1687,7 +1687,7 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
               {!loading && shown.length === 0 && <div className="empty">这个节目没有可播的单集</div>}
               {!loading && shown.map((t, i) => (
                 <div key={t.id + i} className={'row' + (cur?.id === t.id ? ' on' : '')}>
-                  <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Fi n="pause" size={12} /> : <Fi n="play" size={12} />}</button>
+                  <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Fi n="pause-solid" size={13} fill sw={0} /> : <Fi n="play-solid" size={13} fill sw={0} />}</button>
                   <div className="cover" style={t.cover ? {backgroundImage: `url(${t.cover})`} : undefined} />
                   <div className="info">
                     <div className="name">{t.name}</div>
@@ -1736,7 +1736,7 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
                 </span>
               )}
               {canReorder && !selMode && <span className="dgrip" aria-hidden="true">⠿</span>}
-              <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Fi n="pause" size={12} /> : <Fi n="play" size={12} />}</button>
+              <button className="idx" onClick={() => play(t)}>{playing && cur?.id === t.id ? <Fi n="pause-solid" size={13} fill sw={0} /> : <Fi n="play-solid" size={13} fill sw={0} />}</button>
               <div className="cover" style={t.cover ? {backgroundImage: `url(${t.cover})`} : undefined} />
               <div className="info">
                 <div className="name">{t.name}</div>

@@ -13,6 +13,10 @@ const FI: Record<string, string> = {
   'skip-forward': "<polygon points=\"5 4 15 12 5 20 5 4\"/><line x1=\"19\" y1=\"5\" x2=\"19\" y2=\"19\"/>",
   'play': "<polygon points=\"5 3 19 12 5 21 5 3\"/>",
   'pause': "<rect x=\"6\" y=\"4\" width=\"4\" height=\"16\"/><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\"/>",
+  // 小尺寸（12~13px）下面那两条 4px 宽的描边矩形会黏成一整块，看着像「一个绿方块」，
+  // 列表里的播放按钮一律用实心版，两根竖线之间留够空
+  'pause-solid': '<rect x="6.2" y="4.2" width="4.2" height="15.6" rx="1.3"/><rect x="13.6" y="4.2" width="4.2" height="15.6" rx="1.3"/>',
+  'play-solid': '<polygon points="7 4 19.5 12 7 20"/>',
   'volume-2': "<polygon points=\"11 5 6 9 2 9 2 15 6 15 11 19 11 5\"/><path d=\"M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07\"/>",
   'volume-x': "<polygon points=\"11 5 6 9 2 9 2 15 6 15 11 19 11 5\"/><line x1=\"23\" y1=\"9\" x2=\"17\" y2=\"15\"/><line x1=\"17\" y1=\"9\" x2=\"23\" y2=\"15\"/>",
   'disc': "<circle cx=\"12\" cy=\"12\" r=\"10\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>",
