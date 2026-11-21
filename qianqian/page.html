@@ -13597,7 +13597,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.58";
+const BUILD_TAG = "3.0.59";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -16502,37 +16502,6 @@ function App() {
                 })]
               })]
             })]
-          }), !showLrc && /* @__PURE__ */ jsx("div", {
-            className: "sk-mini-lyric",
-            title: "\u5C0F\u6B4C\u8BCD \xB7 \u70B9\u51FB\u5C55\u5F00\u6B4C\u8BCD\u79C0",
-            onClick: toggleLrc,
-            children: isLive ? /* @__PURE__ */ jsx("span", {
-              className: "ml-dim",
-              children: "\u7535\u53F0\u64AD\u653E\u4E2D \xB7 \u65E0\u6B4C\u8BCD"
-            }) : lyric.length === 0 ? /* @__PURE__ */ jsx("span", {
-              className: "ml-dim",
-              children: cur ? "\u6B63\u5728\u53D6\u6B4C\u8BCD\u2026" : "\u672A\u5728\u64AD\u653E"
-            }) : /* @__PURE__ */ jsxs(Fragment, {
-              children: [/* @__PURE__ */ jsx("span", {
-                className: "ml-now",
-                children: /* @__PURE__ */ jsxs("span", {
-                  className: "kowrap",
-                  children: [/* @__PURE__ */ jsx("span", {
-                    className: "kbase",
-                    children: lyric[curIndex] ? lyric[curIndex].text : "\u266A"
-                  }), /* @__PURE__ */ jsx("span", {
-                    className: "kfill",
-                    style: {
-                      width: kProgress * 100 + "%"
-                    },
-                    children: lyric[curIndex] ? lyric[curIndex].text : "\u266A"
-                  })]
-                })
-              }), /* @__PURE__ */ jsx("span", {
-                className: "ml-next",
-                children: lyric[curIndex + 1] ? lyric[curIndex + 1].text : " "
-              })]
-            })
           }), isLive ? /* @__PURE__ */ jsx("div", {
             className: "sk-seek",
             children: /* @__PURE__ */ jsx("span", {
@@ -16744,6 +16713,72 @@ function App() {
                 }, f2);
               })]
             })]
+          })]
+        }), !showLrc && /* @__PURE__ */ jsxs("section", {
+          className: "sk-panel sk-lyr sk-lyr-inline",
+          children: [/* @__PURE__ */ jsxs("div", {
+            className: "sk-title",
+            children: [/* @__PURE__ */ jsx("span", {
+              className: "t",
+              children: skinTheme === "tt" || skinTheme === "hifi" || skinTheme === "steel" || skinTheme === "neon" ? "LYRIC \u6B4C\u8BCD\u79C0" : "\u6B4C\u8BCD\u79C0"
+            }), /* @__PURE__ */ jsx("span", {
+              style: {
+                fontSize: 10.5,
+                color: "#b7bff0"
+              },
+              children: isLive ? "\u7535\u53F0\u65E0\u6B4C\u8BCD" : ""
+            }), /* @__PURE__ */ jsx("div", {
+              className: "sk-win-btns",
+              children: /* @__PURE__ */ jsx("button", {
+                className: "sk-wb",
+                title: "\u5C55\u5F00\u5927\u6B4C\u8BCD\u79C0\uFF08\u5360\u7528\u53F3\u4FA7\u4E00\u6574\u5217\uFF09",
+                onClick: toggleLrc,
+                children: /* @__PURE__ */ jsx(Fi, {
+                  n: "maximize-2",
+                  size: 11
+                })
+              })
+            })]
+          }), /* @__PURE__ */ jsx("div", {
+            className: "sk-lyr-body sk-lyr-inline-body",
+            title: "\u70B9\u51FB\u5C55\u5F00\u5927\u6B4C\u8BCD\u79C0\uFF08Ctrl+\u6EDA\u8F6E\u8C03\u5B57\u53F7\uFF09",
+            style: {
+              "--lrc-k": Math.min(lrcK, 1.3)
+            },
+            onWheel: (e) => {
+              if (e.ctrlKey) {
+                e.preventDefault();
+                bumpLrcK(e.deltaY < 0 ? 0.1 : -0.1);
+              }
+            },
+            onClick: toggleLrc,
+            children: lyric.length > 0 ? /* @__PURE__ */ jsxs(Fragment, {
+              children: [/* @__PURE__ */ jsx("div", {
+                className: "song",
+                children: cur ? cur.name : ""
+              }), lyric.map((l2, k2) => k2 === curIndex ? /* @__PURE__ */ jsx("div", {
+                className: "ln on",
+                children: /* @__PURE__ */ jsxs("span", {
+                  className: "kowrap",
+                  children: [/* @__PURE__ */ jsx("span", {
+                    className: "kbase",
+                    children: l2.text
+                  }), /* @__PURE__ */ jsx("span", {
+                    className: "kfill",
+                    style: {
+                      width: kProgress * 100 + "%"
+                    },
+                    children: l2.text
+                  })]
+                })
+              }, k2) : /* @__PURE__ */ jsx("div", {
+                className: "ln",
+                children: l2.text
+              }, k2))]
+            }) : /* @__PURE__ */ jsx("div", {
+              className: "none",
+              children: isLive ? "\u7535\u53F0\u65E0\u6B4C\u8BCD" : cur ? "\u6B63\u5728\u53D6\u6B4C\u8BCD\u2026" : "\u672A\u5728\u64AD\u653E"
+            })
           })]
         }), /* @__PURE__ */ jsxs("section", {
           className: "sk-panel sk-pl",
@@ -18013,17 +18048,13 @@ html[data-theme='dark'] .plug-kind {
 .sk-mini-btns button.on{background:linear-gradient(180deg,#a9b2ff,#6a72d6 55%,#434aa6);color:#fff}
 
 /* 进度条 */
-/* 主面板小歌词条（右侧歌词秀收起时出现）：当前行逐字填充 + 下一行灰字 */
-.sk-mini-lyric{margin:3px 8px 0;height:32px;padding:3px 7px;display:flex;flex-direction:column;
-  justify-content:center;gap:2px;border-radius:6px;cursor:pointer;overflow:hidden;
-  background:rgba(120,132,255,.10);border:1px solid rgba(140,152,240,.30)}
-.sk-mini-lyric:hover{background:rgba(140,152,255,.18);border-color:rgba(170,182,255,.55)}
-.sk-mini-lyric .ml-now{font-size:12px;line-height:16px;font-weight:600;color:inherit;
-  white-space:nowrap;overflow:hidden;max-width:100%}
-.sk-mini-lyric .ml-now .kbase{opacity:.78}
-.sk-mini-lyric .ml-now .kfill{color:var(--acc,#3f6fe0);text-shadow:none;font-weight:700;opacity:1}
-.sk-mini-lyric .ml-next{font-size:10.5px;line-height:13px;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sk-mini-lyric .ml-dim{font-size:11px;opacity:.72}
+/* 单列小歌词面板（右侧大歌词秀收起时）：固定高度、可上下滚，当前行居中自动跟随 */
+.sk-lyr-inline .sk-lyr-body{min-height:0;height:104px;padding:6px 10px;overflow-y:auto;text-align:center}
+.sk-lyr-inline .sk-lyr-body .song{font-size:11.5px;margin-bottom:2px}
+.sk-lyr-inline .sk-lyr-body .ln{font-size:calc(10.5px * var(--lrc-k,1));line-height:1.85}
+.sk-lyr-inline .sk-lyr-body .ln.on{font-size:calc(11px * var(--lrc-k,1));font-weight:700}
+.sk-lyr-inline .sk-lyr-body .none{font-size:11px;display:flex;height:100%;align-items:center;justify-content:center}
+.sk-lyr-inline .sk-lyr-body{cursor:pointer}
 .sk-seek{display:flex;align-items:center;gap:6px;padding:4px 8px 0}
 .sk-seek .tt{font-size:10.5px;color:#b7bff0;font-variant-numeric:tabular-nums;flex:0 0 auto}
 .sk-seek input{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;
@@ -19952,17 +19983,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.58] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.59] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.58] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.59] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.58] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.59] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.58] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.59] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

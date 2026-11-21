@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.58'
+const BUILD_TAG = '3.0.59'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -2123,30 +2123,6 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
             </div>
           </div>
 
-          {/* 小歌词：右侧歌词秀收起时，在 230px 主面板里显示当前行 + 下一行（点击展开歌词秀） */}
-          {!showLrc && (
-            <div className="sk-mini-lyric" title="小歌词 · 点击展开歌词秀"
-                 onClick={toggleLrc}>
-              {isLive ? (
-                <span className="ml-dim">电台播放中 · 无歌词</span>
-              ) : lyric.length === 0 ? (
-                <span className="ml-dim">{cur ? '正在取歌词…' : '未在播放'}</span>
-              ) : (
-                <>
-                  <span className="ml-now">
-                    <span className="kowrap">
-                      <span className="kbase">{lyric[curIndex] ? lyric[curIndex].text : '♪'}</span>
-                      <span className="kfill" style={{ width: (kProgress * 100) + '%' }}>
-                        {lyric[curIndex] ? lyric[curIndex].text : '♪'}
-                      </span>
-                    </span>
-                  </span>
-                  <span className="ml-next">{lyric[curIndex + 1] ? lyric[curIndex + 1].text : ' '}</span>
-                </>
-              )}
-            </div>
-          )}
-
           {isLive ? (
             <div className="sk-seek"><span className="tt">直播中</span></div>
           ) : (
@@ -2220,6 +2196,45 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
                   )
                 })}
               </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── 歌词秀（右侧大面板收起时的单列小面板，点击展开大面板） ── */}
+        {!showLrc && (
+          <section className="sk-panel sk-lyr sk-lyr-inline">
+            <div className="sk-title">
+              <span className="t">{skinTheme === 'tt' || skinTheme === 'hifi' || skinTheme === 'steel' || skinTheme === 'neon' ? 'LYRIC 歌词秀' : '歌词秀'}</span>
+              <span style={{ fontSize: 10.5, color: '#b7bff0' }}>{isLive ? '电台无歌词' : ''}</span>
+              <div className="sk-win-btns">
+                <button className="sk-wb" title="展开大歌词秀（占用右侧一整列）"
+                        onClick={toggleLrc}><Fi n="maximize-2" size={11} /></button>
+              </div>
+            </div>
+            <div className="sk-lyr-body sk-lyr-inline-body"
+                 title="点击展开大歌词秀（Ctrl+滚轮调字号）"
+                 style={{ '--lrc-k': Math.min(lrcK, 1.3) } as any}
+                 onWheel={(e) => { if (e.ctrlKey) { e.preventDefault(); bumpLrcK(e.deltaY < 0 ? 0.1 : -0.1) } }}
+                 onClick={toggleLrc}>
+              {lyric.length > 0 ? (
+                <>
+                  <div className="song">{cur ? cur.name : ''}</div>
+                  {lyric.map((l, k) => (
+                    k === curIndex ? (
+                      <div key={k} className="ln on">
+                        <span className="kowrap">
+                          <span className="kbase">{l.text}</span>
+                          <span className="kfill" style={{ width: (kProgress * 100) + '%' }}>{l.text}</span>
+                        </span>
+                      </div>
+                    ) : (
+                      <div key={k} className="ln">{l.text}</div>
+                    )
+                  ))}
+                </>
+              ) : (
+                <div className="none">{isLive ? '电台无歌词' : cur ? '正在取歌词…' : '未在播放'}</div>
+              )}
             </div>
           </section>
         )}
