@@ -8492,24 +8492,134 @@ function pairOf(r2) {
   }
   if (r2 && typeof r2 === "object")
     return { data: r2, err: "" };
-  return { data: null, err: typeof r2 === "string" ? r2 : "" };
+  return { data: r2 ?? null, err: "" };
 }
-function makeSpawn() {
+function makeSpawn(pluginDir) {
   return (bin, args) => {
     const realArgs = Array.isArray(args) ? args.map((x2) => String(x2)) : [];
+    const raw = String(bin ?? "").trim();
+    const sep = pluginDir && pluginDir.includes("\\") ? "\\" : "/";
+    const abs = !pluginDir || /^[A-Za-z]:[\\/]/.test(raw) || raw.startsWith("/") || raw.startsWith("\\\\") ? raw : pluginDir.replace(/[\\/]+$/, "") + sep + raw.replace(/^[\\/]+/, "").replace(/[\\/]+/g, sep);
+    trace("spawn new " + abs);
     let result = null;
     let pending = null;
+    let sid = "";
+    let starting = null;
+    let chain = Promise.resolve();
+    let streamed = false;
     const run = async () => {
       const app = bridge$1();
       if (!(app == null ? void 0 : app.RunProcess))
         throw new Error("\u540E\u7AEF\u4E0D\u652F\u6301\u8FD0\u884C\u672C\u673A\u7A0B\u5E8F");
-      const { data, err } = pairOf(await app.RunProcess(bin, realArgs, 300));
+      const { data, err } = pairOf(
+        await app.RunProcess(abs, realArgs, 300)
+      );
       if (err)
         throw new Error(err);
       result = { code: Number((data == null ? void 0 : data.code) ?? 0), stderr: String((data == null ? void 0 : data.stderr) || "") };
     };
+    const ensure = () => starting || (starting = (async () => {
+      const app = bridge$1();
+      if (!(app == null ? void 0 : app.StartPluginProcess))
+        throw new Error("\u540E\u7AEF\u4E0D\u652F\u6301\u4E0E\u63D2\u4EF6\u8FDB\u7A0B\u5BF9\u8BDD");
+      const { data, err } = pairOf(await app.StartPluginProcess(abs, realArgs));
+      if (err)
+        throw new Error(err);
+      trace("start back id=" + String(data));
+      if (!data)
+        throw new Error("\u63D2\u4EF6\u8FDB\u7A0B\u6CA1\u6709\u542F\u52A8");
+      streamed = true;
+      sid = String(data);
+      return sid;
+    })());
+    const enqueue = (fn) => {
+      const next = chain.then(fn, fn);
+      chain = next.then(
+        () => void 0,
+        () => void 0
+      );
+      return next;
+    };
+    const callStr = async (name, ...rest) => {
+      const app = bridge$1();
+      const fn = app == null ? void 0 : app[name];
+      if (!fn)
+        throw new Error("\u540E\u7AEF\u7F3A\u5C11 " + name);
+      const r2 = pairOf(await fn(sid, ...rest));
+      if (r2.err)
+        throw new Error(r2.err);
+      if (r2.data)
+        throw new Error(r2.data);
+    };
     return {
+      write: (data) => enqueue(async () => {
+        trace("spawn write " + abs + " len=" + String(data ?? "").length);
+        try {
+          await ensure();
+        } catch (e) {
+          trace("spawn ensure-fail " + String((e == null ? void 0 : e.message) || e));
+          throw e;
+        }
+        trace("spawn ensured sid=" + sid);
+        const app = bridge$1();
+        if (!(app == null ? void 0 : app.PluginProcWrite))
+          throw new Error("\u540E\u7AEF\u4E0D\u652F\u6301\u5199\u5165\u63D2\u4EF6\u8FDB\u7A0B");
+        let raw2;
+        try {
+          raw2 = await app.PluginProcWrite(sid, String(data ?? ""));
+        } catch (e) {
+          trace("write threw " + String((e == null ? void 0 : e.message) || e));
+          throw e;
+        }
+        const r2 = pairOf(raw2);
+        trace("write back sid=" + sid + " err=" + String(r2.err) + " msg=" + String(r2.data));
+        if (r2.err)
+          throw new Error(r2.err);
+        if (r2.data)
+          throw new Error(r2.data);
+      }),
+      readLine: (ms) => enqueue(async () => {
+        trace("spawn readLine " + abs + " ms=" + String(ms));
+        try {
+          await ensure();
+        } catch (e) {
+          trace("spawn ensure-fail " + String((e == null ? void 0 : e.message) || e));
+          throw e;
+        }
+        const app = bridge$1();
+        if (!(app == null ? void 0 : app.PluginProcReadLine))
+          throw new Error("\u540E\u7AEF\u4E0D\u652F\u6301\u8BFB\u53D6\u63D2\u4EF6\u8FDB\u7A0B");
+        let rawLine;
+        try {
+          rawLine = await app.PluginProcReadLine(sid, Number(ms) || 24e4);
+        } catch (e) {
+          trace("readLine threw " + String((e == null ? void 0 : e.message) || e));
+          throw e;
+        }
+        const { data, err } = pairOf(rawLine);
+        trace("readLine back sid=" + sid + " err=" + String(err) + " len=" + String(data ?? "").length);
+        if (err)
+          throw new Error(err);
+        if (!data)
+          throw new Error("\u8F85\u52A9\u8FDB\u7A0B\u5DF2\u9000\u51FA");
+        return String(data);
+      }),
+      closeStdin: () => enqueue(async () => {
+        trace("spawn closeStdin " + abs);
+        await ensure();
+        await callStr("PluginProcCloseStdin");
+      }),
       wait: async () => {
+        if (streamed) {
+          await chain;
+          const app = bridge$1();
+          if (!(app == null ? void 0 : app.PluginProcWait))
+            return -1;
+          const { data, err } = pairOf(await app.PluginProcWait(sid, 180));
+          if (err)
+            throw new Error(err);
+          return Number(data ?? -1);
+        }
         if (!result) {
           pending = pending || run();
           await pending;
@@ -8517,6 +8627,13 @@ function makeSpawn() {
         return (result == null ? void 0 : result.code) ?? 0;
       },
       errorOutput: async () => {
+        if (streamed) {
+          const app = bridge$1();
+          if (!(app == null ? void 0 : app.PluginProcStderr))
+            return "";
+          const { data } = pairOf(await app.PluginProcStderr(sid));
+          return String(data || "");
+        }
         if (!result) {
           pending = pending || run();
           try {
@@ -8528,6 +8645,12 @@ function makeSpawn() {
       },
       stdout: async () => "",
       kill: () => {
+        var _a;
+        if (!streamed)
+          return;
+        const app = bridge$1();
+        Promise.resolve((_a = app == null ? void 0 : app.PluginProcKill) == null ? void 0 : _a.call(app, sid)).catch(() => {
+        });
       }
     };
   };
@@ -8545,7 +8668,7 @@ function makeHost(id2, dataDir) {
     nickname: "",
     uid: "",
     localhost: "",
-    spawn: makeSpawn(),
+    spawn: makeSpawn(pluginRealDir.get(id2) || pluginDataDir),
     t: (s) => String(s ?? ""),
     setting: (key) => {
       const v2 = (pluginSettings[id2] || {})[key];
@@ -8672,6 +8795,27 @@ function makeFetch() {
           Object.keys(respHeaders).forEach((k2) => fn(String(respHeaders[k2]), k2));
         }
       },
+      body: {
+        getReader: () => {
+          let done = false;
+          return {
+            read: async () => {
+              if (done)
+                return { done: true, value: void 0 };
+              done = true;
+              return { done: false, value: new TextEncoder().encode(text) };
+            },
+            cancel: async () => {
+              done = true;
+            },
+            releaseLock: () => {
+            }
+          };
+        },
+        cancel: async () => {
+        }
+      },
+      bodyUsed: false,
       json: async () => JSON.parse(text),
       text: async () => text,
       arrayBuffer: async () => {
@@ -8709,6 +8853,10 @@ function makeFetchClone() {
     ok: true,
     status: 200,
     headers: { get: () => null, has: () => false },
+    body: { getReader: () => ({ read: async () => ({ done: true, value: void 0 }), cancel: async () => {
+    }, releaseLock: () => {
+    } }) },
+    bodyUsed: false,
     json: async () => ({}),
     text: async () => "",
     arrayBuffer: async () => new ArrayBuffer(0)
@@ -8825,15 +8973,31 @@ function mapTrack(t2) {
   };
 }
 async function mygoSearch(id2, keyword, page = 1) {
+  trace("search id=" + id2 + " kw=" + keyword + " page=" + page);
   const mod = await loadMyGoPlugin(id2);
   if (typeof mod.search !== "function")
     throw new Error("\u8FD9\u4E2A\u63D2\u4EF6\u4E0D\u652F\u6301\u641C\u7D22");
   const offset = Math.max(0, (page - 1) * 20);
-  const res = await mod.search({ query: keyword, kind: "tracks", offset });
+  let res;
+  try {
+    res = await mod.search({ query: keyword, kind: "tracks", offset });
+  } catch (e) {
+    trace("search-failed " + ((e == null ? void 0 : e.message) || e));
+    throw e;
+  }
   const list = (res == null ? void 0 : res.tracks) || (res == null ? void 0 : res.data) || (res == null ? void 0 : res.items) || [];
   if (!Array.isArray(list))
     return [];
   return list.map(mapTrack).filter((x2) => x2.id);
+}
+function trace(note) {
+  var _a;
+  try {
+    const app = bridge$1();
+    Promise.resolve((_a = app == null ? void 0 : app.ProcTrace) == null ? void 0 : _a.call(app, note)).catch(() => {
+    });
+  } catch {
+  }
 }
 async function mygoStream(id2, item, quality = "standard") {
   var _a;
@@ -8999,10 +9163,17 @@ function notifyAccountChanged(pluginId) {
   }
 }
 async function mygoSignIn(pluginId) {
+  trace("signin id=" + pluginId);
   const m2 = await loadMyGoPlugin(pluginId);
   if (typeof m2.signIn !== "function")
     throw new Error("\u8FD9\u4E2A\u63D2\u4EF6\u4E0D\u9700\u8981\u767B\u5F55\uFF0C\u6216\u6CA1\u6709\u63D0\u4F9B signIn");
-  const out = await m2.signIn();
+  let out;
+  try {
+    out = await m2.signIn();
+  } catch (e) {
+    trace("signin-failed " + ((e == null ? void 0 : e.message) || e));
+    throw e;
+  }
   clearMyGoCache(pluginId);
   notifyAccountChanged(pluginId);
   return out;
@@ -9043,6 +9214,7 @@ async function mygoSignOut(pluginId) {
   return { name: String((who == null ? void 0 : who.name) || (who == null ? void 0 : who.nickname) || "") };
 }
 async function mygoAccount(pluginId) {
+  trace("account id=" + pluginId);
   const m2 = await loadMyGoPlugin(pluginId);
   if (typeof m2.account !== "function")
     return null;
@@ -9981,6 +10153,8 @@ function PluginsPage({
     }
   }
   async function doSignIn() {
+    var _a2, _b2, _c, _d;
+    (_d = (_c = (_b2 = (_a2 = window.go) == null ? void 0 : _a2.main) == null ? void 0 : _b2.App) == null ? void 0 : _c.ProcTrace) == null ? void 0 : _d.call(_c, "click signin sel=" + sel);
     if (!sel || accBusy)
       return;
     setAccBusy(true);

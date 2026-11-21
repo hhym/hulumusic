@@ -87,6 +87,8 @@ func (a *App) Start() { a.startup(context.Background()) }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	// 每次启动先落一行版本，排查插件问题时一眼就能确认跑的是哪个 exe。
+	procLog("["+time.Now().Format("2006-01-02 15:04:05")+"] boot "+appVersion+"\n")
 	a.ensureProxy()
 	a.libPth = filepath.Join(dataDir(), "library.json")
 	a.loadLibrary()

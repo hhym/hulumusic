@@ -131,12 +131,15 @@ func processDeclared(base string) bool {
 
 // StartPluginProcess 起一个可对话的子进程，返回句柄 id。
 func (a *App) StartPluginProcess(bin string, args []string) (string, string) {
+	procLog("[" + time.Now().Format("15:04:05") + "] start bin=" + bin + " args=" + strings.Join(args, ",") + "\n")
 	path, errMsg := pluginExecPath(bin)
 	if errMsg != "" {
+		procLog("[start-failed] " + errMsg + "\n")
 		return "", errMsg
 	}
 	base := strings.ToLower(filepath.Base(path))
 	if !processDeclared(base) {
+		procLog("[start-failed] 没有插件声明过 " + filepath.Base(path) + " 权限\n")
 		return "", "没有启用的插件声明过 " + filepath.Base(path) + " 权限"
 	}
 	if base != "ffmpeg" && base != "ffmpeg.exe" {
@@ -148,6 +151,8 @@ func (a *App) StartPluginProcess(bin string, args []string) (string, string) {
 
 	cmd := exec.Command(path, args...)
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	// helper 是控制台程序，不隐藏就会在桌面弹一堆黑窗口
+	hideConsole(cmd)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return "", "启动失败：" + err.Error()
@@ -191,6 +196,9 @@ func (a *App) StartPluginProcess(bin string, args []string) (string, string) {
 				cp.code = cmd.ProcessState.ExitCode()
 			}
 		}
+		// helper 只把错误归类成 frame.error（response/setup/...），真正原因在 stderr，
+		// 用户看不到。这里把 stderr 和退出码追加到数据目录，排查时直接看文件。
+		procLog("[" + time.Now().Format("2006-01-02 15:04:05") + "] " + filepath.Base(path) + " exit=" + strconv.Itoa(cp.code) + " stderr=" + cp.errb.String() + "\n")
 		close(cp.lines)
 		close(cp.done)
 	}()
@@ -214,10 +222,19 @@ func procOf(id string) (*childProc, string) {
 }
 
 func (a *App) PluginProcWrite(id, data string) string {
+	procLog("[" + time.Now().Format("15:04:05") + "] call write id=" + id + " len=" + strconv.Itoa(len(data)) + "\n")
 	cp, errMsg := procOf(id)
 	if errMsg != "" {
 		return errMsg
 	}
+	if cp.stdin == nil {
+		return "stdin 已经关闭"
+	}
+	short := data
+	if len(short) > 600 {
+		short = short[:600] + "…"
+	}
+	procLog("[" + time.Now().Format("15:04:05") + "] stdin " + strings.ReplaceAll(short, "\n", " ↵ ") + "\n")
 	if _, err := cp.stdin.Write([]byte(data)); err != nil {
 		return "写入失败：" + err.Error()
 	}
@@ -225,11 +242,12 @@ func (a *App) PluginProcWrite(id, data string) string {
 }
 
 func (a *App) PluginProcReadLine(id string, timeoutMs int) (string, string) {
+	procLog("[" + time.Now().Format("15:04:05") + "] call readline timeout=" + strconv.Itoa(timeoutMs) + "\n")
 	cp, errMsg := procOf(id)
 	if errMsg != "" {
 		return "", errMsg
 	}
-	if timeoutMs <= 0 || timeoutMs > 120000 {
+	if timeoutMs <= 0 || timeoutMs > 300000 {
 		timeoutMs = 25000
 	}
 	select {
@@ -237,10 +255,35 @@ func (a *App) PluginProcReadLine(id string, timeoutMs int) (string, string) {
 		if !ok {
 			return "", "辅助进程已退出"
 		}
+		show := line
+		if len(show) > 800 {
+			show = show[:800] + "…"
+		}
+		procLog("[" + time.Now().Format("15:04:05") + "] stdout " + show + "\n")
+		if strings.Contains(line, "\"error\"") {
+			// 错误帧当场落盘，并带上此刻的 stderr：helper 是常驻的，等它退出再记就太晚了。
+			procLog("[" + time.Now().Format("15:04:05") + "] frame " + line + " | stderr=" + cp.errb.String() + "\n")
+		}
 		return line, ""
 	case <-time.After(time.Duration(timeoutMs) * time.Millisecond):
 		return "", "辅助进程响应超时"
 	}
+}
+
+// PluginProcCloseStdin 只关掉 stdin，让 helper 读到 EOF 后自己退出。
+func (a *App) PluginProcCloseStdin(id string) string {
+	procLog("[" + time.Now().Format("15:04:05") + "] call closeStdin\n")
+	cp, errMsg := procOf(id)
+	if errMsg != "" {
+		return errMsg
+	}
+	if cp.stdin != nil {
+		if err := cp.stdin.Close(); err != nil {
+			return "关闭写入失败：" + err.Error()
+		}
+		cp.stdin = nil
+	}
+	return ""
 }
 
 func (a *App) PluginProcStderr(id string) (string, string) {
@@ -252,6 +295,7 @@ func (a *App) PluginProcStderr(id string) (string, string) {
 }
 
 func (a *App) PluginProcKill(id string) string {
+	procLog("[" + time.Now().Format("15:04:05") + "] call kill\n")
 	cp, errMsg := procOf(id)
 	if errMsg != "" {
 		return errMsg
@@ -279,4 +323,24 @@ func (a *App) PluginProcWait(id string, timeoutSec int) (int, string) {
 	case <-time.After(time.Duration(timeoutSec) * time.Second):
 		return -1, fmt.Sprintf("等待超时（%d 秒）", timeoutSec)
 	}
+}
+
+// procLog 把插件辅助进程的诊断信息追加到数据目录，方便用户回贴。
+func procLog(line string) {
+	p := filepath.Join(dataDir(), "plugin-proc.log")
+	f, err := os.OpenFile(p, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	if st, err := f.Stat(); err == nil && st.Size() > 2<<20 {
+		_ = os.Truncate(p, 0)
+	}
+	_, _ = f.WriteString(line)
+}
+
+// ProcTrace 让前端把关键步骤写进同一份 plugin-proc.log，便于定位「点了没反应」。
+func (a *App) ProcTrace(note string) string {
+	procLog("[" + time.Now().Format("15:04:05") + "] ui " + note + "\n")
+	return ""
 }

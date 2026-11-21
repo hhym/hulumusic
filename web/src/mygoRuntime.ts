@@ -518,32 +518,150 @@ function scheduleSave(id: string) {
 
 /* Wails 的多返回值在 JS 里会变成数组（也可能被合并成单值），统一在这里拆。 */
 function pairOf<T>(r: any): {data: T | null; err: string} {
+  // Wails 对 (值, error) 形式的 Go 方法：成功时 promise resolve 的就是那个“值”本身
+  // （不是 [值, null]），失败时直接 reject。所以字符串必须当数据，不能当错误信息，
+  // 否则 StartPluginProcess 返回的进程 id "1" 会被误判成错误、spawn 直接失败。
   if (Array.isArray(r)) {
     return {data: (r[0] ?? null) as T | null, err: typeof r[1] === 'string' ? r[1] : ''}
   }
   if (r && typeof r === 'object') return {data: r as T, err: ''}
-  return {data: null, err: typeof r === 'string' ? r : ''}
+  return {data: (r ?? null) as T | null, err: ''}
 }
 
-/* host.spawn(bin, args) 的契约（插件是这么用的）：
-     const p = host.spawn(bin, args); const code = await p.wait(); const said = await p.errorOutput()
-   后端一次跑完再回，这里包成插件期待的两个方法。 */
-function makeSpawn() {
+/* host.spawn(bin, args) 的契约有两套用法：
+   ① 一次性：const p = host.spawn(bin, args); await p.wait(); await p.errorOutput()
+      → 后端 RunProcess 跑完再回。
+   ② 常驻对话：p.write(line) / await p.readLine(ms) / p.closeStdin() / p.kill()
+      → 后端 StartPluginProcess 起一个子进程，按 JSON 行来往（汽水这类带 helper 的插件）。
+   两种都在返回对象上，按插件实际调用的方法懒启动，互不影响。 */
+function makeSpawn(pluginDir?: string) {
   return (bin: string, args?: any[]) => {
     const realArgs = Array.isArray(args) ? args.map((x) => String(x)) : []
+    // 插件写的 bin 是相对自己目录的（bin/qishui-helper-...），直接丢给后端会拼到
+    // plugins 根，找不到文件；这里先按 host.dir 拼成绝对路径。
+    const raw = String(bin ?? '').trim()
+    const sep = pluginDir && pluginDir.includes('\\') ? '\\' : '/'
+    const abs =
+      !pluginDir || /^[A-Za-z]:[\\/]/.test(raw) || raw.startsWith('/') || raw.startsWith('\\\\')
+        ? raw
+        : pluginDir.replace(/[\\/]+$/, '') + sep + raw.replace(/^[\\/]+/, '').replace(/[\\/]+/g, sep)
+
+    trace('spawn new ' + abs)
     let result: {code: number; stderr: string} | null = null
     let pending: Promise<void> | null = null
+    let sid = ''
+    let starting: Promise<string> | null = null
+    let chain: Promise<void> = Promise.resolve()
+    let streamed = false
 
     const run = async () => {
       const app: any = bridge()
       if (!app?.RunProcess) throw new Error('后端不支持运行本机程序')
-      const {data, err} = pairOf<{code: number; stdout: string; stderr: string}>(await app.RunProcess(bin, realArgs, 300))
+      const {data, err} = pairOf<{code: number; stdout: string; stderr: string}>(
+        await app.RunProcess(abs, realArgs, 300)
+      )
       if (err) throw new Error(err)
       result = {code: Number(data?.code ?? 0), stderr: String(data?.stderr || '')}
     }
 
+    const ensure = () =>
+      starting ||
+      (starting = (async () => {
+        const app: any = bridge()
+        if (!app?.StartPluginProcess) throw new Error('后端不支持与插件进程对话')
+        const {data, err} = pairOf<string>(await app.StartPluginProcess(abs, realArgs))
+        if (err) throw new Error(err)
+        trace('start back id=' + String(data))
+        if (!data) throw new Error('插件进程没有启动')
+        streamed = true
+        sid = String(data)
+        return sid
+      })())
+
+    // 写、关 stdin、读行必须按插件调用顺序串起来，否则会出现还没启动就读行。
+    const enqueue = <T>(fn: () => Promise<T>): Promise<T> => {
+      const next = chain.then(fn, fn)
+      chain = next.then(
+        () => undefined,
+        () => undefined
+      )
+      return next
+    }
+
+    const callStr = async (name: string, ...rest: any[]) => {
+      const app: any = bridge()
+      const fn = app?.[name]
+      if (!fn) throw new Error('后端缺少 ' + name)
+      const r = pairOf<string>(await fn(sid, ...rest))
+      if (r.err) throw new Error(r.err)
+      if (r.data) throw new Error(r.data)
+    }
+
     return {
+      write: (data: any) =>
+        enqueue(async () => {
+          trace('spawn write ' + abs + ' len=' + String(data ?? '').length)
+          try {
+            await ensure()
+          } catch (e: any) {
+            trace('spawn ensure-fail ' + String(e?.message || e))
+            throw e
+          }
+          trace('spawn ensured sid=' + sid)
+          const app: any = bridge()
+          if (!app?.PluginProcWrite) throw new Error('后端不支持写入插件进程')
+          let raw: any
+          try {
+            raw = await app.PluginProcWrite(sid, String(data ?? ''))
+          } catch (e: any) {
+            trace('write threw ' + String(e?.message || e))
+            throw e
+          }
+          const r = pairOf<string>(raw)
+          trace('write back sid=' + sid + ' err=' + String(r.err) + ' msg=' + String(r.data))
+          if (r.err) throw new Error(r.err)
+          if (r.data) throw new Error(r.data)
+        }),
+      readLine: (ms?: number) =>
+        enqueue(async () => {
+          trace('spawn readLine ' + abs + ' ms=' + String(ms))
+          try {
+            await ensure()
+          } catch (e: any) {
+            trace('spawn ensure-fail ' + String(e?.message || e))
+            throw e
+          }
+          const app: any = bridge()
+          if (!app?.PluginProcReadLine) throw new Error('后端不支持读取插件进程')
+          // 插件登录要等用户扫码，可能好几分钟；后端上限 120 秒，取满。
+          let rawLine: any
+          try {
+            rawLine = await app.PluginProcReadLine(sid, Number(ms) || 240000)
+          } catch (e: any) {
+            trace('readLine threw ' + String(e?.message || e))
+            throw e
+          }
+          const {data, err} = pairOf<string>(rawLine)
+          trace('readLine back sid=' + sid + ' err=' + String(err) + ' len=' + String(data ?? '').length)
+          if (err) throw new Error(err)
+          if (!data) throw new Error('辅助进程已退出')
+          return String(data)
+        }),
+      closeStdin: () =>
+        enqueue(async () => {
+          trace('spawn closeStdin ' + abs)
+          await ensure()
+          await callStr('PluginProcCloseStdin')
+        }),
       wait: async () => {
+        if (streamed) {
+          await chain
+          const app: any = bridge()
+          if (!app?.PluginProcWait) return -1
+          const {data, err} = pairOf<number>(await app.PluginProcWait(sid, 180))
+          if (err) throw new Error(err)
+          return Number(data ?? -1)
+        }
         if (!result) {
           pending = pending || run()
           await pending
@@ -551,6 +669,12 @@ function makeSpawn() {
         return result?.code ?? 0
       },
       errorOutput: async () => {
+        if (streamed) {
+          const app: any = bridge()
+          if (!app?.PluginProcStderr) return ''
+          const {data} = pairOf<string>(await app.PluginProcStderr(sid))
+          return String(data || '')
+        }
         if (!result) {
           pending = pending || run()
           try {
@@ -562,7 +686,11 @@ function makeSpawn() {
         return result?.stderr || ''
       },
       stdout: async () => '',
-      kill: () => {},
+      kill: () => {
+        if (!streamed) return
+        const app: any = bridge()
+        Promise.resolve(app?.PluginProcKill?.(sid)).catch(() => {})
+      },
     }
   }
 }
@@ -583,7 +711,7 @@ function makeHost(id: string, dataDir: string): AnyObj {
     uid: '',
     // 桌面版没有 localhost 服务，插件如果依赖它会自己降级
     localhost: '',
-    spawn: makeSpawn(),
+    spawn: makeSpawn(pluginRealDir.get(id) || pluginDataDir),
     t: (s: any) => String(s ?? ''),
     setting: (key: string) => {
       const v = (pluginSettings[id] || {})[key]
@@ -705,6 +833,24 @@ function makeFetch(): any {
           Object.keys(respHeaders).forEach((k) => fn(String(respHeaders[k]), k))
         },
       },
+      // 有插件（汽水 1.0.16）是拿 response.body.getReader() 一块块读的，
+      // 只给 text()/json() 不够：它会把空字符串当响应体，最后报「接口返回异常」
+      body: {
+        getReader: () => {
+          let done = false
+          return {
+            read: async () => {
+              if (done) return {done: true, value: undefined}
+              done = true
+              return {done: false, value: new TextEncoder().encode(text)}
+            },
+            cancel: async () => { done = true },
+            releaseLock: () => {},
+          }
+        },
+        cancel: async () => {},
+      },
+      bodyUsed: false,
       json: async () => JSON.parse(text),
       text: async () => text,
       // 二进制响应：后端会把图片这类内容的原始字节以 base64 带回来，
@@ -748,6 +894,8 @@ function makeFetchClone(): any {
     ok: true,
     status: 200,
     headers: {get: () => null, has: () => false},
+    body: {getReader: () => ({read: async () => ({done: true, value: undefined}), cancel: async () => {}, releaseLock: () => {}})},
+    bodyUsed: false,
     json: async () => ({}),
     text: async () => '',
     arrayBuffer: async () => new ArrayBuffer(0),
@@ -877,13 +1025,29 @@ function mapTrack(t: AnyObj): MyGoItem {
 }
 
 export async function mygoSearch(id: string, keyword: string, page = 1): Promise<MyGoItem[]> {
+  trace('search id=' + id + ' kw=' + keyword + ' page=' + page)
   const mod = await loadMyGoPlugin(id)
   if (typeof mod.search !== 'function') throw new Error('这个插件不支持搜索')
   const offset = Math.max(0, (page - 1) * 20)
-  const res = await mod.search({query: keyword, kind: 'tracks', offset})
+  let res: any
+  try {
+    res = await mod.search({query: keyword, kind: 'tracks', offset})
+  } catch (e: any) {
+    trace('search-failed ' + (e?.message || e))
+    throw e
+  }
   const list: any[] = res?.tracks || res?.data || res?.items || []
   if (!Array.isArray(list)) return []
   return list.map(mapTrack).filter((x) => x.id)
+}
+
+function trace(note: string) {
+  try {
+    const app: any = bridge()
+    Promise.resolve(app?.ProcTrace?.(note)).catch(() => {})
+  } catch {
+    /* 没有这个绑定就算了 */
+  }
 }
 
 export async function mygoStream(
@@ -1093,9 +1257,16 @@ function notifyAccountChanged(pluginId: string) {
 
 /* 插件登录：signIn() 会走 host.signInPrompt 弹二维码；account() 读当前登录态。 */
 export async function mygoSignIn(pluginId: string): Promise<any> {
+  trace('signin id=' + pluginId)
   const m: AnyObj = await loadMyGoPlugin(pluginId)
   if (typeof m.signIn !== 'function') throw new Error('这个插件不需要登录，或没有提供 signIn')
-  const out = await m.signIn()
+  let out: any
+  try {
+    out = await m.signIn()
+  } catch (e: any) {
+    trace('signin-failed ' + (e?.message || e))
+    throw e
+  }
   clearMyGoCache(pluginId)
   notifyAccountChanged(pluginId)
   return out
@@ -1143,6 +1314,7 @@ export async function mygoSignOut(pluginId: string): Promise<{name: string}> {
 }
 
 export async function mygoAccount(pluginId: string): Promise<any> {
+  trace('account id=' + pluginId)
   const m: AnyObj = await loadMyGoPlugin(pluginId)
   if (typeof m.account !== 'function') return null
   try {

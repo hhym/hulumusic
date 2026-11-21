@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -80,6 +81,12 @@ func (a *App) HttpRequest(rawURL, method string, headers map[string]string, body
 		}
 	}
 	res, err := client.Do(req)
+	track := strings.Contains(rawURL, "qishui.com") || strings.Contains(rawURL, "beta-luna.douyin.com")
+	if track {
+		if err != nil {
+			procLog("[http] " + method + " " + rawURL + " -> err=" + err.Error() + "\n")
+		}
+	}
 	if err != nil {
 		return HttpResult{Err: "请求失败：" + err.Error()}
 	}
@@ -96,6 +103,26 @@ func (a *App) HttpRequest(rawURL, method string, headers map[string]string, body
 	// 文本类响应给原文；图片/音频这类二进制响应额外给 base64，
 	// 否则插件里 `(await fetch(...)).arrayBuffer()` 拿到的字节是错的
 	ct := res.Header.Get("Content-Type")
+	if strings.Contains(rawURL, "qishui.com") || strings.Contains(rawURL, "beta-luna.douyin.com") {
+		names := []string{}
+		for k := range headers {
+			names = append(names, "H:"+k)
+		}
+		procLog("[http-hdr] " + strings.Join(names, ";") + "\n")
+		names = names[:0]
+		for k, v := range headers {
+			if len(v) > 40 {
+				v = v[:40] + "…"
+			}
+			names = append(names, k+"="+v)
+		}
+		procLog("[http-hdr] " + strings.Join(names, "; ") + "\n")
+		body := string(b)
+		if len(body) > 400 {
+			body = body[:400] + "…"
+		}
+		procLog("[http] " + method + " " + rawURL + " -> " + strconv.Itoa(res.StatusCode) + " ct=" + ct + " body=" + body + "\n")
+	}
 	// 有些站点的响应是 GBK / 混合编码字节，直接塞进 JSON 里会让 Wails 的编码器报
 	// jsontext: invalid UTF-8。这里统一清洗成合法 UTF-8，原文另走 bodyB64。
 	resp := HttpResult{Status: res.StatusCode, Body: strings.ToValidUTF8(string(b), "\uFFFD"), Headers: collectHeaders(res.Header)}

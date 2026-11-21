@@ -357,6 +357,7 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
   }
 
   async function doSignIn() {
+    ;(window as any).go?.main?.App?.ProcTrace?.('click signin sel=' + sel)
     if (!sel || accBusy) return
     setAccBusy(true); setAccErr('')
     try {

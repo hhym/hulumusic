@@ -88,6 +88,11 @@ func (x API) PluginProcReadLine(id any, timeoutMs any) (string, error) {
 	return v, errOf(e)
 }
 
+func (x API) PluginProcCloseStdin(id any) (string, error) {
+	v := x.App.PluginProcCloseStdin(asStr(id))
+	return v, errOf(v)
+}
+
 func (x API) PluginProcStderr(id any) (string, error) {
 	v, e := x.App.PluginProcStderr(asStr(id))
 	return v, errOf(e)
@@ -101,6 +106,10 @@ func (x API) PluginProcKill(id any) (string, error) {
 func (x API) PluginProcWait(id any, timeoutSec any) (int, error) {
 	v, e := x.App.PluginProcWait(asStr(id), as[int](timeoutSec))
 	return v, errOf(e)
+}
+
+func (x API) ProcTrace(note any) string {
+	return x.App.ProcTrace(asStr(note))
 }
 
 func (x API) OpenExternal(url any) string {
