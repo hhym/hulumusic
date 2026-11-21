@@ -15,6 +15,10 @@ type Props = {
   queue: {list: Track[]; idx: number}
   volume: number
   eqGains: number[]
+  eqOn: boolean
+  eqPreset: number
+  eqPresets: string[]
+  shuffle: boolean
   inLib: boolean
   onToggle: () => void
   onPrev: () => void
@@ -23,6 +27,13 @@ type Props = {
   onVolume: (v: number) => void
   onFav: () => void
   onPlayAt: (i: number) => void
+  onEqToggle: () => void
+  onEqReset: () => void
+  onEqPreset: (i: number) => void
+  onShuffle: () => void
+  onRemoveAt: (i: number) => void
+  onClearList: () => void
+  onClearNext: () => void
   onExpand: () => void
 }
 
@@ -156,6 +167,31 @@ export default function SkinView(p: Props) {
   const prevLine = p.curIndex > 0 ? p.lyric[p.curIndex - 1].text : ''
   const nextLine = p.curIndex >= 0 && p.lyric[p.curIndex + 1] ? p.lyric[p.curIndex + 1].text : ''
 
+  // 经典四窗那套：每个面板自带一条小标题栏，□ 折叠、× 收起。
+  const [open, setOpen] = useState({eq: true, lyric: true, pl: true})
+  const flip = (k: 'eq' | 'lyric' | 'pl') => setOpen((o) => ({...o, [k]: !o[k]}))
+  const sev = Object.values(open)
+  const allOpen = sev.every(Boolean)
+
+  const bar = (k?: 'eq' | 'lyric' | 'pl', icon = 'music', name = '', extra?: React.ReactNode) => (
+    <div className="skin-win-bar" onMouseDown={onMouseDown}>
+      <span className="skin-win-ico"><Fi n={icon} size={9} /></span>
+      <span className="skin-win-t">{name}</span>
+      {extra}
+      <button className="skin-win-btn" title={k ? '折叠 / 展开' : '全部面板折叠 / 展开'}
+              onClick={() => (k ? flip(k) : setOpen({eq: !allOpen, lyric: !allOpen, pl: !allOpen}))}>
+        <Fi n="square" size={8} />
+      </button>
+      <button className="skin-win-btn close" title={k ? '收起该面板' : '切回桌面'}
+              onClick={() => (k ? setOpen((o) => ({...o, [k]: false})) : p.onExpand())}>
+        <Fi n="x" size={8} />
+      </button>
+    </div>
+  )
+
+  const presets = p.eqPresets.length ? p.eqPresets : ['默认']
+  const presetName = presets[p.eqPreset] || presets[0]
+
   return (
     <div className="skin-view" data-skin={skinName}>
       {/* 标题栏 */}
@@ -181,95 +217,142 @@ export default function SkinView(p: Props) {
         <span className="skin-swatch-lab">{SKINS.find((s) => s.id === skinName)?.label}</span>
       </div>
 
-      {/* 主播放面板 */}
-      <section className="skin-panel skin-player">
-        <div className="skin-lcd">
-          <div className="skin-lcd-left">
-            <div className="skin-lcd-album">{p.cur?.album || (p.cur ? p.cur.name : '专辑：—')}</div>
-            <div className="skin-lcd-meta">
-              <span>立体声</span>
-              <span>状态：{p.busy ? '取流中' : p.playing ? '播放' : '暂停'}</span>
+      {/* 主播放面板（对应经典主窗） */}
+      <section className="skin-panel skin-player skin-win">
+        {bar(undefined, 'music', '千千静听', (
+          <span className="skin-win-tools">
+            <button className={'skin-mini-btn' + (open.pl ? ' on' : '')} onClick={() => flip('pl')} title="播放列表">PL</button>
+            <button className={'skin-mini-btn' + (open.eq ? ' on' : '')} onClick={() => flip('eq')} title="均衡器">EQ</button>
+            <button className={'skin-mini-btn' + (open.lyric ? ' on' : '')} onClick={() => flip('lyric')} title="歌词秀">LRC</button>
+          </span>
+        ))}
+        <div className="skin-win-body">
+          <div className="skin-lcd">
+            <div className="skin-lcd-left">
+              <div className="skin-lcd-album">{p.cur?.album || (p.cur ? p.cur.name : '专辑：—')}</div>
+              <div className="skin-lcd-meta">
+                <span>立体声</span>
+                <span>状态：{p.busy ? '取流中' : p.playing ? '播放' : '暂停'}</span>
+              </div>
+            </div>
+            <div className="skin-lcd-right">
+              <div className="skin-lcd-time">{fmt(p.pos)}</div>
+              <div className="skin-lcd-dur">/ {fmt(p.dur)}</div>
             </div>
           </div>
-          <div className="skin-lcd-right">
-            <div className="skin-lcd-time">{fmt(p.pos)}</div>
-            <div className="skin-lcd-dur">/ {fmt(p.dur)}</div>
+
+          <div className="skin-progress">
+            <input type="range" min={0} max={p.dur || 0} step={100} value={Math.min(p.pos, p.dur || 0)}
+                   onChange={(e) => p.onSeek(Number(e.target.value))} />
           </div>
-        </div>
 
-        <div className="skin-progress">
-          <input type="range" min={0} max={p.dur || 0} step={100} value={Math.min(p.pos, p.dur || 0)}
-                 onChange={(e) => p.onSeek(Number(e.target.value))} />
-        </div>
-
-        <div className="skin-transport">
-          <button onClick={p.onPrev} title="上一首"><Fi n="skip-back" fill size={18} /></button>
-          <button className="skin-play" onClick={p.onToggle} disabled={!p.cur}
-                  title={p.busy ? '取流中' : p.playing ? '暂停' : '播放'}>
-            <Fi n={FN(p.playing ? 'pause' : 'play')} fill size={20} />
-          </button>
-          <button onClick={p.onNext} title="下一首"><Fi n="skip-forward" fill size={18} /></button>
-          <div className="skin-volume">
-            <Fi n={p.volume > 0 ? 'volume-high' : 'volume-mute'} size={14} />
-            <input type="range" min={0} max={1} step={0.01} value={p.volume}
-                   onChange={(e) => p.onVolume(Number(e.target.value))} />
+          <div className="skin-transport">
+            <button onClick={p.onPrev} title="上一首"><Fi n="skip-back" fill size={18} /></button>
+            <button className="skin-play" onClick={p.onToggle} disabled={!p.cur}
+                    title={p.busy ? '取流中' : p.playing ? '暂停' : '播放'}>
+              <Fi n={FN(p.playing ? 'pause' : 'play')} fill size={20} />
+            </button>
+            <button onClick={p.onNext} title="下一首"><Fi n="skip-forward" fill size={18} /></button>
+            <div className="skin-volume">
+              <Fi n={p.volume > 0 ? 'volume-high' : 'volume-mute'} size={14} />
+              <input type="range" min={0} max={1} step={0.01} value={p.volume}
+                     onChange={(e) => p.onVolume(Number(e.target.value))} />
+            </div>
+            <button className="skin-desk-btn" onClick={p.onExpand} title="回到桌面主界面">音乐窗</button>
           </div>
         </div>
       </section>
 
       {/* 均衡器面板 */}
-      <section className="skin-panel skin-eq">
-        <div className="skin-panel-head">
-          <span>均衡器</span>
-          <span className="skin-eq-bars">
-            {(p.eqGains.length ? p.eqGains : Array(10).fill(0)).map((g, i) => (
-              <span key={i} className="skin-eq-fader" style={{'--gain': g} as any}>
-                <i />
-              </span>
-            ))}
-          </span>
-        </div>
-      </section>
+      {open.eq && (
+        <section className="skin-panel skin-eq skin-win">
+          {bar('eq', 'sliders', '均衡器', (
+            <span className="skin-eq-ctl">
+              <button className={'skin-mini-btn' + (p.eqOn ? ' on' : '')} onClick={p.onEqToggle}
+                      title={p.eqOn ? '关闭均衡器' : '开启均衡器'}>{p.eqOn ? 'ON' : 'OFF'}</button>
+              <button onClick={p.onEqReset} title="全部推子归零">RESET</button>
+              <button onClick={() => p.onEqPreset((p.eqPreset + 1) % presets.length)}
+                      title={`当前：${presetName}`}>PRESETS</button>
+            </span>
+          ))}
+          <div className="skin-win-body skin-eq-body">
+            <div className="skin-eq-scale">
+              <span>+12dB</span>
+              <span>0dB</span>
+              <span>-12dB</span>
+            </div>
+            <span className="skin-eq-bars">
+              {(p.eqGains.length ? p.eqGains : Array(10).fill(0)).map((g, i) => (
+                <span key={i} className="skin-eq-fader" style={{'--gain': g} as any}>
+                  <i />
+                </span>
+              ))}
+            </span>
+          </div>
+        </section>
+      )}
 
       {/* 歌词秀面板 */}
-      <section className="skin-panel skin-lyric">
-        <div className="skin-panel-head">
-          <span>歌词秀</span>
-          <span className="skin-lyric-zoom">
-            <button onClick={() => nudgeZoom(-10)} disabled={zoom <= 80} title="歌词缩小">
-              <Fi n="minus" size={10} />
-            </button>
-            <button className="skin-zoom-val" onClick={() => selectZoom(100)} title="点一下回到 100%">
-              {zoom}%
-            </button>
-            <button onClick={() => nudgeZoom(10)} disabled={zoom >= 300} title="歌词放大">
-              <Fi n="plus" size={10} />
-            </button>
-          </span>
-        </div>
-        <div className="skin-lyric-box" style={{'--lz': zoom / 100} as any}>
-          <div className="skin-lyric-prev">{prevLine || ' '}</div>
-          <div className="skin-lyric-cur">{curLine || title}</div>
-          <div className="skin-lyric-next">{nextLine || ' '}</div>
-        </div>
-      </section>
+      {open.lyric && (
+        <section className="skin-panel skin-lyric skin-win">
+          {bar('lyric', 'document-text', '歌词秀', (
+            <span className="skin-lyric-zoom">
+              <button onClick={() => nudgeZoom(-10)} disabled={zoom <= 80} title="歌词缩小">
+                <Fi n="minus" size={10} />
+              </button>
+              <button className="skin-zoom-val" onClick={() => selectZoom(100)} title="点一下回到 100%">
+                {zoom}%
+              </button>
+              <button onClick={() => nudgeZoom(10)} disabled={zoom >= 300} title="歌词放大">
+                <Fi n="plus" size={10} />
+              </button>
+            </span>
+          ))}
+          <div className="skin-win-body">
+            <div className="skin-lyric-box" style={{'--lz': zoom / 100} as any}>
+              <div className="skin-lyric-prev">{prevLine || ' '}</div>
+              <div className="skin-lyric-cur">{curLine || title}</div>
+              <div className="skin-lyric-next">{nextLine || ' '}</div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 播放列表面板 */}
-      <section className="skin-panel skin-playlist">
-        <div className="skin-panel-head"><span>播放列表</span><span className="skin-pl-count">{p.queue.list.length} 首</span></div>
-        <div className="skin-pl-list">
-          {p.queue.list.length === 0 && <div className="skin-pl-empty">列表为空，去搜索加歌</div>}
-          {p.queue.list.map((t, i) => (
-            <div key={t.id + i} className={'skin-pl-row' + (i === p.queue.idx ? ' on' : '')}
-                 onClick={() => p.onPlayAt(i)}>
-              <span className="skin-pl-idx">{i + 1}</span>
-              <span className="skin-pl-name">{t.name}</span>
-              <span className="skin-pl-artist">{t.artist || '未知'}</span>
-              <span className="skin-pl-dur">{fmt((t.duration || 0) * 1000)}</span>
+      {open.pl && (
+        <section className="skin-panel skin-playlist skin-win">
+          {bar('pl', 'list', '播放列表', <span className="skin-pl-count">{p.queue.list.length} 首</span>)}
+          <div className="skin-win-body skin-pl-body">
+            <div className="skin-pl-tools">
+              <button onClick={() => p.onRemoveAt(p.queue.idx)} disabled={!p.queue.list.length}
+                      title="从列表里删掉当前这首"><Fi n="trash-2" size={11} /></button>
+              <button onClick={p.onClearNext} disabled={!p.queue.list.length} title="清空待播（保留当前）">
+                <Fi n="rotate-ccw" size={11} />
+              </button>
+              <button onClick={p.onClearList} disabled={!p.queue.list.length} title="清空整个列表">
+                <Fi n="x" size={11} />
+              </button>
+              <button className={p.shuffle ? 'on' : ''} onClick={p.onShuffle}
+                      title={p.shuffle ? '随机播放：开' : '随机播放：关'}>
+                <Fi n="shuffle" size={11} />
+              </button>
+              <span className="skin-pl-tab">[默认]</span>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className="skin-pl-list">
+              {p.queue.list.length === 0 && <div className="skin-pl-empty">列表为空，去搜索加歌</div>}
+              {p.queue.list.map((t, i) => (
+                <div key={t.id + i} className={'skin-pl-row' + (i === p.queue.idx ? ' on' : '')}
+                     onClick={() => p.onPlayAt(i)}>
+                  <span className="skin-pl-idx">{i + 1}</span>
+                  <span className="skin-pl-name">{t.name}</span>
+                  <span className="skin-pl-artist">{t.artist || '未知'}</span>
+                  <span className="skin-pl-dur">{fmt((t.duration || 0) * 1000)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   )
 }

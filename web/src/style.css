@@ -1109,11 +1109,36 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-swatch.on{border-color:var(--txt)}
 .skin-swatch-lab{font-size:11px;color:var(--dim);margin-left:auto}
 
-.skin-panel{background:linear-gradient(180deg,var(--panel1),var(--panel2));border:1px solid var(--line);border-radius:11px;padding:10px 12px;box-sizing:border-box}
+.skin-panel{background:linear-gradient(180deg,var(--panel1),var(--panel2));border:1px solid var(--line);border-radius:11px;padding:0;box-sizing:border-box;overflow:hidden}
 .skin-panel-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--accent);margin-bottom:8px}
 
+/* 经典四窗：每个面板自带一条小标题栏（图标 + 标题 + □ ×），中间是窗口体 */
+.skin-win{display:flex;flex-direction:column}
+.skin-win-bar{display:flex;align-items:center;gap:5px;height:22px;padding:0 7px;flex:0 0 auto;
+  background:linear-gradient(180deg,var(--hover),var(--bg1));border-bottom:1px solid var(--line);cursor:grab;user-select:none}
+.skin-win-ico{width:14px;height:14px;border-radius:4px;background:var(--ico-bg);color:var(--ico-txt);
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.skin-win-t{font-size:11px;color:var(--accent);letter-spacing:.5px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skin-win-btn{width:15px;height:14px;padding:0;border:1px solid var(--line);border-radius:3px;
+  background:var(--panel1);color:var(--dim);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.skin-win-btn:hover{background:var(--hover);color:var(--txt)}
+.skin-win-btn.close:hover{color:#ff8a8a}
+.skin-win-body{padding:10px 12px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;min-height:0;flex:1 1 auto}
+
+/* 主窗右侧 PL / EQ / LRC 小开关与「音乐窗」按钮 */
+.skin-win-tools{display:flex;gap:3px;margin-right:2px}
+.skin-mini-btn{height:14px;padding:0 5px;font-size:9px;letter-spacing:.3px;border-radius:3px;
+  border:1px solid var(--line);background:var(--panel1);color:var(--dim);cursor:pointer}
+.skin-mini-btn.on{background:var(--on);color:var(--txt);border-color:var(--accent)}
+.skin-mini-btn:hover{color:var(--txt)}
+.skin-desk-btn{height:24px;padding:0 10px;white-space:nowrap;flex:0 0 auto;border-radius:6px;border:1px solid var(--line);
+  background:var(--panel1);color:var(--accent);font-size:11px;cursor:pointer}
+.skin-desk-btn:hover{background:var(--hover)}
+
+
 /* 主播放面板 */
-.skin-player{display:flex;flex-direction:column;gap:10px}
+.skin-player{flex:0 0 auto}
+.skin-player .skin-win-body{gap:10px}
 .skin-lcd{display:flex;justify-content:space-between;gap:12px;background:var(--lcd);border:1px solid var(--lcd-line);border-radius:9px;padding:12px 14px}
 .skin-lcd-left{display:flex;flex-direction:column;gap:6px;min-width:0}
 .skin-lcd-album{font-size:15px;color:var(--album);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1132,6 +1157,14 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 
 /* 均衡器面板 */
 .skin-eq{flex:0 0 auto}
+.skin-win-body.skin-eq-body{flex-direction:row;align-items:stretch;gap:8px;padding:8px 10px}
+.skin-eq-scale{display:flex;flex-direction:column;justify-content:space-between;font-size:9px;color:var(--dim);
+  font-variant-numeric:tabular-nums;padding:2px 0;flex:0 0 auto}
+.skin-eq-ctl{display:flex;gap:3px;margin-right:2px}
+.skin-eq-ctl button{height:14px;padding:0 5px;font-size:9px;letter-spacing:.3px;border-radius:3px;
+  border:1px solid var(--line);background:var(--panel1);color:var(--dim);cursor:pointer}
+.skin-eq-ctl button:hover{color:var(--txt)}
+.skin-eq-ctl button.skin-mini-btn.on{color:var(--txt);border-color:var(--accent)}
 .skin-eq-bars{display:flex;gap:10px;justify-content:center;align-items:flex-end;height:74px}
 .skin-eq-fader{position:relative;width:8px;height:70px;background:var(--lcd);border:1px solid var(--lcd-line);border-radius:4px}
 .skin-eq-fader i{position:absolute;left:-3px;width:12px;height:14px;border-radius:3px;background:var(--accent);
@@ -1139,7 +1172,7 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 
 /* 歌词秀面板 */
 .skin-lyric{flex:0 0 auto}
-.skin-lyric-box{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:14px 8px;min-height:150px;max-height:330px;overflow:auto;justify-content:center}
+.skin-lyric-box{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:14px 8px;min-height:126px;max-height:300px;overflow:auto;justify-content:center}
 .skin-lyric-prev,.skin-lyric-next{font-size:calc(13px * var(--lz,1));color:var(--prevnext);min-height:20px}
 .skin-lyric-cur{font-size:calc(17px * var(--lz,1));color:var(--txt);min-height:26px}
 /* 歌词缩放：跟桌面歌词秀窗口那排「220% ＋ －」一致，80%–300% 每档 10% */
@@ -1152,7 +1185,15 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-lyric-zoom .skin-zoom-val{width:auto;min-width:42px;padding:0 6px;font-size:11px;font-variant-numeric:tabular-nums}
 
 /* 播放列表面板 */
-.skin-playlist{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.skin-playlist{flex:1 1 auto;min-height:0}
+.skin-win-body.skin-pl-body{padding:6px 8px 8px;gap:6px}
+.skin-pl-tools{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.skin-pl-tools button{width:18px;height:16px;padding:0;border-radius:4px;border:1px solid var(--line);
+  background:var(--panel1);color:var(--dim);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.skin-pl-tools button:hover{background:var(--hover);color:var(--txt)}
+.skin-pl-tools button.on{color:var(--accent);border-color:var(--accent);background:var(--on)}
+.skin-pl-tools button:disabled{opacity:.35;cursor:default}
+.skin-pl-tab{margin-left:auto;font-size:10px;color:var(--dim)}
 .skin-pl-count{font-size:11px;color:var(--dim)}
 .skin-pl-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
 .skin-pl-empty{color:var(--prevnext);text-align:center;padding:30px 0}

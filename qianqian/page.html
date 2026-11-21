@@ -10737,6 +10737,56 @@ function SkinView(p2) {
   const curLine = p2.curIndex >= 0 && p2.lyric[p2.curIndex] ? p2.lyric[p2.curIndex].text : "";
   const prevLine = p2.curIndex > 0 ? p2.lyric[p2.curIndex - 1].text : "";
   const nextLine = p2.curIndex >= 0 && p2.lyric[p2.curIndex + 1] ? p2.lyric[p2.curIndex + 1].text : "";
+  const [open, setOpen] = react.exports.useState({
+    eq: true,
+    lyric: true,
+    pl: true
+  });
+  const flip = (k2) => setOpen((o) => ({
+    ...o,
+    [k2]: !o[k2]
+  }));
+  const sev = Object.values(open);
+  const allOpen = sev.every(Boolean);
+  const bar = (k2, icon = "music", name = "", extra) => /* @__PURE__ */ jsxs("div", {
+    className: "skin-win-bar",
+    onMouseDown,
+    children: [/* @__PURE__ */ jsx("span", {
+      className: "skin-win-ico",
+      children: /* @__PURE__ */ jsx(Fi, {
+        n: icon,
+        size: 9
+      })
+    }), /* @__PURE__ */ jsx("span", {
+      className: "skin-win-t",
+      children: name
+    }), extra, /* @__PURE__ */ jsx("button", {
+      className: "skin-win-btn",
+      title: k2 ? "\u6298\u53E0 / \u5C55\u5F00" : "\u5168\u90E8\u9762\u677F\u6298\u53E0 / \u5C55\u5F00",
+      onClick: () => k2 ? flip(k2) : setOpen({
+        eq: !allOpen,
+        lyric: !allOpen,
+        pl: !allOpen
+      }),
+      children: /* @__PURE__ */ jsx(Fi, {
+        n: "square",
+        size: 8
+      })
+    }), /* @__PURE__ */ jsx("button", {
+      className: "skin-win-btn close",
+      title: k2 ? "\u6536\u8D77\u8BE5\u9762\u677F" : "\u5207\u56DE\u684C\u9762",
+      onClick: () => k2 ? setOpen((o) => ({
+        ...o,
+        [k2]: false
+      })) : p2.onExpand(),
+      children: /* @__PURE__ */ jsx(Fi, {
+        n: "x",
+        size: 8
+      })
+    })]
+  });
+  const presets = p2.eqPresets.length ? p2.eqPresets : ["\u9ED8\u8BA4"];
+  const presetName = presets[p2.eqPreset] || presets[0];
   return /* @__PURE__ */ jsxs("div", {
     className: "skin-view",
     "data-skin": skinName,
@@ -10785,91 +10835,140 @@ function SkinView(p2) {
         children: (_a2 = SKINS.find((s) => s.id === skinName)) == null ? void 0 : _a2.label
       })]
     }), /* @__PURE__ */ jsxs("section", {
-      className: "skin-panel skin-player",
-      children: [/* @__PURE__ */ jsxs("div", {
-        className: "skin-lcd",
+      className: "skin-panel skin-player skin-win",
+      children: [bar(void 0, "music", "\u5343\u5343\u9759\u542C", /* @__PURE__ */ jsxs("span", {
+        className: "skin-win-tools",
+        children: [/* @__PURE__ */ jsx("button", {
+          className: "skin-mini-btn" + (open.pl ? " on" : ""),
+          onClick: () => flip("pl"),
+          title: "\u64AD\u653E\u5217\u8868",
+          children: "PL"
+        }), /* @__PURE__ */ jsx("button", {
+          className: "skin-mini-btn" + (open.eq ? " on" : ""),
+          onClick: () => flip("eq"),
+          title: "\u5747\u8861\u5668",
+          children: "EQ"
+        }), /* @__PURE__ */ jsx("button", {
+          className: "skin-mini-btn" + (open.lyric ? " on" : ""),
+          onClick: () => flip("lyric"),
+          title: "\u6B4C\u8BCD\u79C0",
+          children: "LRC"
+        })]
+      })), /* @__PURE__ */ jsxs("div", {
+        className: "skin-win-body",
         children: [/* @__PURE__ */ jsxs("div", {
-          className: "skin-lcd-left",
-          children: [/* @__PURE__ */ jsx("div", {
-            className: "skin-lcd-album",
-            children: ((_b2 = p2.cur) == null ? void 0 : _b2.album) || (p2.cur ? p2.cur.name : "\u4E13\u8F91\uFF1A\u2014")
+          className: "skin-lcd",
+          children: [/* @__PURE__ */ jsxs("div", {
+            className: "skin-lcd-left",
+            children: [/* @__PURE__ */ jsx("div", {
+              className: "skin-lcd-album",
+              children: ((_b2 = p2.cur) == null ? void 0 : _b2.album) || (p2.cur ? p2.cur.name : "\u4E13\u8F91\uFF1A\u2014")
+            }), /* @__PURE__ */ jsxs("div", {
+              className: "skin-lcd-meta",
+              children: [/* @__PURE__ */ jsx("span", {
+                children: "\u7ACB\u4F53\u58F0"
+              }), /* @__PURE__ */ jsxs("span", {
+                children: ["\u72B6\u6001\uFF1A", p2.busy ? "\u53D6\u6D41\u4E2D" : p2.playing ? "\u64AD\u653E" : "\u6682\u505C"]
+              })]
+            })]
           }), /* @__PURE__ */ jsxs("div", {
-            className: "skin-lcd-meta",
-            children: [/* @__PURE__ */ jsx("span", {
-              children: "\u7ACB\u4F53\u58F0"
-            }), /* @__PURE__ */ jsxs("span", {
-              children: ["\u72B6\u6001\uFF1A", p2.busy ? "\u53D6\u6D41\u4E2D" : p2.playing ? "\u64AD\u653E" : "\u6682\u505C"]
+            className: "skin-lcd-right",
+            children: [/* @__PURE__ */ jsx("div", {
+              className: "skin-lcd-time",
+              children: fmt$2(p2.pos)
+            }), /* @__PURE__ */ jsxs("div", {
+              className: "skin-lcd-dur",
+              children: ["/ ", fmt$2(p2.dur)]
             })]
           })]
-        }), /* @__PURE__ */ jsxs("div", {
-          className: "skin-lcd-right",
-          children: [/* @__PURE__ */ jsx("div", {
-            className: "skin-lcd-time",
-            children: fmt$2(p2.pos)
-          }), /* @__PURE__ */ jsxs("div", {
-            className: "skin-lcd-dur",
-            children: ["/ ", fmt$2(p2.dur)]
-          })]
-        })]
-      }), /* @__PURE__ */ jsx("div", {
-        className: "skin-progress",
-        children: /* @__PURE__ */ jsx("input", {
-          type: "range",
-          min: 0,
-          max: p2.dur || 0,
-          step: 100,
-          value: Math.min(p2.pos, p2.dur || 0),
-          onChange: (e) => p2.onSeek(Number(e.target.value))
-        })
-      }), /* @__PURE__ */ jsxs("div", {
-        className: "skin-transport",
-        children: [/* @__PURE__ */ jsx("button", {
-          onClick: p2.onPrev,
-          title: "\u4E0A\u4E00\u9996",
-          children: /* @__PURE__ */ jsx(Fi, {
-            n: "skip-back",
-            fill: true,
-            size: 18
-          })
-        }), /* @__PURE__ */ jsx("button", {
-          className: "skin-play",
-          onClick: p2.onToggle,
-          disabled: !p2.cur,
-          title: p2.busy ? "\u53D6\u6D41\u4E2D" : p2.playing ? "\u6682\u505C" : "\u64AD\u653E",
-          children: /* @__PURE__ */ jsx(Fi, {
-            n: FN(p2.playing ? "pause" : "play"),
-            fill: true,
-            size: 20
-          })
-        }), /* @__PURE__ */ jsx("button", {
-          onClick: p2.onNext,
-          title: "\u4E0B\u4E00\u9996",
-          children: /* @__PURE__ */ jsx(Fi, {
-            n: "skip-forward",
-            fill: true,
-            size: 18
-          })
-        }), /* @__PURE__ */ jsxs("div", {
-          className: "skin-volume",
-          children: [/* @__PURE__ */ jsx(Fi, {
-            n: p2.volume > 0 ? "volume-high" : "volume-mute",
-            size: 14
-          }), /* @__PURE__ */ jsx("input", {
+        }), /* @__PURE__ */ jsx("div", {
+          className: "skin-progress",
+          children: /* @__PURE__ */ jsx("input", {
             type: "range",
             min: 0,
-            max: 1,
-            step: 0.01,
-            value: p2.volume,
-            onChange: (e) => p2.onVolume(Number(e.target.value))
+            max: p2.dur || 0,
+            step: 100,
+            value: Math.min(p2.pos, p2.dur || 0),
+            onChange: (e) => p2.onSeek(Number(e.target.value))
+          })
+        }), /* @__PURE__ */ jsxs("div", {
+          className: "skin-transport",
+          children: [/* @__PURE__ */ jsx("button", {
+            onClick: p2.onPrev,
+            title: "\u4E0A\u4E00\u9996",
+            children: /* @__PURE__ */ jsx(Fi, {
+              n: "skip-back",
+              fill: true,
+              size: 18
+            })
+          }), /* @__PURE__ */ jsx("button", {
+            className: "skin-play",
+            onClick: p2.onToggle,
+            disabled: !p2.cur,
+            title: p2.busy ? "\u53D6\u6D41\u4E2D" : p2.playing ? "\u6682\u505C" : "\u64AD\u653E",
+            children: /* @__PURE__ */ jsx(Fi, {
+              n: FN(p2.playing ? "pause" : "play"),
+              fill: true,
+              size: 20
+            })
+          }), /* @__PURE__ */ jsx("button", {
+            onClick: p2.onNext,
+            title: "\u4E0B\u4E00\u9996",
+            children: /* @__PURE__ */ jsx(Fi, {
+              n: "skip-forward",
+              fill: true,
+              size: 18
+            })
+          }), /* @__PURE__ */ jsxs("div", {
+            className: "skin-volume",
+            children: [/* @__PURE__ */ jsx(Fi, {
+              n: p2.volume > 0 ? "volume-high" : "volume-mute",
+              size: 14
+            }), /* @__PURE__ */ jsx("input", {
+              type: "range",
+              min: 0,
+              max: 1,
+              step: 0.01,
+              value: p2.volume,
+              onChange: (e) => p2.onVolume(Number(e.target.value))
+            })]
+          }), /* @__PURE__ */ jsx("button", {
+            className: "skin-desk-btn",
+            onClick: p2.onExpand,
+            title: "\u56DE\u5230\u684C\u9762\u4E3B\u754C\u9762",
+            children: "\u97F3\u4E50\u7A97"
           })]
         })]
       })]
-    }), /* @__PURE__ */ jsx("section", {
-      className: "skin-panel skin-eq",
-      children: /* @__PURE__ */ jsxs("div", {
-        className: "skin-panel-head",
-        children: [/* @__PURE__ */ jsx("span", {
-          children: "\u5747\u8861\u5668"
+    }), open.eq && /* @__PURE__ */ jsxs("section", {
+      className: "skin-panel skin-eq skin-win",
+      children: [bar("eq", "sliders", "\u5747\u8861\u5668", /* @__PURE__ */ jsxs("span", {
+        className: "skin-eq-ctl",
+        children: [/* @__PURE__ */ jsx("button", {
+          className: "skin-mini-btn" + (p2.eqOn ? " on" : ""),
+          onClick: p2.onEqToggle,
+          title: p2.eqOn ? "\u5173\u95ED\u5747\u8861\u5668" : "\u5F00\u542F\u5747\u8861\u5668",
+          children: p2.eqOn ? "ON" : "OFF"
+        }), /* @__PURE__ */ jsx("button", {
+          onClick: p2.onEqReset,
+          title: "\u5168\u90E8\u63A8\u5B50\u5F52\u96F6",
+          children: "RESET"
+        }), /* @__PURE__ */ jsx("button", {
+          onClick: () => p2.onEqPreset((p2.eqPreset + 1) % presets.length),
+          title: `\u5F53\u524D\uFF1A${presetName}`,
+          children: "PRESETS"
+        })]
+      })), /* @__PURE__ */ jsxs("div", {
+        className: "skin-win-body skin-eq-body",
+        children: [/* @__PURE__ */ jsxs("div", {
+          className: "skin-eq-scale",
+          children: [/* @__PURE__ */ jsx("span", {
+            children: "+12dB"
+          }), /* @__PURE__ */ jsx("span", {
+            children: "0dB"
+          }), /* @__PURE__ */ jsx("span", {
+            children: "-12dB"
+          })]
         }), /* @__PURE__ */ jsx("span", {
           className: "skin-eq-bars",
           children: (p2.eqGains.length ? p2.eqGains : Array(10).fill(0)).map((g, i) => /* @__PURE__ */ jsx("span", {
@@ -10880,86 +10979,120 @@ function SkinView(p2) {
             children: /* @__PURE__ */ jsx("i", {})
           }, i))
         })]
-      })
-    }), /* @__PURE__ */ jsxs("section", {
-      className: "skin-panel skin-lyric",
-      children: [/* @__PURE__ */ jsxs("div", {
-        className: "skin-panel-head",
-        children: [/* @__PURE__ */ jsx("span", {
-          children: "\u6B4C\u8BCD\u79C0"
-        }), /* @__PURE__ */ jsxs("span", {
-          className: "skin-lyric-zoom",
-          children: [/* @__PURE__ */ jsx("button", {
-            onClick: () => nudgeZoom(-10),
-            disabled: zoom <= 80,
-            title: "\u6B4C\u8BCD\u7F29\u5C0F",
-            children: /* @__PURE__ */ jsx(Fi, {
-              n: "minus",
-              size: 10
-            })
-          }), /* @__PURE__ */ jsxs("button", {
-            className: "skin-zoom-val",
-            onClick: () => selectZoom(100),
-            title: "\u70B9\u4E00\u4E0B\u56DE\u5230 100%",
-            children: [zoom, "%"]
-          }), /* @__PURE__ */ jsx("button", {
-            onClick: () => nudgeZoom(10),
-            disabled: zoom >= 300,
-            title: "\u6B4C\u8BCD\u653E\u5927",
-            children: /* @__PURE__ */ jsx(Fi, {
-              n: "plus",
-              size: 10
-            })
-          })]
-        })]
-      }), /* @__PURE__ */ jsxs("div", {
-        className: "skin-lyric-box",
-        style: {
-          "--lz": zoom / 100
-        },
-        children: [/* @__PURE__ */ jsx("div", {
-          className: "skin-lyric-prev",
-          children: prevLine || " "
-        }), /* @__PURE__ */ jsx("div", {
-          className: "skin-lyric-cur",
-          children: curLine || title
-        }), /* @__PURE__ */ jsx("div", {
-          className: "skin-lyric-next",
-          children: nextLine || " "
-        })]
       })]
-    }), /* @__PURE__ */ jsxs("section", {
-      className: "skin-panel skin-playlist",
-      children: [/* @__PURE__ */ jsxs("div", {
-        className: "skin-panel-head",
-        children: [/* @__PURE__ */ jsx("span", {
-          children: "\u64AD\u653E\u5217\u8868"
-        }), /* @__PURE__ */ jsxs("span", {
-          className: "skin-pl-count",
-          children: [p2.queue.list.length, " \u9996"]
+    }), open.lyric && /* @__PURE__ */ jsxs("section", {
+      className: "skin-panel skin-lyric skin-win",
+      children: [bar("lyric", "document-text", "\u6B4C\u8BCD\u79C0", /* @__PURE__ */ jsxs("span", {
+        className: "skin-lyric-zoom",
+        children: [/* @__PURE__ */ jsx("button", {
+          onClick: () => nudgeZoom(-10),
+          disabled: zoom <= 80,
+          title: "\u6B4C\u8BCD\u7F29\u5C0F",
+          children: /* @__PURE__ */ jsx(Fi, {
+            n: "minus",
+            size: 10
+          })
+        }), /* @__PURE__ */ jsxs("button", {
+          className: "skin-zoom-val",
+          onClick: () => selectZoom(100),
+          title: "\u70B9\u4E00\u4E0B\u56DE\u5230 100%",
+          children: [zoom, "%"]
+        }), /* @__PURE__ */ jsx("button", {
+          onClick: () => nudgeZoom(10),
+          disabled: zoom >= 300,
+          title: "\u6B4C\u8BCD\u653E\u5927",
+          children: /* @__PURE__ */ jsx(Fi, {
+            n: "plus",
+            size: 10
+          })
         })]
-      }), /* @__PURE__ */ jsxs("div", {
-        className: "skin-pl-list",
-        children: [p2.queue.list.length === 0 && /* @__PURE__ */ jsx("div", {
-          className: "skin-pl-empty",
-          children: "\u5217\u8868\u4E3A\u7A7A\uFF0C\u53BB\u641C\u7D22\u52A0\u6B4C"
-        }), p2.queue.list.map((t2, i) => /* @__PURE__ */ jsxs("div", {
-          className: "skin-pl-row" + (i === p2.queue.idx ? " on" : ""),
-          onClick: () => p2.onPlayAt(i),
-          children: [/* @__PURE__ */ jsx("span", {
-            className: "skin-pl-idx",
-            children: i + 1
-          }), /* @__PURE__ */ jsx("span", {
-            className: "skin-pl-name",
-            children: t2.name
-          }), /* @__PURE__ */ jsx("span", {
-            className: "skin-pl-artist",
-            children: t2.artist || "\u672A\u77E5"
-          }), /* @__PURE__ */ jsx("span", {
-            className: "skin-pl-dur",
-            children: fmt$2((t2.duration || 0) * 1e3)
+      })), /* @__PURE__ */ jsx("div", {
+        className: "skin-win-body",
+        children: /* @__PURE__ */ jsxs("div", {
+          className: "skin-lyric-box",
+          style: {
+            "--lz": zoom / 100
+          },
+          children: [/* @__PURE__ */ jsx("div", {
+            className: "skin-lyric-prev",
+            children: prevLine || " "
+          }), /* @__PURE__ */ jsx("div", {
+            className: "skin-lyric-cur",
+            children: curLine || title
+          }), /* @__PURE__ */ jsx("div", {
+            className: "skin-lyric-next",
+            children: nextLine || " "
           })]
-        }, t2.id + i))]
+        })
+      })]
+    }), open.pl && /* @__PURE__ */ jsxs("section", {
+      className: "skin-panel skin-playlist skin-win",
+      children: [bar("pl", "list", "\u64AD\u653E\u5217\u8868", /* @__PURE__ */ jsxs("span", {
+        className: "skin-pl-count",
+        children: [p2.queue.list.length, " \u9996"]
+      })), /* @__PURE__ */ jsxs("div", {
+        className: "skin-win-body skin-pl-body",
+        children: [/* @__PURE__ */ jsxs("div", {
+          className: "skin-pl-tools",
+          children: [/* @__PURE__ */ jsx("button", {
+            onClick: () => p2.onRemoveAt(p2.queue.idx),
+            disabled: !p2.queue.list.length,
+            title: "\u4ECE\u5217\u8868\u91CC\u5220\u6389\u5F53\u524D\u8FD9\u9996",
+            children: /* @__PURE__ */ jsx(Fi, {
+              n: "trash-2",
+              size: 11
+            })
+          }), /* @__PURE__ */ jsx("button", {
+            onClick: p2.onClearNext,
+            disabled: !p2.queue.list.length,
+            title: "\u6E05\u7A7A\u5F85\u64AD\uFF08\u4FDD\u7559\u5F53\u524D\uFF09",
+            children: /* @__PURE__ */ jsx(Fi, {
+              n: "rotate-ccw",
+              size: 11
+            })
+          }), /* @__PURE__ */ jsx("button", {
+            onClick: p2.onClearList,
+            disabled: !p2.queue.list.length,
+            title: "\u6E05\u7A7A\u6574\u4E2A\u5217\u8868",
+            children: /* @__PURE__ */ jsx(Fi, {
+              n: "x",
+              size: 11
+            })
+          }), /* @__PURE__ */ jsx("button", {
+            className: p2.shuffle ? "on" : "",
+            onClick: p2.onShuffle,
+            title: p2.shuffle ? "\u968F\u673A\u64AD\u653E\uFF1A\u5F00" : "\u968F\u673A\u64AD\u653E\uFF1A\u5173",
+            children: /* @__PURE__ */ jsx(Fi, {
+              n: "shuffle",
+              size: 11
+            })
+          }), /* @__PURE__ */ jsx("span", {
+            className: "skin-pl-tab",
+            children: "[\u9ED8\u8BA4]"
+          })]
+        }), /* @__PURE__ */ jsxs("div", {
+          className: "skin-pl-list",
+          children: [p2.queue.list.length === 0 && /* @__PURE__ */ jsx("div", {
+            className: "skin-pl-empty",
+            children: "\u5217\u8868\u4E3A\u7A7A\uFF0C\u53BB\u641C\u7D22\u52A0\u6B4C"
+          }), p2.queue.list.map((t2, i) => /* @__PURE__ */ jsxs("div", {
+            className: "skin-pl-row" + (i === p2.queue.idx ? " on" : ""),
+            onClick: () => p2.onPlayAt(i),
+            children: [/* @__PURE__ */ jsx("span", {
+              className: "skin-pl-idx",
+              children: i + 1
+            }), /* @__PURE__ */ jsx("span", {
+              className: "skin-pl-name",
+              children: t2.name
+            }), /* @__PURE__ */ jsx("span", {
+              className: "skin-pl-artist",
+              children: t2.artist || "\u672A\u77E5"
+            }), /* @__PURE__ */ jsx("span", {
+              className: "skin-pl-dur",
+              children: fmt$2((t2.duration || 0) * 1e3)
+            })]
+          }, t2.id + i))]
+        })]
       })]
     })]
   });
@@ -12998,6 +13131,15 @@ function PluginHome({
   });
 }
 const EQ_FREQS = [31, 62, 125, 250, 500, 1e3, 2e3, 4e3, 8e3, 16e3];
+const EQ_PRESETS = [
+  { name: "\u5E73\u76F4", gains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+  { name: "\u6D41\u884C", gains: [-1, 0, 2, 3, 2, 0, -1, -1, 0, 0] },
+  { name: "\u6447\u6EDA", gains: [3, 3, 1, 0, -1, 0, 1, 2, 3, 2] },
+  { name: "\u7235\u58EB", gains: [2, 1, 0, -1, -1, 0, 1, 2, 3, 3] },
+  { name: "\u53E4\u5178", gains: [0, 1, 2, 2, 1, 0, -1, -1, 0, 1] },
+  { name: "\u4EBA\u58F0", gains: [-2, -1, 0, 2, 4, 4, 3, 1, -1, -2] },
+  { name: "\u4F4E\u97F3\u52A0\u91CD", gains: [5, 4, 3, 2, 0, 0, 0, 0, 0, 0] }
+];
 class Equalizer {
   ac = null;
   src = null;
@@ -13426,7 +13568,7 @@ function App() {
   const [volume, setVolumeState] = react.exports.useState(0.5);
   const [shuffle, setShuffle] = react.exports.useState(false);
   const eqRef = react.exports.useRef(null);
-  react.exports.useState(false);
+  const [eqOn, setEqOn] = react.exports.useState(false);
   const [eqGains, setEqGains] = react.exports.useState(() => {
     try {
       const v2 = JSON.parse(localStorage.getItem("qqjt-eq") || "{}");
@@ -13445,7 +13587,15 @@ function App() {
     }
     return 1;
   });
-  react.exports.useState(-1);
+  const [eqPreset, setEqPreset] = react.exports.useState(-1);
+  const eqReady = () => {
+    const el2 = audio.current;
+    const eq = eqRef.current || (eqRef.current = new Equalizer());
+    return {
+      el: el2,
+      eq
+    };
+  };
   react.exports.useCallback(async () => {
     const el2 = audio.current;
     if (!el2)
@@ -13459,6 +13609,41 @@ function App() {
     await eq.resume();
     return eq.analysts;
   }, []);
+  const toggleEq = async () => {
+    const {
+      el: el2,
+      eq
+    } = eqReady();
+    if (eqOn) {
+      eq.setEnabled(false);
+      setEqOn(false);
+      return;
+    }
+    if (!el2)
+      return;
+    if (!eq.ready) {
+      const ok2 = await eq.attach(el2);
+      if (!ok2) {
+        setErr("\u5747\u8861\u5668\u63A5\u4E0D\u4E0A\u5F53\u524D\u97F3\u6E90\uFF1A\u8FD9\u8DEF\u97F3\u9891\u6CA1\u6709\u5F00\u653E\u8DE8\u6E90\u8BFB\u53D6\uFF08CORS\uFF09\uFF0C\u6D4F\u89C8\u5668\u4E0D\u5141\u8BB8\u505A\u97F3\u6548\u5904\u7406\u3002\u6362\u4E00\u9996\u518D\u8BD5\u3002");
+        return;
+      }
+    }
+    eq.setGains(eqGains);
+    eq.setPreamp(preamp);
+    eq.setEnabled(true);
+    await eq.resume();
+    setEqOn(true);
+  };
+  const resetEq = () => {
+    setEqGains(EQ_FREQS.map(() => 0));
+    setPreamp(1);
+    setEqPreset(0);
+  };
+  const nextPreset = () => {
+    const i = (eqPreset + 1) % EQ_PRESETS.length;
+    setEqPreset(i);
+    setEqGains(EQ_PRESETS[i].gains.slice());
+  };
   const [lyricMode, setLyricMode] = react.exports.useState(() => {
     return localStorage.getItem("qqjt-lrcmode") === "scroll" ? "scroll" : "karaoke";
   });
@@ -15531,6 +15716,10 @@ function App() {
       queue,
       volume,
       eqGains,
+      eqOn,
+      eqPreset,
+      eqPresets: EQ_PRESETS.map((x2) => x2.name),
+      shuffle,
       inLib: !!cur && lib.some((x2) => x2.id === cur.id),
       onToggle: toggle,
       onPrev: () => step(-1),
@@ -15546,6 +15735,13 @@ function App() {
           fav(cur);
       },
       onPlayAt: playAt,
+      onEqToggle: toggleEq,
+      onEqReset: resetEq,
+      onEqPreset: () => nextPreset(),
+      onShuffle: () => setShuffle((v2) => !v2),
+      onRemoveAt: queueRemove,
+      onClearList: queueClear,
+      onClearNext: queueClearNext,
       onExpand: () => toggleSkin(false)
     }), /* @__PURE__ */ jsx("audio", {
       ref: audio,
@@ -16768,11 +16964,36 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-swatch.on{border-color:var(--txt)}
 .skin-swatch-lab{font-size:11px;color:var(--dim);margin-left:auto}
 
-.skin-panel{background:linear-gradient(180deg,var(--panel1),var(--panel2));border:1px solid var(--line);border-radius:11px;padding:10px 12px;box-sizing:border-box}
+.skin-panel{background:linear-gradient(180deg,var(--panel1),var(--panel2));border:1px solid var(--line);border-radius:11px;padding:0;box-sizing:border-box;overflow:hidden}
 .skin-panel-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--accent);margin-bottom:8px}
 
+/* 经典四窗：每个面板自带一条小标题栏（图标 + 标题 + □ ×），中间是窗口体 */
+.skin-win{display:flex;flex-direction:column}
+.skin-win-bar{display:flex;align-items:center;gap:5px;height:22px;padding:0 7px;flex:0 0 auto;
+  background:linear-gradient(180deg,var(--hover),var(--bg1));border-bottom:1px solid var(--line);cursor:grab;user-select:none}
+.skin-win-ico{width:14px;height:14px;border-radius:4px;background:var(--ico-bg);color:var(--ico-txt);
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.skin-win-t{font-size:11px;color:var(--accent);letter-spacing:.5px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skin-win-btn{width:15px;height:14px;padding:0;border:1px solid var(--line);border-radius:3px;
+  background:var(--panel1);color:var(--dim);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.skin-win-btn:hover{background:var(--hover);color:var(--txt)}
+.skin-win-btn.close:hover{color:#ff8a8a}
+.skin-win-body{padding:10px 12px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;min-height:0;flex:1 1 auto}
+
+/* 主窗右侧 PL / EQ / LRC 小开关与「音乐窗」按钮 */
+.skin-win-tools{display:flex;gap:3px;margin-right:2px}
+.skin-mini-btn{height:14px;padding:0 5px;font-size:9px;letter-spacing:.3px;border-radius:3px;
+  border:1px solid var(--line);background:var(--panel1);color:var(--dim);cursor:pointer}
+.skin-mini-btn.on{background:var(--on);color:var(--txt);border-color:var(--accent)}
+.skin-mini-btn:hover{color:var(--txt)}
+.skin-desk-btn{height:24px;padding:0 10px;white-space:nowrap;flex:0 0 auto;border-radius:6px;border:1px solid var(--line);
+  background:var(--panel1);color:var(--accent);font-size:11px;cursor:pointer}
+.skin-desk-btn:hover{background:var(--hover)}
+
+
 /* 主播放面板 */
-.skin-player{display:flex;flex-direction:column;gap:10px}
+.skin-player{flex:0 0 auto}
+.skin-player .skin-win-body{gap:10px}
 .skin-lcd{display:flex;justify-content:space-between;gap:12px;background:var(--lcd);border:1px solid var(--lcd-line);border-radius:9px;padding:12px 14px}
 .skin-lcd-left{display:flex;flex-direction:column;gap:6px;min-width:0}
 .skin-lcd-album{font-size:15px;color:var(--album);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -16791,6 +17012,14 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 
 /* 均衡器面板 */
 .skin-eq{flex:0 0 auto}
+.skin-win-body.skin-eq-body{flex-direction:row;align-items:stretch;gap:8px;padding:8px 10px}
+.skin-eq-scale{display:flex;flex-direction:column;justify-content:space-between;font-size:9px;color:var(--dim);
+  font-variant-numeric:tabular-nums;padding:2px 0;flex:0 0 auto}
+.skin-eq-ctl{display:flex;gap:3px;margin-right:2px}
+.skin-eq-ctl button{height:14px;padding:0 5px;font-size:9px;letter-spacing:.3px;border-radius:3px;
+  border:1px solid var(--line);background:var(--panel1);color:var(--dim);cursor:pointer}
+.skin-eq-ctl button:hover{color:var(--txt)}
+.skin-eq-ctl button.skin-mini-btn.on{color:var(--txt);border-color:var(--accent)}
 .skin-eq-bars{display:flex;gap:10px;justify-content:center;align-items:flex-end;height:74px}
 .skin-eq-fader{position:relative;width:8px;height:70px;background:var(--lcd);border:1px solid var(--lcd-line);border-radius:4px}
 .skin-eq-fader i{position:absolute;left:-3px;width:12px;height:14px;border-radius:3px;background:var(--accent);
@@ -16798,7 +17027,7 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 
 /* 歌词秀面板 */
 .skin-lyric{flex:0 0 auto}
-.skin-lyric-box{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:14px 8px;min-height:150px;max-height:330px;overflow:auto;justify-content:center}
+.skin-lyric-box{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:14px 8px;min-height:126px;max-height:300px;overflow:auto;justify-content:center}
 .skin-lyric-prev,.skin-lyric-next{font-size:calc(13px * var(--lz,1));color:var(--prevnext);min-height:20px}
 .skin-lyric-cur{font-size:calc(17px * var(--lz,1));color:var(--txt);min-height:26px}
 /* 歌词缩放：跟桌面歌词秀窗口那排「220% ＋ －」一致，80%–300% 每档 10% */
@@ -16811,7 +17040,15 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .skin-lyric-zoom .skin-zoom-val{width:auto;min-width:42px;padding:0 6px;font-size:11px;font-variant-numeric:tabular-nums}
 
 /* 播放列表面板 */
-.skin-playlist{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.skin-playlist{flex:1 1 auto;min-height:0}
+.skin-win-body.skin-pl-body{padding:6px 8px 8px;gap:6px}
+.skin-pl-tools{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.skin-pl-tools button{width:18px;height:16px;padding:0;border-radius:4px;border:1px solid var(--line);
+  background:var(--panel1);color:var(--dim);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.skin-pl-tools button:hover{background:var(--hover);color:var(--txt)}
+.skin-pl-tools button.on{color:var(--accent);border-color:var(--accent);background:var(--on)}
+.skin-pl-tools button:disabled{opacity:.35;cursor:default}
+.skin-pl-tab{margin-left:auto;font-size:10px;color:var(--dim)}
 .skin-pl-count{font-size:11px;color:var(--dim)}
 .skin-pl-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
 .skin-pl-empty{color:var(--prevnext);text-align:center;padding:30px 0}

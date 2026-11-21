@@ -161,7 +161,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.33'
+const BUILD_TAG = '3.0.34'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -1694,6 +1694,10 @@ export default function App() {
           queue={queue}
           volume={volume}
           eqGains={eqGains}
+          eqOn={eqOn}
+          eqPreset={eqPreset}
+          eqPresets={EQ_PRESETS.map((x: any) => x.name)}
+          shuffle={shuffle}
           inLib={!!cur && lib.some((x) => x.id === cur.id)}
           onToggle={toggle}
           onPrev={() => step(-1)}
@@ -1702,6 +1706,13 @@ export default function App() {
           onVolume={(v) => setVolumeState(v)}
           onFav={() => { if (cur) fav(cur) }}
           onPlayAt={playAt}
+          onEqToggle={toggleEq}
+          onEqReset={resetEq}
+          onEqPreset={() => nextPreset()}
+          onShuffle={() => setShuffle((v) => !v)}
+          onRemoveAt={queueRemove}
+          onClearList={queueClear}
+          onClearNext={queueClearNext}
           onExpand={() => toggleSkin(false)}
         />
       )}
