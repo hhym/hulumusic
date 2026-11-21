@@ -37,6 +37,10 @@ type Props = {
   onExpand: () => void
   /** 经典四窗：只画某一块面板（副窗用）；不传就是主窗 */
   only?: 'main' | 'eq' | 'lyric' | 'playlist'
+  /** 主窗推过来的配色。副窗每块都是独立的 WebView，localStorage 不共享，
+      所以配色不能靠各自读本地存储，必须由主窗推送。 */
+  skinName?: string
+  onSkinPick?: (id: string) => void
 }
 
 const fmt = (ms: number) => {
@@ -84,11 +88,16 @@ function loadSkin(): string {
 const HAS_GO_APP = typeof (window as any).go?.main?.App !== 'undefined'
 
 export default function SkinView(p: Props) {
-  const [skinName, setSkinName] = useState(loadSkin)
+  const [skinName, setSkinName] = useState(() => p.skinName || loadSkin())
   const [zoom, setZoom] = useState(loadZoom)
+  // 主窗换了配色会推过来；副窗只是被动跟随，自己不出色板。
+  useEffect(() => {
+    if (p.skinName && p.skinName !== skinName) setSkinName(p.skinName)
+  }, [p.skinName])
   const selectSkin = (id: string) => {
     setSkinName(id)
     try { localStorage.setItem(SKIN_KEY, id) } catch { /* 忽略 */ }
+    p.onSkinPick?.(id)
   }
   const selectZoom = (z: number) => {
     const v = zoomClamp(z)
@@ -147,7 +156,7 @@ export default function SkinView(p: Props) {
     e.preventDefault()
     const app = (window as any).go?.main?.App
     if (HAS_GO_APP && app?.DragWindow) {
-      try { app.DragWindow() } catch { /* 忽略 */ }
+      try { app.DragWindow(p.only || 'main') } catch { /* 忽略 */ }
       return
     }
     const onMove = (ev: MouseEvent) => {

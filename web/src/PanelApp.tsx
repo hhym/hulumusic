@@ -22,12 +22,13 @@ type State = {
   eqPresets: string[]
   shuffle: boolean
   inLib: boolean
+  skin?: string
 }
 
 const EMPTY: State = {
   cur: null, playing: false, busy: false, pos: 0, dur: 0, lyric: [], curIndex: -1,
   queue: {list: [], idx: 0}, volume: 1, eqGains: [], eqOn: false, eqPreset: 0,
-  eqPresets: [], shuffle: false, inLib: false,
+  eqPresets: [], shuffle: false, inLib: false, skin: 'purple',
 }
 
 const send = (cmd: Record<string, any>) => {
@@ -47,6 +48,7 @@ export default function PanelApp({panel}: {panel: string}) {
   return (
     <SkinView
       only={panel as any}
+      skinName={st.skin}
       cur={st.cur}
       playing={st.playing}
       busy={st.busy}

@@ -10629,14 +10629,20 @@ function loadSkin() {
 const HAS_GO_APP = typeof ((_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App) !== "undefined";
 function SkinView(p2) {
   var _a2, _b2, _c, _d;
-  const [skinName, setSkinName] = react.exports.useState(loadSkin);
+  const [skinName, setSkinName] = react.exports.useState(() => p2.skinName || loadSkin());
   const [zoom, setZoom] = react.exports.useState(loadZoom);
+  react.exports.useEffect(() => {
+    if (p2.skinName && p2.skinName !== skinName)
+      setSkinName(p2.skinName);
+  }, [p2.skinName]);
   const selectSkin = (id2) => {
+    var _a3;
     setSkinName(id2);
     try {
       localStorage.setItem(SKIN_KEY, id2);
     } catch {
     }
+    (_a3 = p2.onSkinPick) == null ? void 0 : _a3.call(p2, id2);
   };
   const selectZoom = (z2) => {
     const v2 = zoomClamp(z2);
@@ -10710,7 +10716,7 @@ function SkinView(p2) {
     const app = (_b3 = (_a3 = window.go) == null ? void 0 : _a3.main) == null ? void 0 : _b3.App;
     if (HAS_GO_APP && (app == null ? void 0 : app.DragWindow)) {
       try {
-        app.DragWindow();
+        app.DragWindow(p2.only || "main");
       } catch {
       }
       return;
@@ -11170,7 +11176,8 @@ const EMPTY = {
   eqPreset: 0,
   eqPresets: [],
   shuffle: false,
-  inLib: false
+  inLib: false,
+  skin: "purple"
 };
 const send = (cmd) => {
   var _a2, _b2, _c, _d;
@@ -11202,6 +11209,7 @@ function PanelApp({
   }, []);
   return /* @__PURE__ */ jsx(SkinView, {
     only: panel,
+    skinName: st.skin,
     cur: st.cur,
     playing: st.playing,
     busy: st.busy,
@@ -13747,6 +13755,13 @@ function App() {
   const [npOpen, setNpOpen] = react.exports.useState(false);
   const [mini, setMini] = react.exports.useState(START_MINI);
   const [skin, setSkin] = react.exports.useState(false);
+  const [skinColor, setSkinColor] = react.exports.useState(() => {
+    try {
+      return localStorage.getItem("hulu-skin") || "purple";
+    } catch {
+      return "purple";
+    }
+  });
   const [maxedApp, setMaxedApp] = react.exports.useState(false);
   react.exports.useEffect(() => {
     document.body.classList.toggle("qq-mini", mini);
@@ -15097,35 +15112,45 @@ function App() {
     })]
   });
   const syncTimer = react.exports.useRef(0);
+  const pushNow = () => {
+    var _a22, _b22, _c, _d;
+    try {
+      ;
+      (_d = (_c = (_b22 = (_a22 = window.go) == null ? void 0 : _a22.main) == null ? void 0 : _b22.App) == null ? void 0 : _c.SyncPush) == null ? void 0 : _d.call(_c, JSON.stringify({
+        cur,
+        playing,
+        busy,
+        pos,
+        dur,
+        lyric,
+        curIndex,
+        queue,
+        volume,
+        eqGains,
+        eqOn,
+        eqPreset,
+        eqPresets: EQ_PRESETS.map((x2) => x2.name),
+        shuffle,
+        inLib: !!cur && lib.some((x2) => x2.id === cur.id),
+        skin: skinColor
+      }));
+    } catch {
+    }
+  };
   react.exports.useEffect(() => {
     if (!skin || syncTimer.current)
       return;
     syncTimer.current = window.setTimeout(() => {
-      var _a22, _b22, _c, _d;
       syncTimer.current = 0;
-      try {
-        ;
-        (_d = (_c = (_b22 = (_a22 = window.go) == null ? void 0 : _a22.main) == null ? void 0 : _b22.App) == null ? void 0 : _c.SyncPush) == null ? void 0 : _d.call(_c, JSON.stringify({
-          cur,
-          playing,
-          busy,
-          pos,
-          dur,
-          lyric,
-          curIndex,
-          queue,
-          volume,
-          eqGains,
-          eqOn,
-          eqPreset,
-          eqPresets: EQ_PRESETS.map((x2) => x2.name),
-          shuffle,
-          inLib: !!cur && lib.some((x2) => x2.id === cur.id)
-        }));
-      } catch {
-      }
+      pushNow();
     }, 180);
-  }, [skin, cur, playing, busy, pos, dur, lyric, curIndex, queue, volume, eqGains, eqOn, eqPreset, shuffle]);
+  }, [skin, skinColor, cur, playing, busy, pos, dur, lyric, curIndex, queue, volume, eqGains, eqOn, eqPreset, shuffle]);
+  react.exports.useEffect(() => {
+    if (!skin)
+      return;
+    const t2 = window.setInterval(pushNow, 1500);
+    return () => window.clearInterval(t2);
+  }, [skin, cur, playing, skinColor, volume, eqGains, eqOn, eqPreset, shuffle, queue, lyric]);
   react.exports.useEffect(() => {
     window.__huluCmd = (json) => {
       let c;
@@ -15990,6 +16015,8 @@ function App() {
       onTheme: () => pickTheme(NEXT_THEME[theme])
     }), skin && /* @__PURE__ */ jsx(SkinView, {
       only: "main",
+      skinName: skinColor,
+      onSkinPick: setSkinColor,
       cur,
       playing,
       busy,

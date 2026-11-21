@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.35'
+const BUILD_TAG = '3.0.36'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -276,6 +276,10 @@ export default function App() {
   const [mini, setMini] = useState(START_MINI)
   // 竖向皮肤界面：窗口 480×1024，四面板纵向堆叠。
   const [skin, setSkin] = useState(false)
+  // 皮肤窗的配色由主窗持有并推给三个副窗（副窗是独立 WebView，本地存储不互通）。
+  const [skinColor, setSkinColor] = useState(() => {
+    try { return localStorage.getItem('hulu-skin') || 'purple' } catch { return 'purple' }
+  })
   // 窗口最大化状态：按钮图标要在「最大化 / 还原」之间换，所以得记着
   const [maxedApp, setMaxedApp] = useState(false)
   // 迷你模式下窗口缩成 348×124，mygo 那边是透明窗口：页面底色要让出来，
@@ -1320,19 +1324,30 @@ export default function App() {
 
   // 经典四窗：主窗把播放状态推给三个副窗（180ms 合并一次），副窗操作在这里执行。
   const syncTimer = useRef(0)
+  const pushNow = () => {
+    try {
+      ;(window as any).go?.main?.App?.SyncPush?.(JSON.stringify({
+        cur, playing, busy, pos, dur, lyric, curIndex, queue, volume,
+        eqGains, eqOn, eqPreset, eqPresets: EQ_PRESETS.map((x: any) => x.name),
+        shuffle, inLib: !!cur && lib.some((x) => x.id === cur.id), skin: skinColor,
+      }))
+    } catch { /* 忽略 */ }
+  }
   useEffect(() => {
     if (!skin || syncTimer.current) return
     syncTimer.current = window.setTimeout(() => {
       syncTimer.current = 0
-      try {
-        ;(window as any).go?.main?.App?.SyncPush?.(JSON.stringify({
-          cur, playing, busy, pos, dur, lyric, curIndex, queue, volume,
-          eqGains, eqOn, eqPreset, eqPresets: EQ_PRESETS.map((x: any) => x.name),
-          shuffle, inLib: !!cur && lib.some((x) => x.id === cur.id),
-        }))
-      } catch { /* 忽略 */ }
+      pushNow()
     }, 180)
-  }, [skin, cur, playing, busy, pos, dur, lyric, curIndex, queue, volume, eqGains, eqOn, eqPreset, shuffle])
+  }, [skin, skinColor, cur, playing, busy, pos, dur, lyric, curIndex, queue, volume, eqGains, eqOn, eqPreset, shuffle])
+  // 副窗是独立 WebView，可能比主窗晚一点才加载完、也可能中途被收起再打开，
+  // 所以皮肤界面开着的时候再补一条低频全量推送，保证配色/列表总能对上。
+  useEffect(() => {
+    if (!skin) return
+    const t = window.setInterval(pushNow, 1500)
+    return () => window.clearInterval(t)
+  }, [skin, cur, playing, skinColor, volume, eqGains, eqOn, eqPreset, shuffle, queue, lyric])
+
 
   useEffect(() => {
     ;(window as any).__huluCmd = (json: string) => {
@@ -1735,6 +1750,8 @@ export default function App() {
       {skin && (
         <SkinView
           only="main"
+          skinName={skinColor}
+          onSkinPick={setSkinColor}
           cur={cur}
           playing={playing}
           busy={busy}

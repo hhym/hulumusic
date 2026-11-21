@@ -26,6 +26,8 @@ import (
 	"syscall"
 	"time"
 	"unsafe"
+
+	"github.com/egoist/mygo"
 )
 
 var (
@@ -38,6 +40,7 @@ var (
 	procGetAncestor      = syscall.NewLazyDLL("user32.dll").NewProc("GetAncestor")
 	procGetWindowPID     = syscall.NewLazyDLL("user32.dll").NewProc("GetWindowThreadProcessId")
 	procGetCurrentPID    = syscall.NewLazyDLL("kernel32.dll").NewProc("GetCurrentProcessId")
+	procIsWinVisible     = syscall.NewLazyDLL("user32.dll").NewProc("IsWindowVisible")
 )
 
 const (
@@ -47,16 +50,17 @@ const (
 	vkLButton     = 0x01
 	gaRoot        = 2
 	dragPoll      = 10 * time.Millisecond
-	// 标题条命中高度（物理像素）。125% 缩放下标题条约 50px，留点余量。
-	dragStrip = 60
+	// 标题条命中高度（DIP）。真机上缩放可能是 100%/125%/150%，这里按主窗的
+	// 「物理高 ÷ DIP 高」算出本机缩放比，再换算成物理像素，免得高 DPI 下点不上。
+	dragStripDip = 34
 )
 
 type dragPoint struct{ X, Y int32 }
 type dragRect struct{ Left, Top, Right, Bottom int32 }
 
 var (
-	dragMu   sync.Mutex
-	dragDone chan struct{}
+	dragMu     sync.Mutex
+	dragDoneCh chan struct{}
 
 	autoDragOnce sync.Once
 	skinDragOn   atomic.Bool
@@ -95,12 +99,12 @@ func dragLog(format string, args ...any) {
 // beginDrag 在给定锚点/起始位置开始跟手，直到左键抬起；已在拖就直接返回。
 func beginDrag(hwnd uintptr, cursor dragPoint, origin dragRect, why string) {
 	dragMu.Lock()
-	if dragDone != nil {
+	if dragDoneCh != nil {
 		dragMu.Unlock()
 		return
 	}
 	done := make(chan struct{})
-	dragDone = done
+	dragDoneCh = done
 	dragMu.Unlock()
 
 	dragLog("%s hwnd=%x 光标=(%d,%d) 窗口=(%d,%d)", why, hwnd, cursor.X, cursor.Y, origin.Left, origin.Top)
@@ -108,8 +112,8 @@ func beginDrag(hwnd uintptr, cursor dragPoint, origin dragRect, why string) {
 	go func() {
 		defer func() {
 			dragMu.Lock()
-			if dragDone == done {
-				dragDone = nil
+			if dragDoneCh == done {
+				dragDoneCh = nil
 			}
 			dragMu.Unlock()
 		}()
@@ -182,21 +186,36 @@ func (a *App) hwnd() uintptr {
 	return h
 }
 
-// dragWindow 前端标题栏 mousedown 调进来，以当前光标为锚点开始拖。
-func (a *App) dragWindow() {
-	hwnd := windowUnderCursor()
+// dragWindowFor 前端标题栏 mousedown 调进来，带的是自己那块面板名。
+// 句柄直接取自对应窗口（main / eq / lyric / playlist），不再用光标猜——
+// 之前靠 WindowFromPoint 猜窗口在 WebView2 上不可靠，是「拖不动」的根因之一。
+func (a *App) dragWindowFor(panel string) {
+	w := a.panelByName(panel)
+	var hwnd uintptr
+	if w != nil {
+		hwnd = w.NativeHandle()
+	}
+	why := "前端请求拖动(" + panel + ")"
 	if hwnd == 0 {
-		hwnd = a.hwnd()
+		hwnd = windowUnderCursor()
+		why = "前端请求拖动(句柄为空，退回光标命中)"
 	}
 	if hwnd == 0 {
-		dragLog("调用到达，但拿不到窗口句柄")
+		hwnd = a.hwnd()
+		why += "+前台兜底"
+	}
+	if hwnd == 0 {
+		dragLog("调用到达(%s)，但拿不到窗口句柄", panel)
 		return
 	}
 	var cursor dragPoint
 	var origin dragRect
 	cursorAt(&cursor)
-	windowRectAt(hwnd, &origin)
-	beginDrag(hwnd, cursor, origin, "前端请求拖动")
+	if !windowRectAt(hwnd, &origin) {
+		dragLog("%s 但 GetWindowRect 失败 hwnd=%x", why, hwnd)
+		return
+	}
+	beginDrag(hwnd, cursor, origin, why)
 }
 
 // autoDragSwitch 皮肤模式开关时调，true 时启动一次性的兜底监听。
@@ -228,24 +247,113 @@ func (a *App) autoDragLoop() {
 			continue
 		}
 		down = true
-		hwnd := windowUnderCursor()
-		if hwnd == 0 {
-			continue // 光标不在自己的窗口上
-		}
-		if fg, _, _ := procGetForeground.Call(); fg != hwnd {
-			continue // 不是前台窗口，别抢别人的标题栏
+		if a.dragDone() {
+			continue
 		}
 		var cursor dragPoint
-		var r dragRect
-		if !cursorAt(&cursor) || !windowRectAt(hwnd, &r) {
+		if !cursorAt(&cursor) {
 			continue
 		}
-		if cursor.X < r.Left || cursor.X > r.Right {
-			continue
-		}
-		if cursor.Y < r.Top || cursor.Y > r.Top+dragStrip {
-			continue
+		hwnd, r, ok := a.ownWindowAtPoint(cursor)
+		if !ok {
+			dragLog("按下没有命中标题条 光标=(%d,%d) 主窗=%s", cursor.X, cursor.Y, a.rectsText())
+			continue // 光标不在自己的窗口标题条上
 		}
 		beginDrag(hwnd, cursor, r, "顶部标题条自动接管")
 	}
+}
+
+// dragDone 报告当前是否已经在拖（避免自动接管打断前端发起的拖动）。
+func (a *App) dragDone() bool {
+	dragMu.Lock()
+	defer dragMu.Unlock()
+	return dragDoneCh != nil
+}
+
+// dpiScale 物理像素 ÷ DIP。主窗永远是 panelMainH 高，拿它反推本机缩放比。
+func (a *App) dpiScale() float64 {
+	if a.win == nil {
+		return 1
+	}
+	if h := a.win.NativeHandle(); h != 0 {
+		var r dragRect
+		if windowRectAt(h, &r) {
+			if ph := float64(r.Bottom - r.Top); ph > 0 {
+				s := ph / float64(panelMainH)
+				if s >= 0.6 && s <= 4 {
+					return s
+				}
+			}
+		}
+	}
+	return 1
+}
+
+// ownWindowAtPoint 判断光标是否落在自己某个窗口的标题条上（含主窗和三个副窗）。
+// 不查 PID、不要求前台窗口：这两条在 WebView2 + 无边框透明窗上是「拖不动」的元凶。
+func (a *App) ownWindowAtPoint(p dragPoint) (uintptr, dragRect, bool) {
+	strip := int32(dragStripDip * a.dpiScale())
+	cands := []*mygo.Window{a.win}
+	panelMu.Lock()
+	for _, n := range []string{"eq", "lyric", "playlist"} {
+		if w := panelWins[n]; w != nil {
+			cands = append(cands, w)
+		}
+	}
+	panelMu.Unlock()
+	for _, w := range cands {
+		if w == nil {
+			continue
+		}
+		h := w.NativeHandle()
+		if h == 0 {
+			continue
+		}
+		if vis, _, _ := procIsWinVisible.Call(h); vis == 0 {
+			continue
+		}
+		var r dragRect
+		if !windowRectAt(h, &r) {
+			continue
+		}
+		if p.X < r.Left || p.X > r.Right {
+			continue
+		}
+		// 窗口本身很矮（卷起状态）时整块都算标题条。
+		limit := r.Top + strip
+		if r.Bottom < limit {
+			limit = r.Bottom
+		}
+		if p.Y >= r.Top && p.Y <= limit {
+			return h, r, true
+		}
+	}
+	return 0, dragRect{}, false
+}
+
+// rectsText 把四个窗口的矩形拼成一行，供日志用（按下没命中时看看到底偏在哪）。
+func (a *App) rectsText() string {
+	out := ""
+	add := func(name string, w *mygo.Window) {
+		if w == nil {
+			return
+		}
+		h := w.NativeHandle()
+		if h == 0 {
+			return
+		}
+		var r dragRect
+		if !windowRectAt(h, &r) {
+			return
+		}
+		vis, _, _ := procIsWinVisible.Call(h)
+		out += fmt.Sprintf(" %s[%d,%d,%d,%d vis=%d]", name, r.Left, r.Top, r.Right, r.Bottom, vis)
+	}
+	add("main", a.win)
+	panelMu.Lock()
+	add("eq", panelWins["eq"])
+	add("lyric", panelWins["lyric"])
+	add("playlist", panelWins["playlist"])
+	panelMu.Unlock()
+	return out
 }
