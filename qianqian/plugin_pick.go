@@ -26,8 +26,8 @@ func (a *App) PickPluginZip() PickResult {
 	}
 	paths, err := mygo.Dialog.Open(mygo.OpenDialogOptions{
 		Parent:  a.win,
-		Title:   "选择 MyGo 插件压缩包",
-		Filters: []mygo.FileFilter{{Name: "MyGo 插件 (*.zip)", Extensions: []string{"zip"}}},
+		Title:   "选择插件（MyGo .zip 或 MusicFree .js）",
+		Filters: []mygo.FileFilter{{Name: "插件（.zip / MusicFree .js）", Extensions: []string{"zip", "js"}}},
 	})
 	if err != nil {
 		return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}

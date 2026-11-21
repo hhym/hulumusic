@@ -69,8 +69,11 @@ export default function PluginHome({
 
   const load = useCallback(async (pluginId: string, p: string) => {
     if (!pluginId) return
-    // MusicFree 插件没有 home / browse 概念：直接提示去搜索，而不是抛一堆看不懂的错误
-    const plug = enabled.find((x: any) => x.id === pluginId) as any
+    // MusicFree 插件没有 home / browse 概念：直接提示去搜索，而不是抛一堆看不懂的错误。
+    // 注意这里必须用 plugins 现价（依赖 plugins），用外层 enabled 会被 useCallback 的
+    // 旧闭包冻住 —— 老版本就是这样：首次渲染 enabled 还是空的，于是永远判不到 musicfree，
+    // 一路按 MyGo 去执行，最后报「插件只支持相对路径 import：axios」。
+    const plug = plugins.find((x: any) => x.id === pluginId) as any
     if (plug?.kind === 'musicfree') {
       setView(null)
       setErr('')
@@ -89,7 +92,7 @@ export default function PluginHome({
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [plugins])
 
   // 换了音源就回到第一页，同一音源里翻页才跟着 page 走 —— 两件事不能混在一个 effect 里
   const prevPid = useRef('')

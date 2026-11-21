@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -100,7 +103,11 @@ func (a *App) InstallPluginText(code string) PickResult {
 	if strings.TrimSpace(code) == "" {
 		return PickResult{Plugins: a.scanPlugins(), Err: "内容是空的"}
 	}
-	return PickResult{Plugins: a.scanPlugins(), Err: "MyGo 插件是「目录 + plugin.json」的形式，不能只粘贴源码：请用「选文件夹」挑插件目录，或装打包好的 .zip"}
+	id, err := a.installPluginJS("", []byte(code))
+	if err != nil {
+		return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}
+	}
+	return PickResult{Plugins: a.scanPlugins(), Err: "", InstalledID: id}
 }
 
 // InstallPluginFile 从本地导入：选文件夹，或选含 plugin.json 的 .zip。
@@ -123,6 +130,17 @@ func (a *App) InstallPluginFile(path string) PickResult {
 		}
 		return PickResult{Plugins: a.scanPlugins(), Err: "", InstalledID: id}
 	}
+	if strings.HasSuffix(strings.ToLower(path), ".js") {
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}
+		}
+		id, err := a.installPluginJS(filepath.Base(path), b)
+		if err != nil {
+			return PickResult{Plugins: a.scanPlugins(), Err: err.Error()}
+		}
+		return PickResult{Plugins: a.scanPlugins(), Err: "", InstalledID: id}
+	}
 	if strings.HasSuffix(strings.ToLower(path), ".zip") {
 		b, err := os.ReadFile(path)
 		if err != nil {
@@ -134,7 +152,7 @@ func (a *App) InstallPluginFile(path string) PickResult {
 		}
 		return PickResult{Plugins: a.scanPlugins(), Err: "", InstalledID: id}
 	}
-	return PickResult{Plugins: a.scanPlugins(), Err: "只支持 MyGo 插件文件夹，或里面带 plugin.json 的 .zip"}
+	return PickResult{Plugins: a.scanPlugins(), Err: "只支持 MyGo 插件文件夹 / .zip，或 MusicFree 单文件插件 .js"}
 }
 
 // InstallPluginURL 只接受打包好的插件 zip（里面要有 plugin.json）。
@@ -158,7 +176,21 @@ func (a *App) InstallPluginURL(rawURL string) PickResult {
 		return PickResult{Plugins: a.scanPlugins(), Err: "读取失败：" + err.Error()}
 	}
 	if !bytes.HasPrefix(body, []byte("PK\x03\x04")) {
-		return PickResult{Plugins: a.scanPlugins(), Err: "这不是插件 zip（MyGo 插件要打包成含 plugin.json 的压缩包）"}
+		// 不是 zip：当成 MusicFree 单文件插件（直链常见于 raw.githubusercontent / gitcode）
+		name := "mf-" + strconv.FormatInt(time.Now().Unix(), 10) + ".js"
+		if u, perr := url.Parse(rawURL); perr == nil && u.Path != "" {
+			if base := path.Base(u.Path); base != "" && base != "." && base != "/" {
+				name = base
+				if !strings.HasSuffix(strings.ToLower(name), ".js") {
+					name += ".js"
+				}
+			}
+		}
+		id, e2 := a.installPluginJS(name, body)
+		if e2 != nil {
+			return PickResult{Plugins: a.scanPlugins(), Err: e2.Error()}
+		}
+		return PickResult{Plugins: a.scanPlugins(), Err: "", InstalledID: id}
 	}
 	id, err := a.installPluginZip(body)
 	if err != nil {
@@ -184,6 +216,8 @@ func (a *App) RemovePlugin(id string) ([]Plugin, string) {
 	if err := os.RemoveAll(pluginDir(id)); err != nil {
 		return a.scanPlugins(), err.Error()
 	}
+	// 单文件 MusicFree 插件：plugins/<id>.js
+	_ = os.Remove(filepath.Join(pluginsDir(), id+".js"))
 	state := loadPluginState()
 	delete(state, id)
 	savePluginState(state)

@@ -180,6 +180,33 @@ async function makeRequire(code: string): Promise<(name: string) => any> {
   }
 }
 
+/** env 垫片：MusicFree 插件可以用 env.getUserVariables() 读「插件设置」里的变量。
+ *  这里按插件 id 各存一份到 localStorage，重启后还在（等价于 MusicFree 的用户变量）。 */
+function makeEnv(pluginId: string): AnyObj {
+  const key = 'qqjt-mf-vars:' + pluginId
+  let vars: AnyObj = {}
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw) vars = JSON.parse(raw) || {}
+  } catch { /* 忽略 */ }
+  const save = () => {
+    try { localStorage.setItem(key, JSON.stringify(vars)) } catch { /* 忽略 */ }
+  }
+  return {
+    getUserVariables: () => ({...vars}),
+    setUserVariables: (v: AnyObj) => {
+      if (v && typeof v === 'object') {
+        Object.assign(vars, v)
+        save()
+      }
+    },
+    version: '0.1.0',
+    appVersion: '0.1.0',
+    os: 'desktop',
+    platform: 'desktop',
+  }
+}
+
 /** 执行插件源码，返回 module.exports。同一个插件只执行一次。 */
 export async function loadMusicFree(pluginId: string): Promise<AnyObj> {
   if (moduleCache.has(pluginId)) return moduleCache.get(pluginId)!
@@ -194,11 +221,12 @@ export async function loadMusicFree(pluginId: string): Promise<AnyObj> {
   }
   const requireFn = await makeRequire(String(code))
   const mod: AnyObj = {exports: {}}
+  // env 也要给：不少 MusicFree 插件拿 env.getUserVariables() 读设置（比如 GD 音乐台的 musicSource）
   const fn = new Function(
-    'module', 'exports', 'require', 'console', '__filename',
+    'module', 'exports', 'require', 'console', '__filename', 'env',
     String(code) + '\n//# sourceURL=hulu-mf-' + pluginId + '.js'
   )
-  fn(mod, mod.exports, requireFn, console, pluginId + '.js')
+  fn(mod, mod.exports, requireFn, console, pluginId + '.js', makeEnv(pluginId))
   const exp = mod.exports
   if (!exp || typeof exp !== 'object' && typeof exp !== 'function') {
     throw new Error('插件没有导出任何东西（要 module.exports = { … }）')
@@ -225,7 +253,9 @@ const str = (v: any) => (v == null ? '' : String(v))
 export async function mfSearch(pluginId: string, keyword: string, page = 1): Promise<AnyObj[]> {
   const mod = await loadMusicFree(pluginId)
   if (typeof mod.search !== 'function') throw new Error('这个 MusicFree 插件没有 search 方法')
-  const res: any = await mod.search(keyword, page)
+  // 第三个参数是类型：MusicFree 的插件普遍是 search(query, page, type)，
+  // 不传 type 时有些源（GD 音乐台）会直接返回空数组，所以这里明确给 'music'。
+  const res: any = await mod.search(keyword, page, 'music')
   const list: any[] = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
   const out: AnyObj[] = []
   for (const it of list) {

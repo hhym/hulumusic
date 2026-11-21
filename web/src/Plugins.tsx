@@ -458,7 +458,7 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
             onKeyDown={(e) => e.key === 'Enter' && installURL()}
           />
           <button className="primary-btn" onClick={installURL} disabled={busy}>{busy ? '…' : '安装'}</button>
-          <button className="ghost-btn" onClick={() => pickLocal('zip')}>选 zip / .js</button>
+          <button className="ghost-btn" onClick={() => pickLocal('zip')}>选 .zip / .js</button>
           <button className="ghost-btn" onClick={() => pickLocal('dir')}>选文件夹</button>
         </div>
         {msg && <div className="ok-msg">{msg}</div>}

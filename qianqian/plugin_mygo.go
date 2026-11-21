@@ -9,8 +9,11 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 )
 
 /* MyGo Music 插件支持。
@@ -131,6 +134,73 @@ func (a *App) PluginFile(id, rel string) (string, string) {
 		return "", "读不到文件：" + err.Error()
 	}
 	return string(b), ""
+}
+
+// musicFreeMeta 从单文件插件源码里抠出 platform / version 当作显示名。
+// 只看 module.exports 之后的部分（对象字面量在文件末尾），先认 platform、再退回 name。
+func musicFreeMeta(code string) (string, string) {
+	tail := code
+	if i := strings.LastIndex(code, "module.exports"); i >= 0 {
+		tail = code[i:]
+	}
+	pick := func(key string) string {
+		re := regexp.MustCompile(`(?s)` + key + `\s*:\s*['\"]([^'\"]{1,40})['\"]`)
+		if m := re.FindStringSubmatch(tail); len(m) > 1 {
+			return strings.TrimSpace(m[1])
+		}
+		return ""
+	}
+	name := pick("platform")
+	if name == "" {
+		name = pick("name")
+	}
+	ver := ""
+	rv := regexp.MustCompile(`version\s*:\s*['\"]([0-9][0-9.\-a-zA-Z]{0,20})['\"]`)
+	if m := rv.FindStringSubmatch(tail); len(m) > 1 {
+		ver = strings.TrimSpace(m[1])
+	}
+	return name, ver
+}
+
+// sanitizeFileID 给单文件插件做文件名消毒：只留字母、数字、-、_ 和常用汉字，
+// 空格、括号、全角标点这类会在 Windows 路径里添麻烦的字符一律去掉。
+func sanitizeFileID(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9':
+			b.WriteRune(r)
+		case r == '-' || r == '_':
+			b.WriteRune(r)
+		case r >= 0x4E00 && r <= 0x9FFF: // CJK 统一表意文字
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+// installPluginJS 装一个 MusicFree 单文件插件：源码写到 plugins/<id>.js。
+// id 由文件名消毒得到（中文保留，空格/括号去掉），空名时用时间戳兜底。
+func (a *App) installPluginJS(name string, code []byte) (string, error) {
+	if strings.TrimSpace(string(code)) == "" {
+		return "", fmt.Errorf("插件源码是空的")
+	}
+	base := filepath.Base(strings.TrimSpace(name))
+	id := sanitizeFileID(strings.TrimSuffix(base, filepath.Ext(base)))
+	if id == "" {
+		id = "mf-" + strconv.FormatInt(time.Now().Unix(), 10)
+	}
+	if !safePluginID(id) {
+		return "", fmt.Errorf("插件文件名不太合适：只允许字母、数字、下划线、减号、空格和中文")
+	}
+	os.MkdirAll(pluginsDir(), 0o755)
+	if err := os.WriteFile(filepath.Join(pluginsDir(), id+".js"), code, 0o644); err != nil {
+		return "", err
+	}
+	state := loadPluginState()
+	state[id] = true
+	savePluginState(state)
+	return id, nil
 }
 
 // ---------- host.storage 落盘 ----------
@@ -382,6 +452,39 @@ func scanMyGoPlugins(state map[string]bool) []Plugin {
 	out := make([]Plugin, 0)
 	for _, e := range entries {
 		if !e.IsDir() {
+			// 单文件 MusicFree 插件：plugins/<id>.js
+			name := e.Name()
+			if !strings.HasSuffix(strings.ToLower(name), ".js") {
+				continue
+			}
+			id := strings.TrimSuffix(name, filepath.Ext(name))
+			if !safePluginID(id) {
+				continue
+			}
+			fi, _ := e.Info()
+			size := int64(0)
+			installed := ""
+			if fi != nil {
+				size = fi.Size()
+				installed = fi.ModTime().Format("2006-01-02 15:04")
+			}
+			// 名称/版本尽量读插件自己声明的 platform / version，读不到就退回文件名
+			title, ver := id, ""
+			if b, rerr := os.ReadFile(filepath.Join(dir, name)); rerr == nil {
+				title, ver = musicFreeMeta(string(b))
+			}
+			out = append(out, Plugin{
+				ID:          id,
+				Name:        title,
+				Version:     ver,
+				Enabled:     state[id],
+				Compatible:  true,
+				Size:        size,
+				InstalledAt: installed,
+				File:        name,
+				Kind:        "musicfree",
+				Description: "MusicFree 单文件插件",
+			})
 			continue
 		}
 		id := e.Name()
@@ -428,6 +531,16 @@ func scanMyGoPlugins(state map[string]bool) []Plugin {
 			Navigation:  navigationJSON(m),
 			Actions:     actionList(m, id),
 		})
+	}
+	// 同名插件（比如两个都叫 QQ 的源）在列表里分不出来，补上 id 后缀
+	count := map[string]int{}
+	for _, p := range out {
+		count[p.Name]++
+	}
+	for i := range out {
+		if count[out[i].Name] > 1 {
+			out[i].Name = out[i].Name + "（" + out[i].ID + "）"
+		}
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
