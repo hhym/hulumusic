@@ -8118,50 +8118,6 @@ function SettingsPage({
     })]
   });
 }
-const scriptRel = "modulepreload";
-const assetsURL = function(dep) {
-  return "/" + dep;
-};
-const seen = {};
-const __vitePreload = function preload(baseModule, deps, importerUrl) {
-  if (!deps || deps.length === 0) {
-    return baseModule();
-  }
-  const links = document.getElementsByTagName("link");
-  return Promise.all(deps.map((dep) => {
-    dep = assetsURL(dep);
-    if (dep in seen)
-      return;
-    seen[dep] = true;
-    const isCss = dep.endsWith(".css");
-    const cssSelector = isCss ? '[rel="stylesheet"]' : "";
-    const isBaseRelative = !!importerUrl;
-    if (isBaseRelative) {
-      for (let i = links.length - 1; i >= 0; i--) {
-        const link2 = links[i];
-        if (link2.href === dep && (!isCss || link2.rel === "stylesheet")) {
-          return;
-        }
-      }
-    } else if (document.querySelector(`link[href="${dep}"]${cssSelector}`)) {
-      return;
-    }
-    const link = document.createElement("link");
-    link.rel = isCss ? "stylesheet" : scriptRel;
-    if (!isCss) {
-      link.as = "script";
-      link.crossOrigin = "";
-    }
-    link.href = dep;
-    document.head.appendChild(link);
-    if (isCss) {
-      return new Promise((res, rej) => {
-        link.addEventListener("load", res);
-        link.addEventListener("error", () => rej(new Error(`Unable to preload CSS for ${dep}`)));
-      });
-    }
-  })).then(() => baseModule());
-};
 function md5hex(input) {
   const str2 = unescape(encodeURIComponent(String(input)));
   const bytes = [];
@@ -9121,6 +9077,50 @@ async function mygoAccount(pluginId) {
     return null;
   }
 }
+const scriptRel = "modulepreload";
+const assetsURL = function(dep) {
+  return "/" + dep;
+};
+const seen = {};
+const __vitePreload = function preload(baseModule, deps, importerUrl) {
+  if (!deps || deps.length === 0) {
+    return baseModule();
+  }
+  const links = document.getElementsByTagName("link");
+  return Promise.all(deps.map((dep) => {
+    dep = assetsURL(dep);
+    if (dep in seen)
+      return;
+    seen[dep] = true;
+    const isCss = dep.endsWith(".css");
+    const cssSelector = isCss ? '[rel="stylesheet"]' : "";
+    const isBaseRelative = !!importerUrl;
+    if (isBaseRelative) {
+      for (let i = links.length - 1; i >= 0; i--) {
+        const link2 = links[i];
+        if (link2.href === dep && (!isCss || link2.rel === "stylesheet")) {
+          return;
+        }
+      }
+    } else if (document.querySelector(`link[href="${dep}"]${cssSelector}`)) {
+      return;
+    }
+    const link = document.createElement("link");
+    link.rel = isCss ? "stylesheet" : scriptRel;
+    if (!isCss) {
+      link.as = "script";
+      link.crossOrigin = "";
+    }
+    link.href = dep;
+    document.head.appendChild(link);
+    if (isCss) {
+      return new Promise((res, rej) => {
+        link.addEventListener("load", res);
+        link.addEventListener("error", () => rej(new Error(`Unable to preload CSS for ${dep}`)));
+      });
+    }
+  })).then(() => baseModule());
+};
 const moduleCache = /* @__PURE__ */ new Map();
 const sourceCache = /* @__PURE__ */ new Map();
 const pkgCache = /* @__PURE__ */ new Map();
@@ -9416,68 +9416,6 @@ async function mfLyric(pluginId, item) {
   const raw = str((res == null ? void 0 : res.rawLrc) || (res == null ? void 0 : res.lrc) || (res == null ? void 0 : res.lyric) || (typeof res === "string" ? res : ""));
   return parseLrc(raw);
 }
-async function mfHasBrowse(pluginId) {
-  try {
-    const mod = await loadMusicFree(pluginId);
-    return typeof mod.getRecommendSheetsByTag === "function";
-  } catch {
-    return false;
-  }
-}
-async function mfSheetTags(pluginId) {
-  const mod = await loadMusicFree(pluginId);
-  if (typeof mod.getRecommendSheetTags !== "function")
-    return { pinned: [], groups: [] };
-  const res = await mod.getRecommendSheetTags();
-  const norm = (t2) => ({ id: str((t2 == null ? void 0 : t2.id) ?? (t2 == null ? void 0 : t2.tag) ?? ""), title: str((t2 == null ? void 0 : t2.title) ?? (t2 == null ? void 0 : t2.name) ?? "") });
-  const pinned = Array.isArray(res == null ? void 0 : res.pinned) ? res.pinned.map(norm).filter((t2) => t2.id) : [];
-  const groups = Array.isArray(res == null ? void 0 : res.data) ? res.data.map((g) => ({ title: str((g == null ? void 0 : g.title) ?? ""), data: (Array.isArray(g == null ? void 0 : g.data) ? g.data : []).map(norm).filter((t2) => t2.id) })).filter((g) => g.data.length > 0) : [];
-  return { pinned, groups };
-}
-async function mfSheets(pluginId, tag, page = 1) {
-  const mod = await loadMusicFree(pluginId);
-  if (typeof mod.getRecommendSheetsByTag !== "function")
-    throw new Error("\u8FD9\u4E2A\u97F3\u6E90\u4E0D\u652F\u6301\u63A8\u8350");
-  const res = await mod.getRecommendSheetsByTag(tag, page);
-  const raw = Array.isArray(res == null ? void 0 : res.data) ? res.data : Array.isArray(res) ? res : [];
-  const list = raw.filter((x2) => x2 && typeof x2 === "object").map((x2) => ({
-    ...x2,
-    id: str(x2.id ?? x2.sheetId ?? x2.sheetid ?? ""),
-    title: str(x2.title ?? x2.name ?? ""),
-    artwork: str(x2.artwork ?? x2.cover ?? x2.pic ?? x2.img ?? ""),
-    description: str(x2.description ?? x2.desc ?? "")
-  })).filter((x2) => x2.id && x2.title);
-  return { list, isEnd: (res == null ? void 0 : res.isEnd) !== false };
-}
-async function mfSheetTracks(pluginId, sheet, page = 1) {
-  const mod = await loadMusicFree(pluginId);
-  if (typeof mod.getMusicSheetInfo !== "function")
-    throw new Error("\u8FD9\u4E2A\u97F3\u6E90\u4E0D\u652F\u6301\u6253\u5F00\u6B4C\u5355");
-  const res = await mod.getMusicSheetInfo(sheet, page);
-  const raw = Array.isArray(res == null ? void 0 : res.musicList) ? res.musicList : Array.isArray(res == null ? void 0 : res.data) ? res.data : Array.isArray(res) ? res : [];
-  const list = raw.filter((it) => it && typeof it === "object").map((it) => ({
-    ...it,
-    title: str(it.title ?? it.name ?? it.songname),
-    artist: str(it.artist ?? it.singer ?? it.artists),
-    album: str(it.album ?? it.albumName),
-    artwork: str(it.artwork ?? it.cover ?? it.pic ?? it.img),
-    duration: Number(it.duration ?? it.interval ?? 0) || 0,
-    id: str(it.id ?? it.songmid ?? it.songId ?? it.songid ?? "")
-  })).filter((it) => it.title);
-  return { list, isEnd: (res == null ? void 0 : res.isEnd) !== false };
-}
-const musicfreeRuntime = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  loadMusicFree,
-  clearMusicFreeCache,
-  mfSearch,
-  mfMediaSource,
-  mfLyric,
-  mfHasBrowse,
-  mfSheetTags,
-  mfSheets,
-  mfSheetTracks
-}, Symbol.toStringTag, { value: "Module" }));
 const bridge$1 = () => {
   var _a, _b;
   return (_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App;
@@ -9554,33 +9492,6 @@ async function pluginLyric(pluginId, item) {
     return await mfLyric(pluginId, item);
   }
   return await mygoLyric(pluginId, item);
-}
-async function pluginHasReco(pluginId) {
-  if (!pluginId)
-    return false;
-  if (await pluginKindOf(pluginId) !== "musicfree")
-    return false;
-  try {
-    const { mfHasBrowse: mfHasBrowse2 } = await __vitePreload(() => Promise.resolve().then(() => musicfreeRuntime), true ? void 0 : void 0);
-    return await mfHasBrowse2(pluginId);
-  } catch {
-    return false;
-  }
-}
-async function pluginRecoTags(pluginId) {
-  if (await pluginKindOf(pluginId) === "musicfree")
-    return await mfSheetTags(pluginId);
-  throw new Error("\u8FD9\u4E2A\u97F3\u6E90\u6CA1\u6709\u63A8\u8350\u9875\uFF0C\u7528\u300C\u9996\u9875\u300D\u6D4F\u89C8");
-}
-async function pluginRecoSheets(pluginId, tag, page = 1) {
-  if (await pluginKindOf(pluginId) === "musicfree")
-    return await mfSheets(pluginId, tag, page);
-  throw new Error("\u8FD9\u4E2A\u97F3\u6E90\u6CA1\u6709\u63A8\u8350\u9875\uFF0C\u7528\u300C\u9996\u9875\u300D\u6D4F\u89C8");
-}
-async function pluginRecoTracks(pluginId, sheet, page = 1) {
-  if (await pluginKindOf(pluginId) === "musicfree")
-    return await mfSheetTracks(pluginId, sheet, page);
-  throw new Error("\u8FD9\u4E2A\u97F3\u6E90\u6CA1\u6709\u63A8\u8350\u9875\uFF0C\u7528\u300C\u9996\u9875\u300D\u6D4F\u89C8");
 }
 const FI = {
   "layout": '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>',
@@ -10550,7 +10461,7 @@ function PluginsPage({
     }) : null]
   });
 }
-const fmt$3 = (ms) => {
+const fmt$2 = (ms) => {
   if (!ms || !isFinite(ms) || ms < 0)
     return "0:00";
   const s = Math.floor(ms / 1e3);
@@ -10727,7 +10638,7 @@ function NowPlaying(p2) {
           className: "np-prog",
           children: [/* @__PURE__ */ jsx("span", {
             className: "np-time",
-            children: fmt$3(p2.pos)
+            children: fmt$2(p2.pos)
           }), /* @__PURE__ */ jsx("input", {
             type: "range",
             min: 0,
@@ -10740,7 +10651,7 @@ function NowPlaying(p2) {
             }
           }), /* @__PURE__ */ jsx("span", {
             className: "np-time",
-            children: fmt$3(p2.dur)
+            children: fmt$2(p2.dur)
           })]
         })
       }), /* @__PURE__ */ jsxs("div", {
@@ -12853,7 +12764,7 @@ function KindIcon({
     })]
   });
 }
-function fmt$2(sec) {
+function fmt$1(sec) {
   if (!sec)
     return "";
   const m2 = Math.floor(sec / 60);
@@ -12992,7 +12903,7 @@ function PluginHome({
             children: t2.artist
           }), /* @__PURE__ */ jsx("span", {
             className: "home-tr-dur",
-            children: fmt$2(t2.duration)
+            children: fmt$1(t2.duration)
           })]
         }, t2.id + i)), !detail.tracks.length && !loading && /* @__PURE__ */ jsx("div", {
           className: "home-empty",
@@ -13107,266 +13018,6 @@ function PluginHome({
           })]
         })]
       }, si2))]
-    })]
-  });
-}
-function fmt$1(sec) {
-  if (!sec)
-    return "";
-  const m2 = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return m2 + ":" + String(s).padStart(2, "0");
-}
-function CoverIcon() {
-  return /* @__PURE__ */ jsxs("svg", {
-    width: 24,
-    height: 24,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.5,
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    children: [/* @__PURE__ */ jsx("path", {
-      d: "M9 18V6.5l9-2V16"
-    }), /* @__PURE__ */ jsx("circle", {
-      cx: "6.6",
-      cy: "18",
-      r: "2.4"
-    }), /* @__PURE__ */ jsx("circle", {
-      cx: "15.6",
-      cy: "16",
-      r: "2.4"
-    })]
-  });
-}
-function RecommendPage({
-  plugins,
-  pluginId,
-  onPlayItem,
-  onPlayAll
-}) {
-  const enabled = plugins.filter((p2) => !!p2.id);
-  const cur = enabled.find((p2) => p2.id === pluginId) || enabled[0] || null;
-  const [supported, setSupported] = react.exports.useState(null);
-  const [pinned, setPinned] = react.exports.useState([]);
-  const [groups, setGroups] = react.exports.useState([]);
-  const [tag, setTag] = react.exports.useState(null);
-  const [sheets, setSheets] = react.exports.useState([]);
-  const [detail, setDetail] = react.exports.useState(null);
-  const [loading, setLoading] = react.exports.useState(false);
-  const [err, setErr] = react.exports.useState("");
-  const pid = (cur == null ? void 0 : cur.id) || "";
-  const pname = (cur == null ? void 0 : cur.name) || "";
-  const loadTags = react.exports.useCallback(async (id2) => {
-    if (!id2) {
-      setSupported(false);
-      return;
-    }
-    setLoading(true);
-    setErr("");
-    try {
-      const ok2 = await pluginHasReco(id2);
-      setSupported(ok2);
-      if (!ok2) {
-        setPinned([]);
-        setGroups([]);
-        setSheets([]);
-        setTag(null);
-        return;
-      }
-      const r2 = await pluginRecoTags(id2);
-      setPinned(r2.pinned);
-      setGroups(r2.groups);
-      const first = r2.pinned[0] || r2.groups[0] && r2.groups[0].data[0] || null;
-      setTag(first);
-    } catch (e) {
-      setErr(String((e == null ? void 0 : e.message) || e));
-      setSupported(false);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  react.exports.useEffect(() => {
-    setDetail(null);
-    setSheets([]);
-    loadTags(pid);
-  }, [pid, loadTags]);
-  react.exports.useEffect(() => {
-    if (!tag || !pid)
-      return;
-    let alive = true;
-    setLoading(true);
-    setErr("");
-    setDetail(null);
-    pluginRecoSheets(pid, tag, 1).then((r2) => {
-      if (!alive)
-        return;
-      setSheets(r2.list);
-    }).catch((e) => {
-      if (alive)
-        setErr(String((e == null ? void 0 : e.message) || e));
-    }).finally(() => {
-      if (alive)
-        setLoading(false);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [tag == null ? void 0 : tag.id, pid]);
-  async function openSheet(s) {
-    if (!pid)
-      return;
-    setLoading(true);
-    setErr("");
-    try {
-      const r2 = await pluginRecoTracks(pid, s, 1);
-      setDetail({
-        sheet: s,
-        tracks: r2.list
-      });
-    } catch (e) {
-      setErr(String((e == null ? void 0 : e.message) || e));
-    } finally {
-      setLoading(false);
-    }
-  }
-  if (!enabled.length) {
-    return /* @__PURE__ */ jsx("div", {
-      className: "home",
-      children: /* @__PURE__ */ jsxs("div", {
-        className: "home-empty",
-        children: [/* @__PURE__ */ jsx("b", {
-          children: "\u8FD8\u6CA1\u6709\u97F3\u6E90\u63D2\u4EF6"
-        }), /* @__PURE__ */ jsx("p", {
-          children: "\u5148\u53BB\u300C\u63D2\u4EF6\u300D\u9875\u88C5\u4E00\u4E2A\uFF0C\u63A8\u8350\u9875\u8BFB\u7684\u662F\u63D2\u4EF6\u81EA\u5DF1\u7ED9\u7684\u6B4C\u5355\u3002"
-        })]
-      })
-    });
-  }
-  return /* @__PURE__ */ jsxs("div", {
-    className: "home",
-    children: [err && /* @__PURE__ */ jsx("div", {
-      className: "home-err",
-      children: err
-    }), detail ? /* @__PURE__ */ jsxs(Fragment, {
-      children: [/* @__PURE__ */ jsxs("div", {
-        className: "home-detail-h",
-        children: [/* @__PURE__ */ jsx("button", {
-          className: "home-btn",
-          onClick: () => setDetail(null),
-          children: "\u2190 \u56DE\u5230\u63A8\u8350"
-        }), /* @__PURE__ */ jsx("h3", {
-          children: detail.sheet.title
-        }), /* @__PURE__ */ jsxs("span", {
-          className: "home-count",
-          children: [detail.tracks.length, " \u9996"]
-        }), !!detail.tracks.length && /* @__PURE__ */ jsx("button", {
-          className: "home-btn primary",
-          onClick: () => onPlayAll(pid, pname, detail.tracks),
-          children: "\u64AD\u653E\u5168\u90E8"
-        })]
-      }), /* @__PURE__ */ jsxs("div", {
-        className: "home-list",
-        children: [detail.tracks.map((t2, i) => /* @__PURE__ */ jsxs("button", {
-          className: "home-tr",
-          onClick: () => onPlayItem(pid, pname, detail.tracks, i),
-          children: [/* @__PURE__ */ jsx("span", {
-            className: "home-tr-cover",
-            style: t2.artwork ? {
-              backgroundImage: `url("${t2.artwork}")`
-            } : void 0,
-            children: t2.artwork ? "" : /* @__PURE__ */ jsx(CoverIcon, {})
-          }), /* @__PURE__ */ jsx("span", {
-            className: "home-tr-name",
-            children: t2.title
-          }), /* @__PURE__ */ jsx("span", {
-            className: "home-tr-sub",
-            children: t2.artist
-          }), /* @__PURE__ */ jsx("span", {
-            className: "home-tr-dur",
-            children: fmt$1(Number(t2.duration) || 0)
-          })]
-        }, String(t2.id || "") + i)), !detail.tracks.length && !loading && /* @__PURE__ */ jsx("div", {
-          className: "home-empty",
-          children: /* @__PURE__ */ jsx("p", {
-            children: "\u8FD9\u5F20\u6B4C\u5355\u662F\u7A7A\u7684"
-          })
-        })]
-      })]
-    }) : /* @__PURE__ */ jsxs(Fragment, {
-      children: [/* @__PURE__ */ jsxs("div", {
-        className: "home-head",
-        children: [/* @__PURE__ */ jsx("h2", {
-          className: "home-title",
-          children: pname ? pname + " \u63A8\u8350" : "\u63A8\u8350"
-        }), /* @__PURE__ */ jsx("div", {
-          className: "home-actions",
-          children: /* @__PURE__ */ jsx("button", {
-            className: "home-btn",
-            onClick: () => loadTags(pid),
-            disabled: loading,
-            children: loading ? "\u52A0\u8F7D\u4E2D\u2026" : "\u5237\u65B0"
-          })
-        })]
-      }), supported === false && !loading && /* @__PURE__ */ jsxs("div", {
-        className: "home-empty",
-        children: [/* @__PURE__ */ jsx("p", {
-          children: "\u8FD9\u4E2A\u97F3\u6E90\u6CA1\u6709\u63A8\u8350\u9875"
-        }), /* @__PURE__ */ jsx("p", {
-          style: {
-            opacity: 0.7
-          },
-          children: cur && cur.kind === "musicfree" ? "\u5B83\u53EA\u63D0\u4F9B\u4E86\u641C\u7D22\u63A5\u53E3\u3002\u6362\u6210\u652F\u6301\u6B4C\u5355\u6D4F\u89C8\u7684\u6E90\uFF0C\u6216\u8005\u76F4\u63A5\u53BB\u641C\u7D22\u9875\u627E\u6B4C\u3002" : "MyGo \u63D2\u4EF6\u7684\u5185\u5BB9\u5728\u300C\u9996\u9875\u300D\u91CC\u6D4F\u89C8\u3002"
-        })]
-      }), supported && /* @__PURE__ */ jsxs("div", {
-        className: "reco-chips",
-        children: [pinned.map((t2) => /* @__PURE__ */ jsx("button", {
-          className: "reco-chip" + ((tag == null ? void 0 : tag.id) === t2.id ? " on" : ""),
-          onClick: () => setTag(t2),
-          children: t2.title
-        }, "p:" + t2.id)), groups.map((g) => /* @__PURE__ */ jsxs("div", {
-          className: "reco-group",
-          children: [g.title && /* @__PURE__ */ jsx("span", {
-            className: "reco-group-t",
-            children: g.title
-          }), g.data.map((t2) => /* @__PURE__ */ jsx("button", {
-            className: "reco-chip" + ((tag == null ? void 0 : tag.id) === t2.id ? " on" : ""),
-            onClick: () => setTag(t2),
-            children: t2.title
-          }, "g:" + t2.id))]
-        }, g.title))]
-      }), supported && loading && !sheets.length && /* @__PURE__ */ jsx("div", {
-        className: "home-empty",
-        children: /* @__PURE__ */ jsx("p", {
-          children: "\u6B63\u5728\u8BFB\u6B4C\u5355\u2026"
-        })
-      }), supported && !!sheets.length && /* @__PURE__ */ jsx("div", {
-        className: "home-row",
-        children: sheets.map((s, i) => /* @__PURE__ */ jsxs("button", {
-          className: "home-card",
-          onClick: () => openSheet(s),
-          title: s.title,
-          children: [/* @__PURE__ */ jsx("span", {
-            className: "home-cover",
-            style: s.artwork ? {
-              backgroundImage: `url("${s.artwork}")`
-            } : void 0,
-            children: s.artwork ? "" : /* @__PURE__ */ jsx(CoverIcon, {})
-          }), /* @__PURE__ */ jsx("span", {
-            className: "home-name",
-            children: s.title
-          }), /* @__PURE__ */ jsx("span", {
-            className: "home-artist",
-            children: s.description
-          })]
-        }, String(s.id) + i))
-      }), supported && !loading && !sheets.length && /* @__PURE__ */ jsx("div", {
-        className: "home-empty",
-        children: /* @__PURE__ */ jsx("p", {
-          children: "\u8FD9\u4E2A\u5206\u7C7B\u4E0B\u6CA1\u6709\u6B4C\u5355\uFF0C\u6362\u4E2A\u5206\u7C7B\u8BD5\u8BD5"
-        })
-      })]
     })]
   });
 }
@@ -14090,7 +13741,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.65";
+const BUILD_TAG = "3.0.64";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 function App() {
   var _a, _b;
@@ -15519,9 +15170,9 @@ function App() {
       children: [/* @__PURE__ */ jsxs("div", {
         children: [/* @__PURE__ */ jsx("h1", {
           className: "page-h1 ph-" + tab,
-          children: tab === "home" ? "\u9996\u9875" : tab === "reco" ? "\u63A8\u8350" : tab === "library" ? "\u6211\u7684\u6536\u85CF" : tab === "radio" ? "\u7535\u53F0" : tab === "podcast" ? "\u542C\u4E66" : tab === "local" ? "\u4E50\u5E93" : tab === "queue" ? "\u64AD\u5355" : tab === "plugins" ? "\u63D2\u4EF6" : tab === "settings" ? "\u8BBE\u7F6E" : tab === "lyric" ? "\u6B4C\u8BCD" : "\u641C\u7D22\u7ED3\u679C"
+          children: tab === "home" ? "\u9996\u9875" : tab === "library" ? "\u6211\u7684\u6536\u85CF" : tab === "radio" ? "\u7535\u53F0" : tab === "podcast" ? "\u542C\u4E66" : tab === "local" ? "\u4E50\u5E93" : tab === "queue" ? "\u64AD\u5355" : tab === "plugins" ? "\u63D2\u4EF6" : tab === "settings" ? "\u8BBE\u7F6E" : tab === "lyric" ? "\u6B4C\u8BCD" : "\u641C\u7D22\u7ED3\u679C"
         }), /* @__PURE__ */ jsx("p", {
-          children: meta || (tab === "home" ? "\u5F53\u524D\u63D2\u4EF6\u7684\u9996\u9875\uFF0C\u70B9\u5361\u7247\u76F4\u63A5\u64AD" : tab === "reco" ? "\u6309\u63D2\u4EF6\u7684\u6B4C\u5355\u5206\u7C7B\u901B\uFF0C\u70B9\u6B4C\u5355\u8FDB\u53BB\u6311\u6B4C" : tab === "radio" ? "\u7F51\u7EDC\u76F4\u64AD\uFF0C\u70B9\u53F0\u5373\u542C" : tab === "podcast" ? "\u641C\u6709\u58F0\u4E66\u3001\u64AD\u5BA2\u8282\u76EE" : tab === "local" ? localInfo || "\u9009\u4E00\u4E2A\u97F3\u4E50\u6587\u4EF6\u5939\uFF0C\u626B\u51FA\u6765\u7684\u6B4C\u76F4\u63A5\u64AD\uFF08\u540C\u540D .lrc \u4F1A\u5F53\u6B4C\u8BCD\uFF09" : tab === "queue" ? "\u6B63\u5728\u653E\u7684 + \u63A5\u4E0B\u6765\u8981\u653E\u7684\uFF0C\u70B9\u4E00\u4E0B\u5C31\u80FD\u8DF3\u8FC7\u53BB" : tab === "plugins" ? "\u5BFC\u5165 MyGo / MusicFree \u63D2\u4EF6\uFF0C\u6269\u5C55\u97F3\u6E90" : tab === "settings" ? "\u504F\u597D\u8BBE\u7F6E\uFF0C\u6539\u5B8C\u8BB0\u5F97\u70B9\u4FDD\u5B58" : tab === "lyric" ? "\u8DDF\u7740\u5531\uFF0C\u53EF\u5207\u5361\u62C9OK \u5927\u884C / \u6574\u6BB5\u6EDA\u52A8" : "\u8F93\u5165\u5173\u952E\u8BCD\u5F00\u59CB\u641C\u7D22")
+          children: meta || (tab === "home" ? "\u5F53\u524D\u63D2\u4EF6\u7684\u9996\u9875\uFF0C\u70B9\u5361\u7247\u76F4\u63A5\u64AD" : tab === "radio" ? "\u7F51\u7EDC\u76F4\u64AD\uFF0C\u70B9\u53F0\u5373\u542C" : tab === "podcast" ? "\u641C\u6709\u58F0\u4E66\u3001\u64AD\u5BA2\u8282\u76EE" : tab === "local" ? localInfo || "\u9009\u4E00\u4E2A\u97F3\u4E50\u6587\u4EF6\u5939\uFF0C\u626B\u51FA\u6765\u7684\u6B4C\u76F4\u63A5\u64AD\uFF08\u540C\u540D .lrc \u4F1A\u5F53\u6B4C\u8BCD\uFF09" : tab === "queue" ? "\u6B63\u5728\u653E\u7684 + \u63A5\u4E0B\u6765\u8981\u653E\u7684\uFF0C\u70B9\u4E00\u4E0B\u5C31\u80FD\u8DF3\u8FC7\u53BB" : tab === "plugins" ? "\u5BFC\u5165 MyGo / MusicFree \u63D2\u4EF6\uFF0C\u6269\u5C55\u97F3\u6E90" : tab === "settings" ? "\u504F\u597D\u8BBE\u7F6E\uFF0C\u6539\u5B8C\u8BB0\u5F97\u70B9\u4FDD\u5B58" : tab === "lyric" ? "\u8DDF\u7740\u5531\uFF0C\u53EF\u5207\u5361\u62C9OK \u5927\u884C / \u6574\u6BB5\u6EDA\u52A8" : "\u8F93\u5165\u5173\u952E\u8BCD\u5F00\u59CB\u641C\u7D22")
         })]
       }), err && /* @__PURE__ */ jsx("div", {
         className: "err",
@@ -15534,12 +15185,7 @@ function App() {
           children: [p2.name, " \u626B\u7801\u767B\u5F55"]
         }, p2.id))
       })]
-    }), tab === "reco" ? /* @__PURE__ */ jsx(RecommendPage, {
-      plugins,
-      pluginId: homePid,
-      onPlayItem: (pid, pname, items, i) => playPluginList(pid, pname, items, i),
-      onPlayAll: (pid, pname, items) => playPluginList(pid, pname, items, 0)
-    }) : tab === "home" ? /* @__PURE__ */ jsx(PluginHome, {
+    }), tab === "home" ? /* @__PURE__ */ jsx(PluginHome, {
       plugins,
       pluginId: homePid,
       onPlayItem: (pid, pname, items, i) => playPluginList(pid, pname, items, i),
@@ -16275,19 +15921,6 @@ function App() {
             }), /* @__PURE__ */ jsx("span", {
               className: "dn-lab",
               children: "\u9996\u9875"
-            })]
-          }), /* @__PURE__ */ jsxs("button", {
-            className: tab === "reco" ? "on" : "",
-            onClick: () => setTab("reco"),
-            children: [/* @__PURE__ */ jsx("span", {
-              className: "dn-ico",
-              children: /* @__PURE__ */ jsx(Fi, {
-                n: "compass",
-                size: 14
-              })
-            }), /* @__PURE__ */ jsx("span", {
-              className: "dn-lab",
-              children: "\u63A8\u8350"
             })]
           }), /* @__PURE__ */ jsxs("button", {
             className: tab === "radio" ? "on" : "",
@@ -17326,15 +16959,6 @@ function App() {
                 size: 12
               }), /* @__PURE__ */ jsx("span", {
                 children: "\u9996\u9875"
-              })]
-            }), /* @__PURE__ */ jsxs("button", {
-              className: tab === "reco" ? "on" : "",
-              onClick: () => setTab("reco"),
-              children: [/* @__PURE__ */ jsx(Fi, {
-                n: "compass",
-                size: 12
-              }), /* @__PURE__ */ jsx("span", {
-                children: "\u63A8\u8350"
               })]
             }), /* @__PURE__ */ jsxs("button", {
               className: tab === "local" ? "on" : "",
@@ -20474,16 +20098,6 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 .dlp-tools .dlp-ksize{padding:5px 6px;border:1px solid transparent;border-radius:7px;
   font-size:12px;color:var(--dim);min-width:44px;text-align:center;cursor:default;user-select:none}
 
-/* ---------- 推荐页的分类条 ---------- */
-.reco-chips{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 14px;align-items:center}
-.reco-group{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.reco-group-t{font-size:11.5px;color:var(--dim);margin-right:2px}
-.reco-chip{border:1px solid var(--line);background:var(--input);color:var(--txt);border-radius:999px;
-  padding:5px 12px;font-size:12px;line-height:1;cursor:pointer;white-space:nowrap}
-.reco-chip:hover{border-color:var(--acc2)}
-.reco-chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
-@media (max-width:620px){.reco-chip{font-size:11.5px;padding:4px 10px}}
-
 </style>
 </head>
 <body>
@@ -20516,17 +20130,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.65] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.64] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.65] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.64] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.65] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.64] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.65] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.64] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>
