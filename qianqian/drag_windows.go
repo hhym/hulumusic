@@ -127,6 +127,17 @@ func beginDrag(hwnd uintptr, cursor dragPoint, origin dragRect, why string) {
 			case <-t.C:
 			}
 			if !leftDown() {
+				// 松开前补最后一帧：轮询是 10ms 一次，手快的时候最后一段位移
+				// 还没落到窗口上就松手了，窗口会停在半路（实测能差 20px 左右）。
+				if moves > 0 {
+					var fin dragPoint
+					if cursorAt(&fin) {
+						procSetWindowPos.Call(hwnd, 0,
+							lp(int(origin.Left)+int(fin.X-cursor.X)),
+							lp(int(origin.Top)+int(fin.Y-cursor.Y)),
+							0, 0, swpNoSize|swpNoZOrder|swpNoActivate)
+					}
+				}
 				if moves == 0 {
 					dragLog("左键已抬起，一次都没移动过（说明拖动入口通了，只是没动）")
 				}

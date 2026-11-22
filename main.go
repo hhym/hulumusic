@@ -207,6 +207,12 @@ func runApp() {
 		}
 		bootLog("窗口已建，page url: %q", url)
 
+		// 自检：HULU_SELFTEST=1 时在后台把四窗/同步/搬窗逐条写进日志。
+		if qianqian.SelfTestEnabled() {
+			bootLog("自检模式开启")
+			qianqian.RunSelfTest(a, win)
+		}
+
 		win.OnClose(func(e *mygo.CloseEvent) { bootLog("窗口收到关闭请求") })
 		win.OnClosed(func() { bootLog("窗口已关闭") })
 
