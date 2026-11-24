@@ -91,6 +91,13 @@ func (a *App) RunProcess(bin string, args []string, timeoutSec int) (ProcessResu
 		return ProcessResult{}, "没有指定要运行的程序"
 	}
 	base := strings.ToLower(filepath.Base(bin))
+	// 内置 ffmpeg：插件（或用户在设置里）写的 ffmpeg / ffmpeg.exe 在本机找不到时，
+	// 用播放器自带的那份解压出来跑，用户不用再自己装系统 ffmpeg。
+	if base == "ffmpeg" || base == "ffmpeg.exe" {
+		if p, ok := resolveFFmpeg(bin); ok {
+			bin = p
+		}
+	}
 	if !processAllowList[base] {
 		return ProcessResult{}, "桌面版只允许插件运行 ffmpeg / node，其它程序一律拒绝：" + filepath.Base(bin)
 	}

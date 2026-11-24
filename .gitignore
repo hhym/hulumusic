@@ -1,5 +1,6 @@
 # 构建产物
 *.exe
+!qianqian/assets/ffmpeg-win64.exe
 *.zip
 build/bin/
 web/node_modules/
