@@ -247,8 +247,9 @@ nav button.on{background:var(--sel);color:var(--txt)}
 .row{display:flex;align-items:center;gap:10px;padding:4px 10px;border-radius:6px;position:relative;min-height:38px}
 .row:hover{background:var(--hover)}
 .row.on{background:var(--now-bar)}
-.idx{width:24px;height:24px;flex:0 0 24px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--dim);cursor:pointer;font-size:11px}
-.row:hover .idx{border-color:var(--acc);color:var(--acc)}
+.idx{width:26px;height:26px;flex:0 0 26px;border-radius:50%;border:0;background:var(--cover);color:var(--dim);cursor:pointer;font-size:11px;display:inline-flex;align-items:center;justify-content:center;transition:background .15s ease,color .15s ease,transform .12s ease,box-shadow .15s ease}
+.row:hover .idx{background:var(--hover);color:var(--acc);transform:scale(1.06)}
+.idx:active{transform:scale(.96)}
 .cover{width:32px;height:32px;flex:0 0 32px;border-radius:5px;background-color:var(--cover);background-position:center;background-size:cover;background-repeat:no-repeat}
 .info{flex:1;min-width:0;display:grid;grid-template-columns:1fr 168px 150px;gap:12px;align-items:center}
 .name{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1817,11 +1818,15 @@ html[data-theme='dark'] .plug-kind {
 
 .dnp-center{display:flex;flex-direction:column;gap:6px;min-width:0}
 .dnp-btns{display:flex;align-items:center;justify-content:center;gap:14px}
-.dnp-ico{border:0;background:transparent;color:var(--dim);font-size:16px;cursor:pointer;padding:2px 4px}
-.dnp-ico:hover,.dnp-ico.on{color:var(--acc2)}
-.dnp-play{width:40px;height:40px;border-radius:50%;border:0;background:var(--acc);color:#04262c;
-  font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.dnp-play:hover{filter:brightness(1.08)}
+.dnp-ico{width:30px;height:30px;flex:0 0 30px;border-radius:50%;border:0;background:transparent;color:var(--dim);font-size:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s ease,color .15s ease,transform .12s ease}
+.dnp-ico:hover{background:var(--hover);color:var(--acc2);transform:scale(1.06)}
+.dnp-ico.on{background:var(--hover);color:var(--acc2)}
+.dnp-ico:active{transform:scale(.96)}
+.dnp-play{width:42px;height:42px;flex:0 0 42px;border-radius:50%;border:0;background:var(--acc);color:var(--on-acc-text,#04262c);
+  font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 3px 12px rgba(0,0,0,.16);transition:transform .12s ease,filter .15s ease,box-shadow .15s ease}
+.dnp-play:hover{filter:brightness(1.07);transform:scale(1.04);box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.dnp-play:active{transform:scale(.97);filter:brightness(.98)}
 .dnp-vol{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:12px}
 .dnp-vol svg{flex:0 0 14px;opacity:.85}
 .dnp-vol input{width:78px}
@@ -2719,5 +2724,5 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 
 /* 正在播放那一行的圆形按钮：给个实心底色，图标用实心白色，
    小尺寸下也不会像之前那样被两条描边糊成一个方块（皮肤里也统一走这个观感） */
-.row.on .idx, .row.on .idx:hover{border-color:var(--acc);background:var(--acc);color:#fff}
+.row.on .idx, .row.on .idx:hover{border-color:var(--acc);background:var(--acc);color:#fff;transform:none;box-shadow:0 2px 10px rgba(0,0,0,.18)}
 .row.on .idx svg{opacity:1}

@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.89'
+const BUILD_TAG = '3.0.93'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -2182,7 +2182,7 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
                 <div className="dnp-btns">
                   <button className={'dnp-ico' + (repeatOne ? ' on' : '')} onClick={() => setRepeatOne(!repeatOne)} title="单曲循环"><Fi n="repeat" size={15} /></button>
                   <button className="dnp-ico" onClick={() => step(-1)} title="上一首"><Fi n="skip-back" size={15} /></button>
-                  <button className="dnp-play" onClick={toggle} title={playing ? '暂停' : '播放'}><Fi n={FN(playing ? 'pause' : 'play')} size={18} /></button>
+                  <button className="dnp-play" onClick={toggle} title={playing ? '暂停' : '播放'}><Fi n={playing ? 'pause-solid' : 'play-solid'} size={16} fill sw={0} /></button>
                   <button className="dnp-ico" onClick={() => step(1)} title="下一首"><Fi n="skip-forward" size={15} /></button>
                   <div className="dnp-vol">
                     <Fi n={FN(volume > 0 ? 'volume-high' : 'volume-mute')} size={15} />

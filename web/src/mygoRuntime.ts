@@ -812,7 +812,21 @@ function makeFetch(): any {
       else body = JSON.stringify(init.body)
     }
     const manualRedirect = String(init.redirect || '').toLowerCase() === 'manual'
-    const r = await app.HttpRequest(url, method, headers, body, manualRedirect)
+    // 插件常给 fetch 传 signal 做超时（85听书这类站点会卡在半开连接上）。
+    // 后端请求是同步拿结果的，没法真的中断，但可以让 JS 这边立刻放弃等待，
+    // 插件就能按自己的超时重试，而不是被单次 30 秒的请求拖住。
+    const signal: any = (init as any).signal
+    const req = app.HttpRequest(url, method, headers, body, manualRedirect)
+    const r = signal
+      ? await Promise.race([
+          Promise.resolve(req),
+          new Promise((_, reject) => {
+            const stop = () => reject(new Error('请求已取消'))
+            if (signal.aborted) stop()
+            else if (typeof signal.addEventListener === 'function') signal.addEventListener('abort', stop, {once: true})
+          }),
+        ])
+      : await req
     if (r?.err) throw new Error(r.err)
     const text = r?.body ?? ''
     const status = r?.status ?? 0
@@ -1197,7 +1211,54 @@ export async function mygoBrowseView(id: string, page: string): Promise<HomeView
   return normBrowse(await mod.browse({page}))
 }
 
+/* 首页那批「听歌模式 / 场景 / 电台」卡片带的不是真歌单 id，而是
+   preference:fresh、scene:4、radio:<id>、radio-theme:v1:<id> 这类虚拟 id。
+   汽水插件把它们交给 stationNext() 分流（内部走 feed / radio 接口），
+   一律丢给 playlist() 只会拿到 ERR_INVALID_PARAM。 */
+const STATION_ID_RE = /^(preference:|scene:|radio:|radio-theme:|recommendations)/
+
+function isStationId(pid: string) {
+  return STATION_ID_RE.test(pid)
+}
+
+/* 模式/电台卡片：先拿 stations() 里的名字，再连续取两页 stationNext，
+   这类内容是无限流，两页够一屏，点开也不至于等太久。 */
+export async function mygoStationTracks(id: string, sid: string): Promise<{name: string; tracks: MyGoItem[]}> {
+  const mod = await loadMyGoPlugin(id)
+  if (typeof mod.stationNext !== 'function') throw new Error('这个插件没有开放电台/模式接口')
+  let name = '听歌模式'
+  try {
+    const ss: any = await mod.stations?.()
+    const hit = Array.isArray(ss) ? ss.find((s: any) => String(s?.id ?? '') === sid) : null
+    if (hit?.name) name = String(hit.name)
+  } catch {
+    /* 拿不到名字就用默认的 */
+  }
+  const seen = new Set<string>()
+  const tracks: MyGoItem[] = []
+  for (let round = 0; round < 2; round++) {
+    let arr: any[] = []
+    try {
+      const r: any = await mod.stationNext({id: sid})
+      arr = Array.isArray(r) ? r : Array.isArray(r?.tracks) ? r.tracks : []
+    } catch (e: any) {
+      if (round === 0) throw e
+      break
+    }
+    if (!arr.length) break
+    for (const t of arr) {
+      const it = mapTrack(t)
+      if (!it.id || seen.has(it.id)) continue
+      seen.add(it.id)
+      tracks.push(it)
+    }
+    if (arr.length < 5) break
+  }
+  return {name, tracks}
+}
+
 export async function mygoPlaylistTracks(id: string, pid: string): Promise<{name: string; tracks: MyGoItem[]}> {
+  if (isStationId(pid)) return mygoStationTracks(id, pid)
   const mod = await loadMyGoPlugin(id)
   if (typeof mod.playlist !== 'function') throw new Error('这个插件不支持打开歌单')
   const r = await mod.playlist({id: pid})
@@ -1214,6 +1275,11 @@ export async function mygoShowTracks(
   offset = 0
 ): Promise<{name: string; tracks: MyGoItem[]; more: boolean}> {
   const mod = await loadMyGoPlugin(id)
+  // 模式/电台卡片 id 自带类型前缀，别再去猜 album/playlist，那一定 1000004
+  if (isStationId(sid) && typeof mod.stationNext === 'function') {
+    const r = await mygoStationTracks(id, sid)
+    return {...r, more: false}
+  }
   const tries: string[] = []
   if (kind === 'show') tries.push('show', 'album', 'playlist', 'station')
   else if (kind === 'station') tries.push('station', 'album', 'playlist')

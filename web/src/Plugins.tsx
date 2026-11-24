@@ -603,7 +603,7 @@ export default function PluginsPage({ onPlay, onChanged }: { onPlay: (t: Track) 
           <div className="list">
             {hits.map((it, i) => (
               <div className="row" key={i}>
-                <button className="idx" onClick={() => playHit(it)}>▶</button>
+                <button className="idx" onClick={() => playHit(it)} title="播放"><Fi n="play-solid" size={14} fill sw={0} /></button>
                 <div
                   className="cover"
                   style={it.artwork ? { backgroundImage: 'url(' + it.artwork + ')' } : undefined}
