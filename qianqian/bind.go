@@ -245,6 +245,18 @@ func (x API) SavePluginStorage(id any, data any) string {
 	return x.App.SavePluginStorage(asStr(id), asStr(data))
 }
 
+// PluginWorkDir 给插件一个真实存在的可写目录（转码缓存、临时文件都写这里）。
+func (x API) PluginWorkDir(id any) (string, error) {
+	v, e := x.App.PluginWorkDir(asStr(id))
+	return v, errOf(e)
+}
+
+// BuiltinFFmpegPath 播放器自带的 ffmpeg 路径（非 Windows 或解压失败返回空串）。
+func (x API) BuiltinFFmpegPath() (string, error) {
+	v, e := x.App.BuiltinFFmpegPath()
+	return v, errOf(e)
+}
+
 func (x API) PickPluginZip() PickResult {
 	return x.App.PickPluginZip()
 }

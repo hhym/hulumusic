@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.94'
+const BUILD_TAG = '3.0.95'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -856,8 +856,8 @@ export default function App() {
     // 看门狗：取流卡住时把 busy 放掉，否则后面点什么都像死了一样
     const watchdog = window.setTimeout(() => {
       setBusy(false)
-      setErr('取流超过 25 秒没回，已复位。再点一次；要是这个源一直这样，换首歌或换个音源试试')
-    }, 25000)
+      setErr('取流超过 60 秒没回，已复位。再点一次；要是这个源一直这样，换首歌或换个音源试试')
+    }, 60000)
     // 记录播放队列，供上一首 / 下一首使用
     if (!inQueue) {
       const srcList = tab === 'library' ? lib : tab === 'local' ? localTracks : list
@@ -869,7 +869,11 @@ export default function App() {
       if (t.source === 'plugin') {
         const ref = decodePluginTrackId(t.id)
         if (!ref) throw new Error('插件曲目信息损坏，重新搜一次')
-        const src = await withTimeout(pluginMediaSource(ref.pluginId, ref.item), 15000, '插件取流')
+        // 有的源（85 听书这类 HE-AAC）要先用内置 ffmpeg 把整段转成 AAC-LC，
+        // 一集几十分钟的音频要转几十秒，所以这里给足时间并提前告诉用户在干什么。
+        setErr('正在准备音频：这类源要用内置 ffmpeg 转码，长音频可能要几十秒')
+        const src = await withTimeout(pluginMediaSource(ref.pluginId, ref.item), 45000, '插件取流')
+        setErr('')
         const proxied: any = await withTimeout(call<any>('PluginPlayURL', src.url, src.referer || ''), 8000, '打开本地代理')
         url = typeof proxied === 'string' && /^(http|blob|data):/.test(proxied) ? proxied : ''
         if (!url) throw new Error(typeof proxied === 'string' && proxied.trim() ? proxied : '插件取流失败')

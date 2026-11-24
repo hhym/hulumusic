@@ -271,6 +271,29 @@ func pluginDataPath(id string) string {
 	return filepath.Join(pluginDataDir(), sanitizeID(id)+".json")
 }
 
+// PluginWorkDir 返回插件自己的可写目录 <dataDir>/plugin-data/<id>，并保证它已存在。
+// 插件（比如 85 听书）会把转码/缓存文件直接写到这个目录，目录不在 ffmpeg 会报
+// "Error opening output …: No such file or directory"，所以由宿主负责建好。
+func (a *App) PluginWorkDir(id string) (string, string) {
+	if !safePluginID(id) {
+		return "", "插件 id 不合法"
+	}
+	dir := filepath.Join(pluginDataDir(), sanitizeID(id))
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", err.Error()
+	}
+	return dir, ""
+}
+
+// BuiltinFFmpegPath 播放器自带 ffmpeg 的落盘路径（非 Windows 或解压失败返回空串）。
+func (a *App) BuiltinFFmpegPath() (string, string) {
+	p := ensureBuiltinFFmpeg()
+	if p == "" {
+		return "", "内置 ffmpeg 只支持 Windows"
+	}
+	return p, ""
+}
+
 // PluginStorage 读回插件自己的持久化数据（host.storage 的底层）。
 func (a *App) PluginStorage(id string) (string, string) {
 	b, err := os.ReadFile(pluginDataPath(id))

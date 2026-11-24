@@ -118,6 +118,9 @@ func (a *App) RunProcess(bin string, args []string, timeoutSec int) (ProcessResu
 
 	cmd := exec.Command(bin, args...)
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	// 播放器自己是 windowsgui 程序，子进程（ffmpeg）默认会弹出一个黑色控制台窗口，
+	// 转码几十秒就挂一个黑窗在用户屏幕上，必须藏掉。
+	hideConsole(cmd)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

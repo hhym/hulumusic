@@ -449,6 +449,10 @@ function storageOf(id: string): Map<string, any> {
 let appDataDir = ''
 // 插件自己的安装目录（host.dir）：插件用它拼自带程序，如 bin/win32-amd64/ffmpeg.exe
 const pluginRealDir = new Map<string, string>()
+// 插件自己的可写目录（host.dataDir）：宿主侧已 mkdir 过，插件直接往里写转码产物
+const pluginWorkDir = new Map<string, string>()
+// 播放器自带 ffmpeg 的落盘路径（Windows 才有），插件用它转码就不用装系统 ffmpeg
+let builtinFFmpeg = ''
 // 插件声明的设置项取值（<dataDir>/plugin-settings.json 里按 id 分组存）
 const pluginSettings: Record<string, Record<string, string>> = {}
 
@@ -698,11 +702,15 @@ function makeSpawn(pluginDir?: string) {
 function makeHost(id: string, dataDir: string): AnyObj {
   const st = storageOf(id)
   const sep = dataDir.includes('\\') ? '\\' : '/'
-  const pluginDataDir = dataDir ? dataDir + sep + 'plugin-data' + sep + id : id
+  // 宿主已经建好这个目录（PluginWorkDir），拿不到才退回自己拼
+  const pluginDataDir =
+    pluginWorkDir.get(id) || (dataDir ? dataDir + sep + 'plugin-data' + sep + id : id)
   return {
     // 插件会自己拼临时文件路径（转码、缓存），所以要给一个真实可写目录
     dataDir: pluginDataDir,
     dir: pluginRealDir.get(id) || pluginDataDir,
+    // 播放器自带的 ffmpeg（Windows 首次访问时解压到数据目录），插件直接拿去转码
+    ffmpegPath: builtinFFmpeg,
     platform: 'windows',
     arch: 'amd64',
     language: () => 'zh-CN',
@@ -993,6 +1001,26 @@ export async function loadMyGoPlugin(id: string): Promise<AnyObj> {
   }
   await initStorage(id)
   await initSettings(id)
+  if (!pluginWorkDir.has(id)) {
+    try {
+      const app: any = bridge()
+      if (app?.PluginWorkDir) {
+        const r = await app.PluginWorkDir(id)
+        const v = Array.isArray(r) ? r[0] : r
+        if (typeof v === 'string' && v) pluginWorkDir.set(id, v)
+      }
+    } catch { /* 拿不到就退回下面的拼接路径 */ }
+  }
+  if (!builtinFFmpeg) {
+    try {
+      const app: any = bridge()
+      if (app?.BuiltinFFmpegPath) {
+        const r = await app.BuiltinFFmpegPath()
+        const v = Array.isArray(r) ? r[0] : r
+        if (typeof v === 'string') builtinFFmpeg = v
+      }
+    } catch { /* 非 Windows 就是没有，忽略 */ }
+  }
   codeCache.clear()
   await prepare(id, '')
   const built = new Map<string, AnyObj>()
