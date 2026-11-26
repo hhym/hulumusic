@@ -5,7 +5,7 @@ import SettingsPage from './Settings'
 import PluginsPage from './Plugins'
 import NowPlaying from './NowPlaying'
 import MiniPlayer from './MiniPlayer'
-import {NEXT_THEME, THEME_ICON, THEME_LABEL, type Theme} from './theme'
+import {NEXT_THEME, THEME_ICON, THEME_LABEL, isTheme, type Theme} from './theme'
 import {Fi, FN} from './feather'
 import SignInModal, {type SignInRequest} from './SignInModal'
 import {
@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.95'
+const BUILD_TAG = '3.0.96'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -192,7 +192,7 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       const saved = localStorage.getItem('hulu-theme')
-      if (saved === 'dark' || saved === 'light' || saved === 'amber' || saved === 'teal' || saved === 'green' || saved === 'neon') return saved
+      if (isTheme(saved)) return saved
     } catch { /* 忽略 */ }
     return 'light'
   })
@@ -508,7 +508,14 @@ export default function App() {
   // 各切各的就会出现「桌面橘黄 + 皮肤深紫」这种不搭的组合，所以做成联动：
   // 切皮肤把主题拉到最搭的那档，切主题把皮肤换成对应款式，三个界面始终是一套。
   const SKIN_THEME: Record<Skin, Theme> = {winamp: 'dark', tt: 'amber', light: 'light', glass: 'light', hifi: 'dark', steel: 'light', green: 'green', neon: 'neon'}
-  const THEME_SKIN: Record<Theme, Skin> = {dark: 'winamp', amber: 'tt', light: 'light', teal: 'hifi', green: 'green', neon: 'neon'}
+  // 11 套配色主题各自拉到最接近的皮肤款式（皮肤界面不吃主题变量，只有一套固定外形，只能就近配）
+  const THEME_SKIN: Record<Theme, Skin> = {
+    dark: 'winamp', amber: 'tt', light: 'light', teal: 'hifi', green: 'green', neon: 'neon',
+    'retro-brown': 'tt', 'retro-brass': 'hifi', 'retro-wine': 'light',
+    'cyber-violet': 'neon', 'cyber-dusk': 'winamp', 'cyber-rose': 'neon',
+    'mist-blue': 'light', 'sage-green': 'green', 'oat-beige': 'steel',
+    'klein-blue': 'light', 'tomato-indigo': 'tt',
+  }
   const applySkin = (s: Skin) => {
     setSkinTheme(s)
     try { localStorage.setItem('qqjt-skin', s) } catch { /* 忽略 */ }
@@ -651,7 +658,7 @@ export default function App() {
         // 如果这里无条件把 st.theme 应用回去，用户换过主题后每次启动就会被旧值覆盖，所以只在没存过时兜底。
         let savedTheme = ''
         try { savedTheme = localStorage.getItem('hulu-theme') || '' } catch { /* 忽略 */ }
-        if (!savedTheme && (st.theme === 'dark' || st.theme === 'light' || st.theme === 'amber' || st.theme === 'teal' || st.theme === 'green' || st.theme === 'neon')) setTheme(st.theme as Theme)
+        if (!savedTheme && isTheme(st.theme)) setTheme(st.theme as Theme)
       })
       .catch(() => {})
   }, [])

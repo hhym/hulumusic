@@ -178,6 +178,22 @@ export default function SettingsPage({ theme, onTheme, accounts, onSignOut, onRe
           </div>
         </div>
         <div className="set-row">
+          <label>配色</label>
+          <div className="seg-grid">
+            <button className={theme === 'retro-brown' ? 'on' : ''} onClick={() => onTheme('retro-brown')}>❖暖褐复古</button>
+            <button className={theme === 'retro-brass' ? 'on' : ''} onClick={() => onTheme('retro-brass')}>❀墨绿黄铜</button>
+            <button className={theme === 'retro-wine' ? 'on' : ''} onClick={() => onTheme('retro-wine')}>✧酒红米白</button>
+            <button className={theme === 'mist-blue' ? 'on' : ''} onClick={() => onTheme('mist-blue')}>◇雾蓝岩灰</button>
+            <button className={theme === 'sage-green' ? 'on' : ''} onClick={() => onTheme('sage-green')}>❁鼠尾草绿</button>
+            <button className={theme === 'oat-beige' ? 'on' : ''} onClick={() => onTheme('oat-beige')}>○燕麦米杏</button>
+            <button className={theme === 'klein-blue' ? 'on' : ''} onClick={() => onTheme('klein-blue')}>●克莱因蓝</button>
+            <button className={theme === 'tomato-indigo' ? 'on' : ''} onClick={() => onTheme('tomato-indigo')}>✸番茄靛蓝</button>
+            <button className={theme === 'cyber-violet' ? 'on' : ''} onClick={() => onTheme('cyber-violet')}>◈深紫霓虹</button>
+            <button className={theme === 'cyber-dusk' ? 'on' : ''} onClick={() => onTheme('cyber-dusk')}>◎午夜青橙</button>
+            <button className={theme === 'cyber-rose' ? 'on' : ''} onClick={() => onTheme('cyber-rose')}>✷电光玫红</button>
+          </div>
+        </div>
+        <div className="set-row">
           <label>启动页</label>
           <select
             value={['search', 'radio', 'podcast', 'library', 'local'].includes(s.defaultTab) ? s.defaultTab : 'search'}
