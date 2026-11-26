@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.96'
+const BUILD_TAG = '3.0.97'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -307,6 +307,11 @@ export default function App() {
   const [playing, setPlaying] = useState(false)
   const [pos, setPos] = useState(0)
   const [dur, setDur] = useState(0)
+  // 桌面播放条的渐变填充靠 CSS 变量 --pct 控制宽度（时间轴与音量条各用各的）
+  useEffect(() => {
+    const pct = dur > 0 ? Math.max(0, Math.min(100, (pos / dur) * 100)) : 0
+    try { document.documentElement.style.setProperty('--pct', pct.toFixed(2) + '%') } catch { /* 忽略 */ }
+  }, [pos, dur])
   const [lyric, setLyric] = useState<LyricLine[]>([])
   const [busy, setBusy] = useState(false)
   const audio = useRef<HTMLAudioElement | null>(null)

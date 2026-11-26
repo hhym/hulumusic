@@ -150,7 +150,7 @@ export default function NowPlaying(p: Props) {
                 type="range" min={0} max={p.dur || 1} value={Math.min(p.pos, p.dur || 1)}
                 onChange={(e) => p.onSeek(Number(e.target.value))}
                 className="np-range"
-                style={{background: `linear-gradient(to right, var(--np-acc) ${pct}%, var(--np-track) ${pct}%)`}}
+                style={{background: `linear-gradient(90deg,var(--np-fa),var(--np-fb)) 0 0/${pct}% 100% no-repeat,var(--np-track)`}}
               />
               <span className="np-time">{fmt(p.dur)}</span>
             </div>
@@ -205,7 +205,7 @@ export default function NowPlaying(p: Props) {
             type="range" min={0} max={100} value={Math.round(p.volume * 100)}
             onChange={(e) => p.onVolume(Number(e.target.value) / 100)}
             className="np-range small"
-            style={{background: `linear-gradient(to right, var(--np-acc) ${p.volume * 100}%, var(--np-track) ${p.volume * 100}%)`}}
+            style={{background: `linear-gradient(90deg,var(--np-fa),var(--np-fb)) 0 0/${p.volume * 100}% 100% no-repeat,var(--np-track)`}}
           />
         </div>
       </div>
