@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import {type Theme} from './theme'
+import logoClassic from './assets/images/logo-hulu.png'
+import iconNeonImg from './assets/images/icon-neon.png'
+import iconSunsetImg from './assets/images/icon-sunset.png'
 
 type Settings = {
   theme: string
@@ -19,6 +22,12 @@ type Settings = {
 type AccountItem = {id: string; name: string; who: string}
 
 type IconKind = 'classic' | 'neon' | 'sunset'
+
+const ICON_SRC: Record<IconKind, string> = {
+  classic: logoClassic,
+  neon: iconNeonImg,
+  sunset: iconSunsetImg,
+}
 
 type Props = {
   theme: Theme
@@ -184,10 +193,14 @@ export default function SettingsPage({ theme, onTheme, icon, onIcon, accounts, o
         </div>
         <div className="set-row">
           <label>图标</label>
-          <div className="seg">
-            <button className={icon === 'classic' ? 'on' : ''} onClick={() => onIcon('classic')}>◎ 经典</button>
-            <button className={icon === 'neon' ? 'on' : ''} onClick={() => onIcon('neon')}>◈ 霓虹</button>
-            <button className={icon === 'sunset' ? 'on' : ''} onClick={() => onIcon('sunset')}>◐ 暖橙</button>
+          <div className="icon-row">
+            <div className="seg">
+              <button className={icon === 'classic' ? 'on' : ''} onClick={() => onIcon('classic')}>◎ 经典</button>
+              <button className={icon === 'neon' ? 'on' : ''} onClick={() => onIcon('neon')}>◈ 霓虹</button>
+              <button className={icon === 'sunset' ? 'on' : ''} onClick={() => onIcon('sunset')}>◐ 暖橙</button>
+            </div>
+            <img className="icon-prev" src={ICON_SRC[icon]} alt="当前图标" />
+            <span className="dim icon-tip">窗口和任务栏图标会一起换</span>
           </div>
         </div>
         <div className="set-row">

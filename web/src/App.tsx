@@ -164,7 +164,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.98'
+const BUILD_TAG = '3.0.99'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -202,13 +202,7 @@ export default function App() {
   })
   // 应用图标：classic（exe 自带）/ neon（霓虹）/ sunset（暖橙）。界面 logo 直接换图，
   // 窗口 + 任务栏图标交给后端 SetAppIcon（Win32 WM_SETICON）。
-  const [appIcon, setAppIcon] = useState<IconKind>(() => {
-    try {
-      const v = localStorage.getItem('hulu-icon')
-      if (v === 'neon' || v === 'sunset') return v
-    } catch { /* 忽略 */ }
-    return 'classic'
-  })
+  const [appIcon, setAppIcon] = useState<IconKind>('classic')
   const [tab, setTab] = useState<Tab>('home')
   const [q, setQ] = useState('千千阙歌')
   // 桌面版左侧歌单：按专辑把收藏分组，点一下只看这张
@@ -544,7 +538,7 @@ export default function App() {
   }
   const pickIcon = (k: IconKind) => {
     setAppIcon(k)
-    try { localStorage.setItem('hulu-icon', k) } catch { /* 忽略 */ }
+    // Go 侧 SetAppIcon 会自己把选择写进 settings.json 并换窗口 / 任务栏图标
     call('SetAppIcon', k).catch(() => { /* 非 Windows 或后端未就绪时只换界面 logo */ })
   }
   const switchSkin = () => {
@@ -683,15 +677,8 @@ export default function App() {
         let savedTheme = ''
         try { savedTheme = localStorage.getItem('hulu-theme') || '' } catch { /* 忽略 */ }
         if (!savedTheme && isTheme(st.theme)) setTheme(st.theme as Theme)
-        // 重启后窗口/任务栏图标要按上次选的恢复（localStorage 优先，没有就用 settings.json 里存的）
-        let savedIcon = ''
-        try { savedIcon = localStorage.getItem('hulu-icon') || '' } catch { /* 忽略 */ }
-        if (!savedIcon && (st.icon === 'neon' || st.icon === 'sunset')) {
-          setAppIcon(st.icon as IconKind)
-          call('SetAppIcon', st.icon).catch(() => {})
-        } else {
-          call('SetAppIcon', appIcon).catch(() => {})
-        }
+        // 界面 logo 用哪张跟着 settings.json 走（窗口图标 Go 启动时已经换好）
+        if (st.icon === 'neon' || st.icon === 'sunset') setAppIcon(st.icon as IconKind)
       })
       .catch(() => {})
   }, [])

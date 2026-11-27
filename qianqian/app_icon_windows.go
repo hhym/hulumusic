@@ -27,10 +27,11 @@ var (
 )
 
 // applyWindowIcon 把主窗口的标题栏 / 任务栏图标换成 icoPath；空串表示恢复 exe 自带图标。
-func applyWindowIcon(icoPath string) {
+// 返回 false 表示窗口还没出现（启动阶段要轮询重试）。
+func applyWindowIcon(icoPath string) bool {
 	hwnd := findOwnMainWindow()
 	if hwnd == 0 {
-		return
+		return false
 	}
 	var bigIcon, smallIcon uintptr
 	if icoPath != "" {
@@ -43,6 +44,7 @@ func applyWindowIcon(icoPath string) {
 	}
 	procSendMessageW.Call(hwnd, wmSetIcon, iconBigRes, bigIcon)
 	procSendMessageW.Call(hwnd, wmSetIcon, iconSmallRes, smallIcon)
+	return true
 }
 
 // findOwnMainWindow 返回本进程第一个可见窗口（Wails 的主窗口）。

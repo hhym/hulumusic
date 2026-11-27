@@ -7638,6 +7638,11 @@ reactJsxRuntime_production_min.jsxs = q;
 const Fragment = jsxRuntime.exports.Fragment;
 const jsx = jsxRuntime.exports.jsx;
 const jsxs = jsxRuntime.exports.jsxs;
+const ICON_SRC = {
+  classic: logoHulu,
+  neon: iconNeon,
+  sunset: iconSunset
+};
 const bridge$2 = () => {
   var _a, _b;
   return (_b = (_a = window.go) == null ? void 0 : _a.main) == null ? void 0 : _b.App;
@@ -7848,19 +7853,29 @@ function SettingsPage({
         children: [/* @__PURE__ */ jsx("label", {
           children: "\u56FE\u6807"
         }), /* @__PURE__ */ jsxs("div", {
-          className: "seg",
-          children: [/* @__PURE__ */ jsx("button", {
-            className: icon === "classic" ? "on" : "",
-            onClick: () => onIcon("classic"),
-            children: "\u25CE \u7ECF\u5178"
-          }), /* @__PURE__ */ jsx("button", {
-            className: icon === "neon" ? "on" : "",
-            onClick: () => onIcon("neon"),
-            children: "\u25C8 \u9713\u8679"
-          }), /* @__PURE__ */ jsx("button", {
-            className: icon === "sunset" ? "on" : "",
-            onClick: () => onIcon("sunset"),
-            children: "\u25D0 \u6696\u6A59"
+          className: "icon-row",
+          children: [/* @__PURE__ */ jsxs("div", {
+            className: "seg",
+            children: [/* @__PURE__ */ jsx("button", {
+              className: icon === "classic" ? "on" : "",
+              onClick: () => onIcon("classic"),
+              children: "\u25CE \u7ECF\u5178"
+            }), /* @__PURE__ */ jsx("button", {
+              className: icon === "neon" ? "on" : "",
+              onClick: () => onIcon("neon"),
+              children: "\u25C8 \u9713\u8679"
+            }), /* @__PURE__ */ jsx("button", {
+              className: icon === "sunset" ? "on" : "",
+              onClick: () => onIcon("sunset"),
+              children: "\u25D0 \u6696\u6A59"
+            })]
+          }), /* @__PURE__ */ jsx("img", {
+            className: "icon-prev",
+            src: ICON_SRC[icon],
+            alt: "\u5F53\u524D\u56FE\u6807"
+          }), /* @__PURE__ */ jsx("span", {
+            className: "dim icon-tip",
+            children: "\u7A97\u53E3\u548C\u4EFB\u52A1\u680F\u56FE\u6807\u4F1A\u4E00\u8D77\u6362"
           })]
         })]
       }), /* @__PURE__ */ jsxs("div", {
@@ -14193,7 +14208,7 @@ const fmt = (ms) => {
   const s = Math.round(ms / 1e3);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-const BUILD_TAG = "3.0.98";
+const BUILD_TAG = "3.0.99";
 const srcName = (s) => s === "qq" ? "QQ" : s === "ne" ? "\u7F51\u6613\u4E91" : s === "radio" ? "\u7535\u53F0" : s === "pod" ? "\u542C\u4E66" : s === "plugin" ? "\u63D2\u4EF6" : s === "local" ? "\u672C\u5730" : s;
 const POD_KEYWORDS = ["\u6709\u58F0\u4E66", "\u90ED\u5FB7\u7EB2", "\u4E09\u56FD\u6F14\u4E49", "\u7761\u524D\u6545\u4E8B", "\u76F8\u58F0", "\u82F1\u8BED\u64AD\u5BA2", "\u513F\u7AE5\u6545\u4E8B", "\u5386\u53F2"];
 const POD_PLATFORMS = [{
@@ -14224,15 +14239,7 @@ function App() {
     }
     return "light";
   });
-  const [appIcon, setAppIcon] = react.exports.useState(() => {
-    try {
-      const v2 = localStorage.getItem("hulu-icon");
-      if (v2 === "neon" || v2 === "sunset")
-        return v2;
-    } catch {
-    }
-    return "classic";
-  });
+  const [appIcon, setAppIcon] = react.exports.useState("classic");
   const [tab, setTab] = react.exports.useState("home");
   const [q2, setQ] = react.exports.useState("\u5343\u5343\u9619\u6B4C");
   const [libAlbum, setLibAlbum] = react.exports.useState("");
@@ -14616,10 +14623,6 @@ function App() {
   };
   const pickIcon = (k2) => {
     setAppIcon(k2);
-    try {
-      localStorage.setItem("hulu-icon", k2);
-    } catch {
-    }
     call("SetAppIcon", k2).catch(() => {
     });
   };
@@ -14753,19 +14756,8 @@ function App() {
       }
       if (!savedTheme && isTheme(st.theme))
         setTheme(st.theme);
-      let savedIcon = "";
-      try {
-        savedIcon = localStorage.getItem("hulu-icon") || "";
-      } catch {
-      }
-      if (!savedIcon && (st.icon === "neon" || st.icon === "sunset")) {
+      if (st.icon === "neon" || st.icon === "sunset")
         setAppIcon(st.icon);
-        call("SetAppIcon", st.icon).catch(() => {
-        });
-      } else {
-        call("SetAppIcon", appIcon).catch(() => {
-        });
-      }
     }).catch(() => {
     });
   }, []);
@@ -21046,6 +21038,12 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 :root[data-theme="tomato-indigo"] .np{--np-acc:#E63946;--np-track:rgba(230,57,70,0.18);--np-fa:#E63946;--np-fb:#457B9D;--np-glow:rgba(69,123,157,0.26);--np-txt:#1D3557;--np-dim:rgba(29,53,87,0.55);--np-bg:#FFF8F0}
 
 
+/* 3.0.99 设置里的图标预览 */
+.icon-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.icon-row .seg{flex:0 1 auto}
+.icon-prev{width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--panel)}
+.icon-tip{font-size:12px}
+
 </style>
 </head>
 <body>
@@ -21078,17 +21076,17 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
       var goMain = window.go && window.go.main && window.go.main.App;
       var n = root ? root.innerHTML.length : -1;
       var methods = goMain ? Object.keys(goMain).length : 0;
-      if (!root) { put('[boot][构建 3.0.98] 找不到 #root', true); return; }
+      if (!root) { put('[boot][构建 3.0.99] 找不到 #root', true); return; }
       if (!window.go) {
-        put('[boot][构建 3.0.98] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
+        put('[boot][构建 3.0.99] window.go 缺失（Wails 绑定未注入）· root=' + n + ' · theme=' + (document.documentElement.dataset.theme || 'none'), true);
         return;
       }
       if (n < 50) {
-        put('[boot][构建 3.0.98] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
+        put('[boot][构建 3.0.99] React 未渲染 · root=' + n + ' · go方法=' + methods, true);
         return;
       }
       // 一切正常就什么都不显示，只留一条控制台日志
-      try { console.log('[boot][构建 3.0.98] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
+      try { console.log('[boot][构建 3.0.99] 启动正常 · go方法=' + methods + ' · root=' + n) } catch (e) {}
     }, 1500);
   })();
 </script>

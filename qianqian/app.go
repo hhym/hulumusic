@@ -94,6 +94,8 @@ func (a *App) startup(ctx context.Context) {
 	a.loadLibrary()
 	// 本地乐库：把上次授权过的音乐目录装进代理白名单
 	setLocalRoots(a.loadSettings().LocalDirs)
+	// 应用图标：按上次选的那套恢复窗口 / 任务栏图标（前端不用再管）
+	a.applySavedIcon()
 }
 
 // 独立版用自己的数据目录，和加装版（~/.hulu-music-desktop）分开，

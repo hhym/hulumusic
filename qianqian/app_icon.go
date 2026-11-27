@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	_ "embed"
 )
@@ -57,27 +58,57 @@ func writeIconFile(name string, data []byte) string {
 }
 
 // SetAppIcon 切换窗口图标：classic（恢复 exe 自带）/ neon（霓虹）/ sunset（暖橙）。
+// 顺手把选择写回 settings.json（端口每次启动都会变，前端 localStorage 靠不住）。
 // 返回实际用的 ico 路径，classic 或失败时为空。
 func (a *App) SetAppIcon(name string) (string, string) {
+	if name == "" {
+		name = "classic"
+	}
+	var p string
 	switch name {
-	case "", "classic":
-		applyWindowIcon("")
-		return "", ""
+	case "classic":
+		// 恢复 exe 自带图标
 	case "neon":
-		p := writeIconFile("icon-neon.ico", iconNeon)
-		if p == "" {
-			return "", "图标解压失败"
-		}
-		applyWindowIcon(p)
-		return p, ""
+		p = writeIconFile("icon-neon.ico", iconNeon)
 	case "sunset":
-		p := writeIconFile("icon-sunset.ico", iconSunset)
-		if p == "" {
-			return "", "图标解压失败"
-		}
-		applyWindowIcon(p)
-		return p, ""
+		p = writeIconFile("icon-sunset.ico", iconSunset)
 	default:
 		return "", "未知图标：" + name
 	}
+	if name != "classic" && p == "" {
+		return "", "图标解压失败"
+	}
+	a.mu.Lock()
+	s := a.loadSettings()
+	s.Icon = name
+	_ = a.saveSettings(s)
+	a.mu.Unlock()
+	applyWindowIcon(p)
+	return p, ""
+}
+
+// applySavedIcon 启动时按 settings.json 里的选择恢复窗口图标。
+// 窗口句柄通常比 startup 晚几百毫秒才出现，所以轮询十来秒。
+func (a *App) applySavedIcon() {
+	name := a.loadSettings().Icon
+	if name != "neon" && name != "sunset" {
+		return
+	}
+	go func() {
+		var p string
+		if name == "neon" {
+			p = writeIconFile("icon-neon.ico", iconNeon)
+		} else {
+			p = writeIconFile("icon-sunset.ico", iconSunset)
+		}
+		if p == "" {
+			return
+		}
+		for i := 0; i < 40; i++ {
+			if applyWindowIcon(p) {
+				return
+			}
+			time.Sleep(250 * time.Millisecond)
+		}
+	}()
 }
