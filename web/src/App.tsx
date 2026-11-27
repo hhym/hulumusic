@@ -162,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.1.1'
+const BUILD_TAG = '3.1.2'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -531,6 +531,11 @@ export default function App() {
   const pickTheme = (t: Theme) => {
     setTheme(t)
     applySkin(THEME_SKIN[t])
+    try { localStorage.setItem('hulu-theme', t) } catch { /* 忽略 */ }
+    // 落盘，别让「localStorage 一套、settings.json 一套」两条线各说各话
+    call<any>('GetSettings').then((st) => {
+      if (st && typeof st === 'object') call('SaveSettings', {...st, theme: t}).catch(() => {})
+    }).catch(() => {})
   }
   const pickIcon = (k: string) => {
     setAppIcon(k)
@@ -668,11 +673,9 @@ export default function App() {
           setVolumeState(st.volume)
           if (audio.current) audio.current.volume = st.volume
         }
-        // 主题以 localStorage 为准：点一下主题按钮只会写这里，settings.json 里存的还是上次保存的旧值。
-        // 如果这里无条件把 st.theme 应用回去，用户换过主题后每次启动就会被旧值覆盖，所以只在没存过时兜底。
-        let savedTheme = ''
-        try { savedTheme = localStorage.getItem('hulu-theme') || '' } catch { /* 忽略 */ }
-        if (!savedTheme && isTheme(st.theme)) setTheme(st.theme as Theme)
+        // 主题以 settings.json 为准：换主题时 pickTheme 会顺手落盘（见下），两处不会再打架。
+        // localStorage 只用来「首屏先按上次的样子渲染」，真正的值以这里为准。
+        if (isTheme(st.theme)) setTheme(st.theme as Theme)
         // 界面 logo 用哪张跟着 settings.json 走（窗口图标 Go 启动时已经换好）
         if (isIconId(st.icon)) setAppIcon(st.icon)
       })
