@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
-import logoHulu from './assets/images/logo-hulu.png'
+import iconClassic from './assets/images/icon-classic.png'
 import iconNeon from './assets/images/icon-neon.png'
 import iconSunset from './assets/images/icon-sunset.png'
 import './style.css'
@@ -164,7 +164,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.99'
+const BUILD_TAG = '3.1.0'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -558,7 +558,7 @@ export default function App() {
   }
   const SKIN_MARK: Record<Skin, string> = {winamp: '◆', tt: '●', light: '○', glass: '◉', hifi: '◈', steel: '▣', green: '✿', neon: '✦'}
   const skinName = SKIN_NAME[skinTheme]
-  const appIconSrc = appIcon === 'neon' ? iconNeon : appIcon === 'sunset' ? iconSunset : logoHulu
+  const appIconSrc = appIcon === 'neon' ? iconNeon : appIcon === 'sunset' ? iconSunset : iconClassic
   const [repeatOne, setRepeatOne] = useState(false)
   // 播放队列（上一首 / 下一首）
   // 播放队列（上一首 / 下一首 / 播放列表页都用它）

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {type Theme} from './theme'
-import logoClassic from './assets/images/logo-hulu.png'
+import logoClassic from './assets/images/icon-classic.png'
 import iconNeonImg from './assets/images/icon-neon.png'
 import iconSunsetImg from './assets/images/icon-sunset.png'
 
