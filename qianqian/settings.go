@@ -21,6 +21,10 @@ type Settings struct {
 	LastTrackID string   `json:"lastTrackId"`
 	LocalDirs   []string `json:"localDirs"` // 本地乐库授权的音乐目录
 
+	// Icon 应用图标：classic（exe 自带）/ neon（霓虹）/ sunset（暖橙）。
+	// 界面 logo 由前端直接换图，窗口 + 任务栏图标由 SetAppIcon 走 Win32 WM_SETICON。
+	Icon string `json:"icon"`
+
 	// AllowPluginProcess 允许插件运行 ffmpeg 之外的本机程序（node 等）。
 	// 默认关闭：汽水音乐这类插件要跑 node + Electron 才能扫码登录，但等于把
 	// 任意命令执行交给插件，所以必须由用户在设置里显式打开。
@@ -36,7 +40,7 @@ type Settings struct {
 	Version   string `json:"version"`
 }
 
-const appVersion = "3.0.97"
+const appVersion = "3.0.98"
 
 func defaultSettings() Settings {
 	return Settings{
@@ -45,6 +49,7 @@ func defaultSettings() Settings {
 		AutoPlay:    true,
 		ShowLyric:   true,
 		DefaultTab:  "search",
+		Icon:        "classic",
 		Sources:     []string{"ne", "qq"},
 		SearchLimit: 20,
 	}

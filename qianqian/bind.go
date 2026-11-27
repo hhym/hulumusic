@@ -251,6 +251,12 @@ func (x API) PluginWorkDir(id any) (string, error) {
 	return v, errOf(e)
 }
 
+// SetAppIcon 切换窗口 / 任务栏图标，返回实际用的 ico 路径（classic 或失败为空串）。
+func (x API) SetAppIcon(name any) (string, error) {
+	v, e := x.App.SetAppIcon(asStr(name))
+	return v, errOf(e)
+}
+
 // BuiltinFFmpegPath 播放器自带的 ffmpeg 路径（非 Windows 或解压失败返回空串）。
 func (x API) BuiltinFFmpegPath() (string, error) {
 	v, e := x.App.BuiltinFFmpegPath()

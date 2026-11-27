@@ -1,5 +1,7 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import logoHulu from './assets/images/logo-hulu.png'
+import iconNeon from './assets/images/icon-neon.png'
+import iconSunset from './assets/images/icon-sunset.png'
 import './style.css'
 import SettingsPage from './Settings'
 import PluginsPage from './Plugins'
@@ -162,7 +164,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.0.97'
+const BUILD_TAG = '3.0.98'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -184,6 +186,8 @@ async function openExternal(url: string) {
   }
 }
 
+type IconKind = 'classic' | 'neon' | 'sunset'
+
 type Tab = 'home' | 'search' | 'library' | 'radio' | 'podcast' | 'local' | 'queue' | 'lyric' | 'plugins' | 'settings'
 
 export default function App() {
@@ -195,6 +199,15 @@ export default function App() {
       if (isTheme(saved)) return saved
     } catch { /* 忽略 */ }
     return 'light'
+  })
+  // 应用图标：classic（exe 自带）/ neon（霓虹）/ sunset（暖橙）。界面 logo 直接换图，
+  // 窗口 + 任务栏图标交给后端 SetAppIcon（Win32 WM_SETICON）。
+  const [appIcon, setAppIcon] = useState<IconKind>(() => {
+    try {
+      const v = localStorage.getItem('hulu-icon')
+      if (v === 'neon' || v === 'sunset') return v
+    } catch { /* 忽略 */ }
+    return 'classic'
   })
   const [tab, setTab] = useState<Tab>('home')
   const [q, setQ] = useState('千千阙歌')
@@ -529,6 +542,11 @@ export default function App() {
     setTheme(t)
     applySkin(THEME_SKIN[t])
   }
+  const pickIcon = (k: IconKind) => {
+    setAppIcon(k)
+    try { localStorage.setItem('hulu-icon', k) } catch { /* 忽略 */ }
+    call('SetAppIcon', k).catch(() => { /* 非 Windows 或后端未就绪时只换界面 logo */ })
+  }
   const switchSkin = () => {
     const next = SKIN_ORDER[(SKIN_ORDER.indexOf(skinTheme) + 1) % SKIN_ORDER.length]
     applySkin(next)
@@ -546,6 +564,7 @@ export default function App() {
   }
   const SKIN_MARK: Record<Skin, string> = {winamp: '◆', tt: '●', light: '○', glass: '◉', hifi: '◈', steel: '▣', green: '✿', neon: '✦'}
   const skinName = SKIN_NAME[skinTheme]
+  const appIconSrc = appIcon === 'neon' ? iconNeon : appIcon === 'sunset' ? iconSunset : logoHulu
   const [repeatOne, setRepeatOne] = useState(false)
   // 播放队列（上一首 / 下一首）
   // 播放队列（上一首 / 下一首 / 播放列表页都用它）
@@ -664,6 +683,15 @@ export default function App() {
         let savedTheme = ''
         try { savedTheme = localStorage.getItem('hulu-theme') || '' } catch { /* 忽略 */ }
         if (!savedTheme && isTheme(st.theme)) setTheme(st.theme as Theme)
+        // 重启后窗口/任务栏图标要按上次选的恢复（localStorage 优先，没有就用 settings.json 里存的）
+        let savedIcon = ''
+        try { savedIcon = localStorage.getItem('hulu-icon') || '' } catch { /* 忽略 */ }
+        if (!savedIcon && (st.icon === 'neon' || st.icon === 'sunset')) {
+          setAppIcon(st.icon as IconKind)
+          call('SetAppIcon', st.icon).catch(() => {})
+        } else {
+          call('SetAppIcon', appIcon).catch(() => {})
+        }
       })
       .catch(() => {})
   }, [])
@@ -1742,6 +1770,8 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
         <SettingsPage
           theme={theme}
           onTheme={(t) => pickTheme(t)}
+          icon={appIcon}
+          onIcon={(k) => pickIcon(k)}
           accounts={accounts}
           onSignOut={signOutOne}
           onRefreshAccounts={refreshAccounts}
@@ -1959,7 +1989,7 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
                   </>
                 ) : (
                   <>
-                    <img className="dn-ava" src={logoHulu} alt="" />
+                    <img className="dn-ava" src={appIconSrc} alt="" />
                     <div className="dnp-id"><b>千千静听</b><span className="dnp-sub">未装音源</span></div>
                   </>
                 )}
@@ -2276,7 +2306,7 @@ async function explainPlayFail(url: string, e: any): Promise<string> {
         {/* ── 主窗口 ── */}
         <section className="sk-panel sk-win">
           <div className="sk-title">
-            <img src={logoHulu} alt="" />
+            <img src={appIconSrc} alt="" />
             <span className="t">千千静听</span>
             <span className="sk-time" style={{ marginLeft: 'auto' }}>{isLive ? 'LIVE' : fmt(pos)}</span>
             <button className="sk-wb" title="切换到桌面界面（左侧竖排导航 + 底部播放条）"

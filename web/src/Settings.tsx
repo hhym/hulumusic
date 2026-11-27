@@ -13,13 +13,18 @@ type Settings = {
   dataDir: string
   version: string
   allowPluginProcess: boolean
+  icon?: string
 }
 
 type AccountItem = {id: string; name: string; who: string}
 
+type IconKind = 'classic' | 'neon' | 'sunset'
+
 type Props = {
   theme: Theme
   onTheme: (t: Theme) => void
+  icon: IconKind
+  onIcon: (k: IconKind) => void
   accounts: AccountItem[]
   onSignOut: (id: string) => void
   onRefreshAccounts: () => void
@@ -47,7 +52,7 @@ const empty: Settings = {
   allowPluginProcess: false,
 }
 
-export default function SettingsPage({ theme, onTheme, accounts, onSignOut, onRefreshAccounts }: Props) {
+export default function SettingsPage({ theme, onTheme, icon, onIcon, accounts, onSignOut, onRefreshAccounts }: Props) {
   const [s, setS] = useState<Settings>(empty)
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
@@ -84,7 +89,7 @@ export default function SettingsPage({ theme, onTheme, accounts, onSignOut, onRe
     setErr('')
     setMsg('')
     try {
-      const payload: Settings = { ...s, theme }
+      const payload: Settings = { ...s, theme, icon }
       const raw: any = await callM<any>('SaveSettings', payload)
       // 双返回值被 Wails 合并成单值：成功给 Settings，失败给错误字符串
       if (typeof raw === 'string') {
@@ -175,6 +180,14 @@ export default function SettingsPage({ theme, onTheme, accounts, onSignOut, onRe
             <button className={theme === 'teal' ? 'on' : ''} onClick={() => onTheme('teal')}>❋深青</button>
             <button className={theme === 'green' ? 'on' : ''} onClick={() => onTheme('green')}>✿护眼绿</button>
             <button className={theme === 'neon' ? 'on' : ''} onClick={() => onTheme('neon')}>✦霓虹紫</button>
+          </div>
+        </div>
+        <div className="set-row">
+          <label>图标</label>
+          <div className="seg">
+            <button className={icon === 'classic' ? 'on' : ''} onClick={() => onIcon('classic')}>◎ 经典</button>
+            <button className={icon === 'neon' ? 'on' : ''} onClick={() => onIcon('neon')}>◈ 霓虹</button>
+            <button className={icon === 'sunset' ? 'on' : ''} onClick={() => onIcon('sunset')}>◐ 暖橙</button>
           </div>
         </div>
         <div className="set-row">
