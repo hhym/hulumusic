@@ -1,12 +1,11 @@
 package qianqian
 
 import (
+	"embed"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
-
-	_ "embed"
 )
 
 /* 应用图标切换（设置页「图标」那一行用）。
@@ -14,11 +13,35 @@ import (
    WM_SETICON 换掉窗口图标（标题栏 + 任务栏一起变）。
    exe 文件本身的图标仍是编译时那个，运行中改不了。 */
 
-//go:embed assets/icon-neon.ico
-var iconNeon []byte
+// 全部图标一套打进 exe：icon-neon / icon-sunset + 11 套配色图标。
+//go:embed assets/*.ico
+var iconFS embed.FS
 
-//go:embed assets/icon-sunset.ico
-var iconSunset []byte
+// IconIDs 可选的图标：classic 是 exe 自带（千千静听新图标），其余都是 assets 里的 .ico
+var IconIDs = []string{
+	"classic", "neon", "sunset",
+	"retro-brown", "retro-brass", "retro-wine",
+	"cyber-violet", "cyber-dusk", "cyber-rose",
+	"mist-blue", "sage-green", "oat-beige",
+	"klein-blue", "tomato-indigo",
+}
+
+func iconBytes(name string) []byte {
+	b, err := iconFS.ReadFile("assets/icon-" + name + ".ico")
+	if err != nil {
+		return nil
+	}
+	return b
+}
+
+// iconFile 把某套图标解压到磁盘并返回路径，未知 / 失败返回空串。
+func iconFile(name string) string {
+	b := iconBytes(name)
+	if b == nil {
+		return ""
+	}
+	return writeIconFile("icon-"+name+".ico", b)
+}
 
 var (
 	iconOnce sync.Once
@@ -57,7 +80,7 @@ func writeIconFile(name string, data []byte) string {
 	return dst
 }
 
-// SetAppIcon 切换窗口图标：classic（恢复 exe 自带）/ neon（霓虹）/ sunset（暖橙）。
+// SetAppIcon 切换窗口图标：classic（恢复 exe 自带）或任一套配色图标。
 // 顺手把选择写回 settings.json（端口每次启动都会变，前端 localStorage 靠不住）。
 // 返回实际用的 ico 路径，classic 或失败时为空。
 func (a *App) SetAppIcon(name string) (string, string) {
@@ -65,23 +88,16 @@ func (a *App) SetAppIcon(name string) (string, string) {
 		name = "classic"
 	}
 	var p string
-	switch name {
-	case "classic":
-		// 恢复 exe 自带图标
-	case "neon":
-		p = writeIconFile("icon-neon.ico", iconNeon)
-	case "sunset":
-		p = writeIconFile("icon-sunset.ico", iconSunset)
-	default:
-		return "", "未知图标：" + name
-	}
-	if name != "classic" && p == "" {
-		return "", "图标解压失败"
+	if name != "classic" {
+		p = iconFile(name)
+		if p == "" {
+			return "", "未知图标：" + name
+		}
 	}
 	a.mu.Lock()
-	s := a.loadSettings()
-	s.Icon = name
-	_ = a.saveSettings(s)
+	sv := a.loadSettings()
+	sv.Icon = name
+	_ = a.saveSettings(sv)
 	a.mu.Unlock()
 	applyWindowIcon(p)
 	return p, ""
@@ -91,16 +107,11 @@ func (a *App) SetAppIcon(name string) (string, string) {
 // 窗口句柄通常比 startup 晚几百毫秒才出现，所以轮询十来秒。
 func (a *App) applySavedIcon() {
 	name := a.loadSettings().Icon
-	if name != "neon" && name != "sunset" {
+	if name == "" || name == "classic" {
 		return
 	}
 	go func() {
-		var p string
-		if name == "neon" {
-			p = writeIconFile("icon-neon.ico", iconNeon)
-		} else {
-			p = writeIconFile("icon-sunset.ico", iconSunset)
-		}
+		p := iconFile(name)
 		if p == "" {
 			return
 		}

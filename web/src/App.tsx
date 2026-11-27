@@ -1,7 +1,5 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
-import iconClassic from './assets/images/icon-classic.png'
-import iconNeon from './assets/images/icon-neon.png'
-import iconSunset from './assets/images/icon-sunset.png'
+import {iconSrc, isIconId} from './icons'
 import './style.css'
 import SettingsPage from './Settings'
 import PluginsPage from './Plugins'
@@ -164,7 +162,7 @@ const fmt = (ms: number) => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
-const BUILD_TAG = '3.1.0'
+const BUILD_TAG = '3.1.1'
 const srcName = (s: string) =>
   s === 'qq' ? 'QQ' : s === 'ne' ? '网易云' : s === 'radio' ? '电台' : s === 'pod' ? '听书'
   : s === 'plugin' ? '插件' : s === 'local' ? '本地' : s
@@ -186,8 +184,6 @@ async function openExternal(url: string) {
   }
 }
 
-type IconKind = 'classic' | 'neon' | 'sunset'
-
 type Tab = 'home' | 'search' | 'library' | 'radio' | 'podcast' | 'local' | 'queue' | 'lyric' | 'plugins' | 'settings'
 
 export default function App() {
@@ -202,7 +198,7 @@ export default function App() {
   })
   // 应用图标：classic（exe 自带）/ neon（霓虹）/ sunset（暖橙）。界面 logo 直接换图，
   // 窗口 + 任务栏图标交给后端 SetAppIcon（Win32 WM_SETICON）。
-  const [appIcon, setAppIcon] = useState<IconKind>('classic')
+  const [appIcon, setAppIcon] = useState<string>('classic')
   const [tab, setTab] = useState<Tab>('home')
   const [q, setQ] = useState('千千阙歌')
   // 桌面版左侧歌单：按专辑把收藏分组，点一下只看这张
@@ -536,7 +532,7 @@ export default function App() {
     setTheme(t)
     applySkin(THEME_SKIN[t])
   }
-  const pickIcon = (k: IconKind) => {
+  const pickIcon = (k: string) => {
     setAppIcon(k)
     // Go 侧 SetAppIcon 会自己把选择写进 settings.json 并换窗口 / 任务栏图标
     call('SetAppIcon', k).catch(() => { /* 非 Windows 或后端未就绪时只换界面 logo */ })
@@ -558,7 +554,7 @@ export default function App() {
   }
   const SKIN_MARK: Record<Skin, string> = {winamp: '◆', tt: '●', light: '○', glass: '◉', hifi: '◈', steel: '▣', green: '✿', neon: '✦'}
   const skinName = SKIN_NAME[skinTheme]
-  const appIconSrc = appIcon === 'neon' ? iconNeon : appIcon === 'sunset' ? iconSunset : iconClassic
+  const appIconSrc = iconSrc(appIcon)
   const [repeatOne, setRepeatOne] = useState(false)
   // 播放队列（上一首 / 下一首）
   // 播放队列（上一首 / 下一首 / 播放列表页都用它）
@@ -678,7 +674,7 @@ export default function App() {
         try { savedTheme = localStorage.getItem('hulu-theme') || '' } catch { /* 忽略 */ }
         if (!savedTheme && isTheme(st.theme)) setTheme(st.theme as Theme)
         // 界面 logo 用哪张跟着 settings.json 走（窗口图标 Go 启动时已经换好）
-        if (st.icon === 'neon' || st.icon === 'sunset') setAppIcon(st.icon as IconKind)
+        if (isIconId(st.icon)) setAppIcon(st.icon)
       })
       .catch(() => {})
   }, [])

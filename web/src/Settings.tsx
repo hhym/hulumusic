@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import {type Theme} from './theme'
-import logoClassic from './assets/images/icon-classic.png'
-import iconNeonImg from './assets/images/icon-neon.png'
-import iconSunsetImg from './assets/images/icon-sunset.png'
+import {ICON_SRC, ICON_LABEL, ICON_TOP, ICON_THEME_KEYS} from './icons'
 
 type Settings = {
   theme: string
@@ -21,19 +19,11 @@ type Settings = {
 
 type AccountItem = {id: string; name: string; who: string}
 
-type IconKind = 'classic' | 'neon' | 'sunset'
-
-const ICON_SRC: Record<IconKind, string> = {
-  classic: logoClassic,
-  neon: iconNeonImg,
-  sunset: iconSunsetImg,
-}
-
 type Props = {
   theme: Theme
   onTheme: (t: Theme) => void
-  icon: IconKind
-  onIcon: (k: IconKind) => void
+  icon: string
+  onIcon: (k: string) => void
   accounts: AccountItem[]
   onSignOut: (id: string) => void
   onRefreshAccounts: () => void
@@ -193,16 +183,28 @@ export default function SettingsPage({ theme, onTheme, icon, onIcon, accounts, o
         </div>
         <div className="set-row">
           <label>图标</label>
-          <div className="icon-row">
+          <div className="icon-pick">
             <div className="seg">
-              <button className={icon === 'classic' ? 'on' : ''} onClick={() => onIcon('classic')}>◎ 经典</button>
-              <button className={icon === 'neon' ? 'on' : ''} onClick={() => onIcon('neon')}>◈ 霓虹</button>
-              <button className={icon === 'sunset' ? 'on' : ''} onClick={() => onIcon('sunset')}>◐ 暖橙</button>
+              {ICON_TOP.map((k) => (
+                <button key={k} className={icon === k ? 'on' : ''} onClick={() => onIcon(k)}>
+                  <img src={ICON_SRC[k]} alt="" />{ICON_LABEL[k]}
+                </button>
+              ))}
             </div>
-            <img className="icon-prev" src={ICON_SRC[icon]} alt="当前图标" />
+            <img className="icon-prev" src={ICON_SRC[icon] || ICON_SRC.classic} alt="当前图标" />
             <span className="dim icon-tip">窗口和任务栏图标会一起换</span>
           </div>
         </div>
+        <div className="set-row">
+          <label>同色图标</label>
+            <div className="seg-grid icon-grid">
+              {ICON_THEME_KEYS.map((k) => (
+                <button key={k} className={icon === k ? 'on' : ''} onClick={() => onIcon(k)} title={ICON_LABEL[k]}>
+                  <img src={ICON_SRC[k]} alt="" />{ICON_LABEL[k]}
+                </button>
+              ))}
+            </div>
+          </div>
         <div className="set-row">
           <label>配色</label>
           <div className="seg-grid">

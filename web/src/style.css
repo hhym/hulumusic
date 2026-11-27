@@ -2874,8 +2874,10 @@ body.edge-resizing{cursor:ew-resize;user-select:none}
 :root[data-theme="tomato-indigo"] .np{--np-acc:#E63946;--np-track:rgba(230,57,70,0.18);--np-fa:#E63946;--np-fb:#457B9D;--np-glow:rgba(69,123,157,0.26);--np-txt:#1D3557;--np-dim:rgba(29,53,87,0.55);--np-bg:#FFF8F0}
 
 
-/* 设置里的图标预览（3.1.0 起） */
-.icon-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.icon-row .seg{flex:0 1 auto}
-.icon-prev{width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--panel)}
+/* 设置里的图标：常用三套一排 + 同色图标一排（3.1.1 起） */
+.icon-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1 1 auto}
+.icon-pick .seg{flex:0 1 auto}
+.icon-prev{width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--panel);flex:0 0 36px}
 .icon-tip{font-size:12px}
+.seg button img,.seg-grid button img{width:16px;height:16px;border-radius:4px;object-fit:cover;margin-right:5px;vertical-align:-3px;display:inline-block}
+.icon-grid{flex:1 1 100%}
